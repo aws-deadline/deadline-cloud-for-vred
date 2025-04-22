@@ -30,37 +30,36 @@ import traceback
 from pathlib import Path
 from typing import Optional
 
-import vrController # pylint: disable=import-error
+import vrController  # pylint: disable=import-error
+
+# It's recommended to maintain these variables (below) - to be in sync with convention changes
+#
+ERROR_MSG_CLIENT_MISSING = (
+    "The Deadline Cloud client directory cannot be determined. Please ensure that the "
+    "Deadline Cloud Client is fully installed and that its directory is present in the system PATH "
+    "environment variable. Typical installation directories are:\n"
+    "   C:\\DeadlineCloudSubmitter\\DeadlineClient\n"
+    "   %USERPROFILE\\DeadlineCloudSubmitter\\DeadlineClient\n"
+)
+
+ERROR_MSG_LOAD_CLIENT = 'Encountered an error while loading the Deadline Cloud Client'
+ERROR_MSG_LOAD_SUBMITTER = 'Encountered an error while loading the Deadline Cloud Submitter'
+ERROR_MSG_MENU_INIT = 'An error occurred when attempting to add Deadline menu.'
+ERROR_MSG_SCRIPT_NOT_FOUND = (
+    "The vred_submitter.py script could not be found in the Deadline Cloud Client directory for "
+    "VRED. Please ensure that Deadline Cloud for VRED has been fully installed on this machine. "
+    "Typical directory locations for vred_submitter.py are:\n"
+    "   C:\\DeadlineCloudSubmitter\\DeadlineClient\\Submitters\\VRED\\scripts\n"
+    "   %USERPROFILE\\DeadlineCloudSubmitter\\DeadlineClient\\Submitters\\VRED\\scripts\n"
+)
+PATH_FIELD = 'PATH'
+SUBMITTER_BASE_FOLDER_NAME = "DeadlineCloudSubmitter"
+SUBMITTER_PYTHON_MODULES_SUB_PATH = "Submitters/VRED/python/modules"
+SUBMITTER_PYTHON_SCRIPTS_SUB_PATH = "Submitters/VRED/scripts"
 
 
 class DeadlineCloudForVRED:
     """Provides logic for initializing the Deadline Cloud menu bar and its related dependencies."""
-
-    # It's recommended to maintain these variables (below) - to be in sync with convention changes
-    #
-
-    ERROR_MSG_CLIENT_MISSING = (
-        "The Deadline Cloud client directory cannot be determined. Please ensure that the "
-        "Deadline Cloud Client is fully installed and that its directory is present in the system PATH "
-        "environment variable. Typical installation directories are:\n"
-        "   C:\\DeadlineCloudSubmitter\\DeadlineClient\n"
-        "   %USERPROFILE\\DeadlineCloudSubmitter\\DeadlineClient\n"
-    )
-
-    ERROR_MSG_LOAD_CLIENT = 'Encountered an error while loading the Deadline Cloud Client'
-    ERROR_MSG_LOAD_SUBMITTER = 'Encountered an error while loading the Deadline Cloud Submitter'
-    ERROR_MSG_MENU_INIT = 'An error occurred when attempting to add Deadline menu.'
-    ERROR_MSG_SCRIPT_NOT_FOUND = (
-        "The vred_submitter.py script could not be found in the Deadline Cloud Client directory for "
-        "VRED. Please ensure that Deadline Cloud for VRED has been fully installed on this machine. "
-        "Typical directory locations for vred_submitter.py are:\n"
-        "   C:\\DeadlineCloudSubmitter\\DeadlineClient\\Submitters\\VRED\\scripts\n"
-        "   %USERPROFILE\\DeadlineCloudSubmitter\\DeadlineClient\\Submitters\\VRED\\scripts\n"
-    )
-    PATH_FIELD = 'PATH'
-    SUBMITTER_BASE_FOLDER_NAME = "DeadlineCloudSubmitter"
-    SUBMITTER_PYTHON_MODULES_SUB_PATH = "Submitters/VRED/python/modules"
-    SUBMITTER_PYTHON_SCRIPTS_SUB_PATH = "Submitters/VRED/scripts"
 
     def __init__(self):
         """"
@@ -73,9 +72,9 @@ class DeadlineCloudForVRED:
         # variables, binaries within, especially if naming conventions change.)
         #
         self.base_dc_installation_path = DeadlineCloudForVRED.find_first_existing_environment_path_containing(
-            DeadlineCloudForVRED.SUBMITTER_BASE_FOLDER_NAME)
+            SUBMITTER_BASE_FOLDER_NAME)
         if not self.base_dc_installation_path:
-            vrController.vrLogError(DeadlineCloudForVRED.ERROR_MSG_CLIENT_MISSING)
+            vrController.vrLogError(ERROR_MSG_CLIENT_MISSING)
         else:
             self.initialize_deadline_cloud_submitter()
 
@@ -89,7 +88,7 @@ class DeadlineCloudForVRED:
         return: True if initialization succeeds, False otherwise.
         """
         if self._setup_deadline_cloud_client_modules() and self._setup_vred_scripts():
-            return self._initialize_deadline_menu()
+            return self._initialize_deadline_cloud_menu()
         return False
 
     def _setup_deadline_cloud_client_modules(self) -> bool:
@@ -105,21 +104,19 @@ class DeadlineCloudForVRED:
         try:
             modules_path = os.path.join(
                 self.base_dc_installation_path,
-                DeadlineCloudForVRED.SUBMITTER_PYTHON_MODULES_SUB_PATH
+                SUBMITTER_PYTHON_MODULES_SUB_PATH
             )
             modules_path = os.path.realpath(modules_path).replace("\\", "/")
             if not os.path.isdir(modules_path):
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), modules_path)
             if modules_path not in sys.path:
                 sys.path.append(modules_path)
-            # Test importing of a Deadline Cloud module
-            #
             import deadline.client
             return True
         except FileNotFoundError:
-            vrController.vrLogError(DeadlineCloudForVRED.ERROR_MSG_CLIENT_MISSING)
+            vrController.vrLogError(ERROR_MSG_CLIENT_MISSING)
         except Exception as e:
-            vrController.vrLogError(f"{DeadlineCloudForVRED.ERROR_MSG_LOAD_CLIENT}: {str(e)}")
+            vrController.vrLogError(f"{ERROR_MSG_LOAD_CLIENT}: {str(e)}")
             vrController.vrLogError(traceback.format_exc())
         return False
 
@@ -136,25 +133,23 @@ class DeadlineCloudForVRED:
             #
             scripts_path = os.path.join(
                 self.base_dc_installation_path,
-                DeadlineCloudForVRED.SUBMITTER_PYTHON_SCRIPTS_SUB_PATH
+                SUBMITTER_PYTHON_SCRIPTS_SUB_PATH
             )
             scripts_path = os.path.realpath(scripts_path).replace("\\", "/")
             if not os.path.isdir(scripts_path):
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), scripts_path)
             if scripts_path not in sys.path:
                 sys.path.append(scripts_path)
-            # Test importing of Deadline Cloud VRED Submitter module
-            #
             import deadline.vred_submitter
             return True
         except FileNotFoundError:
-            vrController.vrLogError(DeadlineCloudForVRED.ERROR_MSG_SCRIPT_NOT_FOUND)
+            vrController.vrLogError(ERROR_MSG_SCRIPT_NOT_FOUND)
         except Exception as e:
-            vrController.vrLogError(f"{DeadlineCloudForVRED.ERROR_MSG_LOAD_SUBMITTER}: {str(e)}")
+            vrController.vrLogError(f"{ERROR_MSG_LOAD_SUBMITTER}: {str(e)}")
             vrController.vrLogError(traceback.format_exc())
         return False
 
-    def _initialize_deadline_menu(self) -> bool:
+    def _initialize_deadline_cloud_menu(self) -> bool:
         """
         Initialize the Deadline menu in the VRED interface.
         returns: True if initialization succeeds, False otherwise.
@@ -164,7 +159,7 @@ class DeadlineCloudForVRED:
             vred_submitter.add_deadline_cloud_menu()
             return True
         except Exception as e:
-            vrController.vrLogError(f"{DeadlineCloudForVRED.ERROR_MSG_MENU_INIT}: {str(e)}")
+            vrController.vrLogError(f"{ERROR_MSG_MENU_INIT}: {str(e)}")
             vrController.vrLogError(traceback.format_exc())
             return False
 
@@ -176,7 +171,7 @@ class DeadlineCloudForVRED:
         return: the portion of the existing path that matches up to and including the search string, None otherwise
         """
         try:
-            path_env = os.environ.get(DeadlineCloudForVRED.PATH_FIELD, '')
+            path_env = os.environ.get(PATH_FIELD, '')
             if not path_env:
                 return None
             paths = path_env.split(os.pathsep)
