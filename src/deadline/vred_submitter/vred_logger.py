@@ -33,10 +33,12 @@ class VREDLogger(logging.Logger):
     """Custom logger providing both console and file-based logging capabilities."""
 
     ALTERNATIVE_LOGGING_FILENAME = f"rfm.{os.getpid()}.log"
-    CONSOLE_LOG_FORMAT = "[%(name)s] %(levelname)8s:  (%(threadName)-10s)" \
-                         "  %(module)s %(funcName)s: %(message)s"
-    DISK_LOG_FORMAT = "%(asctime)s %(levelname)8s {%(threadName)-10s}" \
-                      ":  %(module)s %(funcName)s: %(message)s"
+    CONSOLE_LOG_FORMAT = (
+        "[%(name)s] %(levelname)8s:  (%(threadName)-10s)" "  %(module)s %(funcName)s: %(message)s"
+    )
+    DISK_LOG_FORMAT = (
+        "%(asctime)s %(levelname)8s {%(threadName)-10s}" ":  %(module)s %(funcName)s: %(message)s"
+    )
     DEFAULT_LOGFILE_LOCATION = "~/.deadline/logs/submitters/vred.log"
     LOGFILE_BACKUP_COUNT = 5
     MAX_LOGFILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -67,9 +69,7 @@ class VREDLogger(logging.Logger):
         """
         log_file = self._get_log_file_path()
         disk_handler = logging.handlers.RotatingFileHandler(
-            log_file,
-            maxBytes=self.MAX_LOGFILE_SIZE,
-            backupCount=self.LOGFILE_BACKUP_COUNT
+            log_file, maxBytes=self.MAX_LOGFILE_SIZE, backupCount=self.LOGFILE_BACKUP_COUNT
         )
         disk_handler.setFormatter(logging.Formatter(self.DISK_LOG_FORMAT))
         self.addHandler(disk_handler)
