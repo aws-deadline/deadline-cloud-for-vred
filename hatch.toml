@@ -1,0 +1,27 @@
+[envs.default]
+pre-install-commands = [
+  "pip install -r requirements-testing.txt"
+]
+
+[envs.default.scripts]
+sync = "pip install -r requirements-testing.txt"
+test = "pytest {args:test}"
+typing = "mypy {args:src test vred_submitter_plugin/plug-ins}"
+style = [
+  "ruff check {args:.}",
+  "black --check --diff {args:.}",
+]
+fmt = [
+  "black {args:.}",
+  "style",
+]
+lint = [
+  "style",
+  "typing",
+]
+
+[[envs.all.matrix]]
+python = ["3.9", "3.10", "3.11"]
+
+[envs.release]
+detached = true
