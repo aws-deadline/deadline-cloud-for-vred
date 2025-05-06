@@ -133,7 +133,7 @@ class DeadlineCloudForVRED:
         """
         try:
             # Determine the VRED-specific Python Scripts folder within Deadline Cloud
-            #
+            # Test
             scripts_path = os.path.join(
                 self.base_dc_installation_path, SUBMITTER_PYTHON_SCRIPTS_SUB_PATH
             )
