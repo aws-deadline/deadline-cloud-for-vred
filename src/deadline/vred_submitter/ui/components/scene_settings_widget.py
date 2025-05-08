@@ -7,8 +7,8 @@ Acts as the main control point for branching out these responsibilities to other
     - populating VRED runtime-level values into UI elements
 """
 
-import itertools
-from typing import Type
+from itertools import count
+from typing import Any, Callable, Type
 
 from ...data_classes import RenderSubmitterUISettings
 from .constants import Constants
@@ -17,7 +17,7 @@ from .scene_settings_callbacks import SceneSettingsCallbacks
 from .scene_settings_logic import SceneSettingsLogic
 
 from PySide6.QtCore import Qt, QEvent
-from PySide6.QtGui import (QDoubleValidator, QIntValidator)
+from PySide6.QtGui import QDoubleValidator, QIntValidator
 from PySide6.QtWidgets import (
     QCheckBox,
     QGridLayout,
@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QSpinBox,
     QWidget,
-    QVBoxLayout
+    QVBoxLayout,
 )
 
 
@@ -86,7 +86,7 @@ class SceneSettingsWidget(QWidget):
         self.group_box_sequencer_options.layout().addLayout(grid_layout_sequencer)
         self.group_box_tiling_settings.layout().addLayout(grid_layout_tiling)
         # Create lower-level UI controls for each group. Keep the UI elements positioned relatively with a row counter.
-        row_counter = itertools.count()
+        row_counter = count()
         self._build_general_options(grid_layout_general, row_counter)
         self._build_render_options(grid_layout_render, row_counter)
         self._build_sequencer_options(grid_layout_sequencer, row_counter)
@@ -101,13 +101,16 @@ class SceneSettingsWidget(QWidget):
         self.group_box_render_options = CustomGroupBox(Constants.SECTION_RENDER_OPTIONS)
         self.group_box_sequencer_options = CustomGroupBox(Constants.SECTION_SEQUENCER_OPTIONS)
         self.group_box_tiling_settings = CustomGroupBox(Constants.SECTION_TILING_SETTINGS)
-        for group_box in [self.group_box_render_options, self.group_box_sequencer_options,
-                          self.group_box_tiling_settings]:
+        for group_box in [
+            self.group_box_render_options,
+            self.group_box_sequencer_options,
+            self.group_box_tiling_settings,
+        ]:
             group_box.setLayout(QVBoxLayout())
             layout_main.addWidget(group_box, self.DEFAULT_WIDGET_ALIGNMENT)
         return layout_main
 
-    def _build_general_options(self, grid_layout: QGridLayout, row_counter: int) -> None:
+    def _build_general_options(self, grid_layout: QGridLayout, row_counter: count[int]) -> None:
         """
         Build general options section with UI elements defined below.
         param: grid_layout: the grid layout to which UI elements are added
@@ -116,81 +119,157 @@ class SceneSettingsWidget(QWidget):
         self.render_job_type_label = QLabel(Constants.JOB_TYPE_LABEL)
         self.render_job_type_label.setToolTip(Constants.JOB_TYPE_LABEL_DESCRIPTION)
         self.render_job_type_widget = AutoSizedComboBox()
-        self.render_job_type_widget.currentIndexChanged.connect(self.callbacks.job_type_changed_callback)
+        self.render_job_type_widget.currentIndexChanged.connect(
+            self.callbacks.job_type_changed_callback
+        )
         job_type_layout = QHBoxLayout()
         job_type_layout.addWidget(self.render_job_type_label)
         job_type_layout.addWidget(self.render_job_type_widget)
         grid_layout.addLayout(job_type_layout, next(row_counter), 0, self.DEFAULT_WIDGET_ALIGNMENT)
 
-    def _build_render_options(self, grid_layout: QGridLayout, row_counter: int) -> None:
+    def _build_render_options(self, grid_layout: QGridLayout, row_counter: count[int]) -> None:
         """
         Build Render Options section with UI elements defined below.
         param: grid_layout: the grid layout to which UI elements are added
         param: row_counter: tracks row number that UI elements added
         """
-        def iter_value(x): int(x.__reduce__()[1][0])
-        self._add_render_output_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self.render_view_widget = self._add_label_and_widget(
-            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value, Constants.RENDER_VIEW_LABEL,
-            Constants.RENDER_VIEW_LABEL_DESCRIPTION, AutoSizedComboBox
+
+        def iter_value(x):
+            int(x.__reduce__()[1][0])
+
+        self._add_render_output_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
         )
-        self._add_image_size_preset_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_image_size_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_printing_size_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_resolution_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_render_animation_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
+        self.render_view_widget = self._add_label_and_widget(
+            grid_layout,
+            row_counter,
+            self.DEFAULT_WIDGET_ALIGNMENT,
+            iter_value,
+            Constants.RENDER_VIEW_LABEL,
+            Constants.RENDER_VIEW_LABEL_DESCRIPTION,
+            AutoSizedComboBox,
+        )
+        self._add_image_size_preset_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_image_size_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_printing_size_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_resolution_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_render_animation_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
         self.render_quality_widget = self._add_label_and_widget(
-            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value, Constants.RENDER_QUALITY_LABEL,
-            Constants.RENDER_QUALITY_LABEL_DESCRIPTION, AutoSizedComboBox
+            grid_layout,
+            row_counter,
+            self.DEFAULT_WIDGET_ALIGNMENT,
+            iter_value,
+            Constants.RENDER_QUALITY_LABEL,
+            Constants.RENDER_QUALITY_LABEL_DESCRIPTION,
+            AutoSizedComboBox,
         )
         self.dlss_quality_widget = self._add_label_and_widget(
-            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value, Constants.DLSS_QUALITY_LABEL,
+            grid_layout,
+            row_counter,
+            self.DEFAULT_WIDGET_ALIGNMENT,
+            iter_value,
+            Constants.DLSS_QUALITY_LABEL,
             Constants.DLSS_QUALITY_LABEL_DESCRIPTION,
-            AutoSizedComboBox
+            AutoSizedComboBox,
         )
         self.ss_quality_widget = self._add_label_and_widget(
-            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value, Constants.SS_QUALITY_LABEL,
-            Constants.SS_QUALITY_LABEL_DESCRIPTION, AutoSizedComboBox
+            grid_layout,
+            row_counter,
+            self.DEFAULT_WIDGET_ALIGNMENT,
+            iter_value,
+            Constants.SS_QUALITY_LABEL,
+            Constants.SS_QUALITY_LABEL_DESCRIPTION,
+            AutoSizedComboBox,
         )
-        self._add_animation_type_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_animation_clip_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
+        self._add_animation_type_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_animation_clip_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
         self.use_clip_range_widget = QCheckBox(Constants.USE_CLIP_RANGE_LABEL)
         self.use_clip_range_widget.setToolTip(Constants.USE_CLIP_RANGE_LABEL_DESCRIPTION)
-        self.use_clip_range_widget.stateChanged.connect(self.callbacks.use_clip_range_changed_callback)
-        grid_layout.addWidget(self.use_clip_range_widget, next(row_counter), 0, self.DEFAULT_WIDGET_ALIGNMENT)
-        self._add_frame_range_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_frames_per_task_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
+        self.use_clip_range_widget.stateChanged.connect(
+            self.callbacks.use_clip_range_changed_callback
+        )
+        grid_layout.addWidget(
+            self.use_clip_range_widget, next(row_counter), 0, self.DEFAULT_WIDGET_ALIGNMENT
+        )
+        self._add_frame_range_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_frames_per_task_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
 
-    def _build_sequencer_options(self, grid_layout: QGridLayout, row_counter: int) -> None:
+    def _build_sequencer_options(self, grid_layout: QGridLayout, row_counter: count[int]) -> None:
         """
         Build sequencer options section with UI elements defined below.
         param: grid_layout: the grid layout to which UI elements are added
         param: row_counter: tracks row number that UI elements added
         """
-        def iter_value(x): int(x.__reduce__()[1][0])
+
+        def iter_value(x):
+            int(x.__reduce__()[1][0])
+
         self.sequence_name_label = QLabel(Constants.SEQUENCE_NAME_LABEL)
         self.sequence_name_label.setToolTip(Constants.SEQUENCE_NAME_LABEL_DESCRIPTION)
-        grid_layout.addWidget(self.sequence_name_label, iter_value(row_counter), 0, self.DEFAULT_WIDGET_ALIGNMENT)
+        grid_layout.addWidget(
+            self.sequence_name_label, iter_value(row_counter), 0, self.DEFAULT_WIDGET_ALIGNMENT
+        )
         self.sequence_name_widget = QLineEdit("")
         self.sequence_name_widget.setFixedWidth(Constants.LONG_TEXT_ENTRY_WIDTH)
-        grid_layout.addWidget(self.sequence_name_widget, iter_value(row_counter), 1, self.DEFAULT_WIDGET_ALIGNMENT)
+        grid_layout.addWidget(
+            self.sequence_name_widget, iter_value(row_counter), 1, self.DEFAULT_WIDGET_ALIGNMENT
+        )
 
-    def _build_tiling_settings(self, grid_layout: QGridLayout, row_counter: int) -> None:
+    def _build_tiling_settings(self, grid_layout: QGridLayout, row_counter: count[int]) -> None:
         """
         Build tiling settings section with UI elements defined below.
         param: grid_layout: the grid layout to which UI elements are added
         param: row_counter: tracks row number that UI elements added
         """
-        def iter_value(x): int(x.__reduce__()[1][0])
-        self._add_region_rendering_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
-        self._add_tiles_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_assembly_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_abort_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_assemble_over_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
-        self._add_background_image_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
 
-    def _add_label_and_widget(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                              iter_value: int, label_text: str, tooltip: str, widget_cls: Type[QWidget]) -> QWidget:
+        def iter_value(x):
+            int(x.__reduce__()[1][0])
+
+        self._add_region_rendering_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
+        self._add_tiles_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_assembly_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_abort_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_assemble_over_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+        self._add_background_image_controls(
+            grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value
+        )
+
+    def _add_label_and_widget(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+        label_text: str,
+        tooltip: str,
+        widget_cls: Type[QWidget],
+    ) -> QWidget:
         """
         Helper method to add a label and widget pair to a grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -208,8 +287,13 @@ class SceneSettingsWidget(QWidget):
         grid_layout.addWidget(new_widget, next(row_counter), 1, alignment)
         return new_widget
 
-    def _add_render_output_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                    iter_value: int) -> None:
+    def _add_render_output_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add render output UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -229,7 +313,13 @@ class SceneSettingsWidget(QWidget):
         render_output_layout.addWidget(self.render_output_button)
         grid_layout.addLayout(render_output_layout, next(row_counter), 1, alignment)
 
-    def _add_image_size_preset_controls(self, grid_layout, row_counter, alignment, iter_value):
+    def _add_image_size_preset_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add image size preset UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -242,11 +332,17 @@ class SceneSettingsWidget(QWidget):
         grid_layout.addWidget(self.image_size_presets_label, iter_value(row_counter), 0, alignment)
         self.image_size_presets_widget = AutoSizedComboBox()
         self.image_size_presets_widget.currentIndexChanged.connect(
-            self.callbacks.image_size_preset_selection_changed_callback)
+            self.callbacks.image_size_preset_selection_changed_callback
+        )
         grid_layout.addWidget(self.image_size_presets_widget, next(row_counter), 1, alignment)
 
-    def _add_image_size_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                 iter_value: int) -> None:
+    def _add_image_size_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add image size UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -259,20 +355,31 @@ class SceneSettingsWidget(QWidget):
         grid_layout.addWidget(self.image_size_label, iter_value(row_counter), 0, alignment)
         self.image_size_x_widget = QLineEdit("")
         self.image_size_x_widget.setFixedWidth(Constants.SHORT_TEXT_ENTRY_WIDTH)
-        self.image_size_x_widget.returnPressed.connect(self.callbacks.image_size_text_changed_callback)
+        self.image_size_x_widget.returnPressed.connect(
+            self.callbacks.image_size_text_changed_callback
+        )
         self.image_size_y_widget = QLineEdit("")
         self.image_size_y_widget.setFixedWidth(Constants.SHORT_TEXT_ENTRY_WIDTH)
-        self.image_size_y_widget.returnPressed.connect(self.callbacks.image_size_text_changed_callback)
+        self.image_size_y_widget.returnPressed.connect(
+            self.callbacks.image_size_text_changed_callback
+        )
         image_size_layout = QHBoxLayout()
         image_size_layout.addWidget(self.image_size_x_widget)
         image_size_layout.addWidget(self.image_size_y_widget)
         grid_layout.addLayout(image_size_layout, next(row_counter), 1, alignment)
-        image_size_validator = QIntValidator(Constants.MIN_IMAGE_DIMENSION, Constants.MAX_IMAGE_DIMENSION)
+        image_size_validator = QIntValidator(
+            Constants.MIN_IMAGE_DIMENSION, Constants.MAX_IMAGE_DIMENSION
+        )
         self.image_size_x_widget.setValidator(image_size_validator)
         self.image_size_y_widget.setValidator(image_size_validator)
 
-    def _add_printing_size_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                    iter_value: int) -> None:
+    def _add_printing_size_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add printing size UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -285,21 +392,33 @@ class SceneSettingsWidget(QWidget):
         grid_layout.addWidget(self.printing_size_label, iter_value(row_counter), 0, alignment)
         self.printing_size_x_widget = QLineEdit("")
         self.printing_size_x_widget.setFixedWidth(Constants.SHORT_TEXT_ENTRY_WIDTH)
-        self.printing_size_x_widget.returnPressed.connect(self.callbacks.printing_size_text_changed_callback)
+        self.printing_size_x_widget.returnPressed.connect(
+            self.callbacks.printing_size_text_changed_callback
+        )
         self.printing_size_y_widget = QLineEdit("")
         self.printing_size_y_widget.setFixedWidth(Constants.SHORT_TEXT_ENTRY_WIDTH)
-        self.printing_size_y_widget.returnPressed.connect(self.callbacks.printing_size_text_changed_callback)
+        self.printing_size_y_widget.returnPressed.connect(
+            self.callbacks.printing_size_text_changed_callback
+        )
         printing_size_layout = QHBoxLayout()
         printing_size_layout.addWidget(self.printing_size_x_widget)
         printing_size_layout.addWidget(self.printing_size_y_widget)
         grid_layout.addLayout(printing_size_layout, next(row_counter), 1, alignment)
-        printing_size_validator = QDoubleValidator(Constants.MIN_IMAGE_DIMENSION, Constants.MAX_IMAGE_DIMENSION,
-                                                   Constants.PRINTING_PRECISION_DIGITS_COUNT)
+        printing_size_validator = QDoubleValidator(
+            Constants.MIN_IMAGE_DIMENSION,
+            Constants.MAX_IMAGE_DIMENSION,
+            Constants.PRINTING_PRECISION_DIGITS_COUNT,
+        )
         self.printing_size_x_widget.setValidator(printing_size_validator)
         self.printing_size_y_widget.setValidator(printing_size_validator)
 
-    def _add_resolution_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                 iter_value: int) -> None:
+    def _add_resolution_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add resolution UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -312,12 +431,19 @@ class SceneSettingsWidget(QWidget):
         grid_layout.addWidget(self.resolution_label, iter_value(row_counter), 0, alignment)
         self.resolution_widget = QLineEdit("")
         self.resolution_widget.setFixedWidth(Constants.SHORT_TEXT_ENTRY_WIDTH)
-        self.resolution_widget.returnPressed.connect(self.callbacks.resolution_text_changed_callback)
+        self.resolution_widget.returnPressed.connect(
+            self.callbacks.resolution_text_changed_callback
+        )
         grid_layout.addWidget(self.resolution_widget, next(row_counter), 1, alignment)
         self.resolution_widget.setValidator(QIntValidator(Constants.MIN_DPI, Constants.MAX_DPI))
 
-    def _add_render_animation_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                       iter_value: int) -> None:
+    def _add_render_animation_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add render animation and GPU ray tracing UI elements to the grid layout."""
         self.render_animation_widget = QCheckBox(Constants.RENDER_ANIMATION_LABEL)
@@ -329,8 +455,13 @@ class SceneSettingsWidget(QWidget):
         self.gpu_ray_tracing_widget.stateChanged.connect(self.callbacks.job_type_changed_callback)
         grid_layout.addWidget(self.gpu_ray_tracing_widget, next(row_counter), 1, alignment)
 
-    def _add_animation_type_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                     iter_value: int) -> None:
+    def _add_animation_type_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add animation type UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -343,11 +474,17 @@ class SceneSettingsWidget(QWidget):
         grid_layout.addWidget(self.animation_type_label, iter_value(row_counter), 0, alignment)
         self.animation_type_widget = AutoSizedComboBox()
         self.animation_type_widget.currentIndexChanged.connect(
-            self.callbacks.animation_type_selection_changed_callback)
+            self.callbacks.animation_type_selection_changed_callback
+        )
         grid_layout.addWidget(self.animation_type_widget, next(row_counter), 1, alignment)
 
-    def _add_animation_clip_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                     iter_value: int) -> None:
+    def _add_animation_clip_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add animation clip UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -361,11 +498,17 @@ class SceneSettingsWidget(QWidget):
         self.animation_clip_widget = AutoSizedComboBox()
         self.animation_clip_widget.setFixedWidth(Constants.MODERATE_TEXT_ENTRY_WIDTH)
         self.animation_clip_widget.currentIndexChanged.connect(
-            self.callbacks.animation_clip_selection_changed_callback)
+            self.callbacks.animation_clip_selection_changed_callback
+        )
         grid_layout.addWidget(self.animation_clip_widget, next(row_counter), 1, alignment)
 
-    def _add_frame_range_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                  iter_value: int) -> None:
+    def _add_frame_range_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add frame range UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -380,8 +523,13 @@ class SceneSettingsWidget(QWidget):
         self.frame_range_widget.setFixedWidth(Constants.LONG_TEXT_ENTRY_WIDTH)
         grid_layout.addWidget(self.frame_range_widget, next(row_counter), 1, alignment)
 
-    def _add_frames_per_task_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                      iter_value: int) -> None:
+    def _add_frames_per_task_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add frames per task UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -397,8 +545,9 @@ class SceneSettingsWidget(QWidget):
         grid_layout.addWidget(self.frames_per_task_widget, next(row_counter), 1, alignment)
         self.frames_per_task_widget.setMinimum(Constants.MIN_FRAMES_PER_TASK)
 
-    def _add_region_rendering_controls(self, grid_layout: QGridLayout, row_counter: int,
-                                       alignment: Qt.Alignment) -> None:
+    def _add_region_rendering_controls(
+        self, grid_layout: QGridLayout, row_counter: count[int], alignment: Qt.Alignment
+    ) -> None:
         """
         Add region rendering UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -406,13 +555,23 @@ class SceneSettingsWidget(QWidget):
         param: alignment: alignment for the label and widget
         """
         self.enable_region_rendering_widget = QCheckBox(Constants.ENABLE_REGION_RENDERING_LABEL)
-        self.enable_region_rendering_widget.setToolTip(Constants.ENABLE_REGION_RENDERING_LABEL_DESCRIPTION)
+        self.enable_region_rendering_widget.setToolTip(
+            Constants.ENABLE_REGION_RENDERING_LABEL_DESCRIPTION
+        )
         self.enable_region_rendering_widget.stateChanged.connect(
-            self.callbacks.enable_region_rendering_changed_callback)
-        grid_layout.addWidget(self.enable_region_rendering_widget, next(row_counter), 0, 1, 1, alignment)
+            self.callbacks.enable_region_rendering_changed_callback
+        )
+        grid_layout.addWidget(
+            self.enable_region_rendering_widget, next(row_counter), 0, 1, 1, alignment
+        )
 
-    def _add_tiles_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                            iter_value: int) -> None:
+    def _add_tiles_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add tiles in X and Y UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -441,8 +600,13 @@ class SceneSettingsWidget(QWidget):
         self.tiles_in_y_widget.setMinimum(Constants.MIN_TILES_PER_DIMENSION)
         self.tiles_in_y_widget.setMaximum(Constants.MAX_TILES_PER_DIMENSION)
 
-    def _add_assembly_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                               iter_value: int) -> None:
+    def _add_assembly_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add assembly job UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -450,15 +614,28 @@ class SceneSettingsWidget(QWidget):
         param: alignment: alignment for the label and widget
         param: iter_value: function to get the next row counter value
         """
-        self.submit_dependent_assembly_widget = QCheckBox(Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL)
-        self.submit_dependent_assembly_widget.setToolTip(Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL_DESCRIPTION)
-        grid_layout.addWidget(self.submit_dependent_assembly_widget, iter_value(row_counter), 0, alignment)
+        self.submit_dependent_assembly_widget = QCheckBox(
+            Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL
+        )
+        self.submit_dependent_assembly_widget.setToolTip(
+            Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL_DESCRIPTION
+        )
+        grid_layout.addWidget(
+            self.submit_dependent_assembly_widget, iter_value(row_counter), 0, alignment
+        )
         self.cleanup_tiles_widget = QCheckBox(Constants.CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL)
-        self.cleanup_tiles_widget.setToolTip(Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL_DESCRIPTION)
+        self.cleanup_tiles_widget.setToolTip(
+            Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL_DESCRIPTION
+        )
         grid_layout.addWidget(self.cleanup_tiles_widget, next(row_counter), 1, alignment)
 
-    def _add_abort_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                            iter_value: int) -> None:
+    def _add_abort_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add abort handling UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -467,14 +644,29 @@ class SceneSettingsWidget(QWidget):
         param: iter_value: function to get the next row counter value
         """
         self.abort_on_missing_tiles_widget = QCheckBox(Constants.ABORT_ON_MISSING_TILES_LABEL)
-        self.abort_on_missing_tiles_widget.setToolTip(Constants.ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION)
-        grid_layout.addWidget(self.abort_on_missing_tiles_widget, iter_value(row_counter), 0, alignment)
-        self.abort_on_missing_background_widget = QCheckBox(Constants.ABORT_ON_MISSING_BACKGROUND_LABEL)
-        self.abort_on_missing_background_widget.setToolTip(Constants.ABORT_ON_MISSING_BACKGROUND_LABEL_DESCRIPTION)
-        grid_layout.addWidget(self.abort_on_missing_background_widget, next(row_counter), 1, alignment)
+        self.abort_on_missing_tiles_widget.setToolTip(
+            Constants.ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION
+        )
+        grid_layout.addWidget(
+            self.abort_on_missing_tiles_widget, iter_value(row_counter), 0, alignment
+        )
+        self.abort_on_missing_background_widget = QCheckBox(
+            Constants.ABORT_ON_MISSING_BACKGROUND_LABEL
+        )
+        self.abort_on_missing_background_widget.setToolTip(
+            Constants.ABORT_ON_MISSING_BACKGROUND_LABEL_DESCRIPTION
+        )
+        grid_layout.addWidget(
+            self.abort_on_missing_background_widget, next(row_counter), 1, alignment
+        )
 
-    def _add_assemble_over_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                    iter_value: int) -> None:
+    def _add_assemble_over_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add assemble over UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
@@ -486,11 +678,18 @@ class SceneSettingsWidget(QWidget):
         self.assemble_over_label.setToolTip(Constants.ASSEMBLE_OVER_LABEL_DESCRIPTION)
         grid_layout.addWidget(self.assemble_over_label, iter_value(row_counter), 0, alignment)
         self.assemble_over_widget = AutoSizedComboBox()
-        self.assemble_over_widget.currentIndexChanged.connect(self.callbacks.assemble_over_changed_callback)
+        self.assemble_over_widget.currentIndexChanged.connect(
+            self.callbacks.assemble_over_changed_callback
+        )
         grid_layout.addWidget(self.assemble_over_widget, next(row_counter), 1, alignment)
 
-    def _add_background_image_controls(self, grid_layout: QGridLayout, row_counter: int, alignment: Qt.Alignment,
-                                       iter_value: int) -> None:
+    def _add_background_image_controls(
+        self,
+        grid_layout: QGridLayout,
+        row_counter: count[int],
+        alignment: Qt.Alignment,
+        iter_value: Callable[[Any], Any],
+    ) -> None:
         """
         Add background image UI elements to the grid layout.
         param: grid_layout: the grid layout to which UI elements are added
