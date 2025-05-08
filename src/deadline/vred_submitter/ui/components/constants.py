@@ -22,11 +22,13 @@ class Constants(metaclass=ConstantsMeta):
     """Constants class for UI settings."""
 
     ABORT_ON_MISSING_TILES_LABEL: Final[str] = "Abort on Missing Tiles"
-    ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION: Final[str] = ("If enabled, the assembly job will fail if it cannot find "
-                                                            "any of the tiles.")
+    ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION: Final[str] = (
+        "If enabled, the assembly job will fail if it cannot find any of the tiles."
+    )
     ABORT_ON_MISSING_BACKGROUND_LABEL: Final[str] = "Abort on Missing Background"
     ABORT_ON_MISSING_BACKGROUND_LABEL_DESCRIPTION: Final[str] = (
-        "If enabled, the render will fail if the background image specified does not exist.")
+        "If enabled, the render will fail if the background image specified does not exist."
+    )
     ANIMATION_SETTINGS_DIALOG_NAME: Final[str] = "Animation Settings"
     ANIMATION_CLIP_LABEL: Final[str] = "Animation Clip"
     ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The specific animation clip to render."
@@ -36,12 +38,14 @@ class Constants(metaclass=ConstantsMeta):
     ASSEMBLE_OVER_LABEL: Final[str] = "Assemble Over"
     ASSEMBLE_OVER_LABEL_DESCRIPTION: Final[str] = "The initial image to assemble over."
     BACKGROUND_IMAGE_LABEL: Final[str] = "Background Image"
-    BACKGROUND_IMAGE_LABEL_DESCRIPTION: Final[str] = ("The background image file to be used for the assemble over "
-                                                      "option.")
+    BACKGROUND_IMAGE_LABEL_DESCRIPTION: Final[str] = (
+        "The background image file to be used for the assemble over option."
+    )
     BACKGROUND_IMAGE_OPTIONS: Final[List[str]] = ["Blank Image", "Previous Output", "Selected Image"]
     CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL: Final[str] = "Cleanup Tiles After Assembly"
-    CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL_DESCRIPTION: Final[
-        str] = "If enabled, tiles will be deleted after the assembly job is completed."
+    CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL_DESCRIPTION: Final[str] = (
+        "If enabled, tiles will be deleted after the assembly job is completed."
+    )
     CLIP_LABEL: Final[str] = "Clip"
     CUSTOM_SPEED_FIELD_NAME: Final[str] = "_customSpeed"
     DEFAULT_IMAGE_SIZE_PRESET: Final[str] = "SVGA (800 x 600)"
@@ -53,14 +57,16 @@ class Constants(metaclass=ConstantsMeta):
     ELLIPSIS_LABEL: Final[str] = "..."
     EMPTY_FRAME_RANGE: Final[str] = "0-0"
     ENABLE_REGION_RENDERING_LABEL: Final[str] = "Enable Region Rendering"
-    ENABLE_REGION_RENDERING_LABEL_DESCRIPTION: Final[str] = ("If this option is enabled, then the image will be "
-                                                             "divided into multiple tasks and assembled afterwards.")
+    ENABLE_REGION_RENDERING_LABEL_DESCRIPTION: Final[str] = (
+        "If this option is enabled, then the image will be divided into multiple tasks and assembled afterwards."
+    )
     FRAME_RANGE_BASIC_FORMAT: Final[str] = "%d-%d"
     FRAME_RANGE_LABEL: Final[str] = "Frame Range"
     FRAME_RANGE_LABEL_DESCRIPTION: Final[str] = "The list of frames to render."
     FRAMES_PER_TASK_LABEL: Final[str] = "Frames Per Task"
-    FRAMES_PER_TASK_LABEL_DESCRIPTION: Final[
-        str] = "The number of frames that will be rendered at a time for each job's task."
+    FRAMES_PER_TASK_LABEL_DESCRIPTION: Final[str] = (
+        "The number of frames that will be rendered at a time for each job's task."
+    )
     IMAGE_SIZE_LABEL: Final[str] = "Image Size (px w,h)"
     IMAGE_SIZE_LABEL_DESCRIPTION: Final[str] = "The image size in pixels (width and height)"
     IMAGE_SIZE_PRESET_CUSTOM: Final[str] = "Custom"
@@ -125,12 +131,14 @@ class Constants(metaclass=ConstantsMeta):
     PRINTING_SIZE_LABEL: Final[str] = "Printing Size (cm w,h)"
     PRINTING_SIZE_LABEL_DESCRIPTION: Final[str] = "The printing size in centimeters (width and height)"
     RENDER_ANIMATION_LABEL: Final[str] = "Render Animation"
-    RENDER_ANIMATION_LABEL_DESCRIPTION: Final[
-        str] = "The animation to use, if left blank it will use all enabled clips."
+    RENDER_ANIMATION_LABEL_DESCRIPTION: Final[str] = (
+        "The animation to use, if left blank it will use all enabled clips."
+    )
     RENDER_QUALITY_LABEL: Final[str] = "Render Quality"
     RENDER_QUALITY_LABEL_DESCRIPTION: Final[str] = "The Render quality to use."
-    RENDER_QUALITY_OPTIONS: Final[List[str]] = ["Analytic Low", "Analytic High", "Realistic Low", "Realistic High",
-                                                "Raytracing", "NPR"]
+    RENDER_QUALITY_OPTIONS: Final[List[str]] = [
+        "Analytic Low", "Analytic High", "Realistic Low", "Realistic High", "Raytracing", "NPR"
+    ]
     RENDER_OUTPUT_LABEL: Final[str] = "Render Output"
     RENDER_OUTPUT_LABEL_DESCRIPTION: Final[str] = "The filename of the image(s) to be rendered."
     RENDER_VIEW_LABEL: Final[str] = "Render Viewpoint/Camera"
@@ -145,8 +153,9 @@ class Constants(metaclass=ConstantsMeta):
     SEQUENCE_NAME_LABEL_DESCRIPTION: Final[str] = "The name of the sequence to run, if empty all sequences will be run."
     SHORT_TEXT_ENTRY_WIDTH: Final[int] = 200
     SS_QUALITY_LABEL: Final[str] = "SS Quality"
-    SS_QUALITY_LABEL_DESCRIPTION: Final[str] = ("Sets the regular (non-DLSS) supersampling quality. DLSS quality takes "
-                                                "precedence.")
+    SS_QUALITY_LABEL_DESCRIPTION: Final[str] = (
+        "Sets the regular (non-DLSS) supersampling quality. DLSS quality takes precedence."
+    )
     SS_QUALITY_OPTIONS: Final[List[str]] = ["Off", "Low", "Medium", "High", "Ultra High"]
     SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL: Final[str] = "Submit Dependent Assembly Job"
     SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL_DESCRIPTION: Final[
@@ -161,18 +170,21 @@ class Constants(metaclass=ConstantsMeta):
     USE_CLIP_RANGE_LABEL: Final[str] = "Use Clip Range"
     USE_CLIP_RANGE_LABEL_DESCRIPTION: Final[str] = (
         "When enabled, the frame range will be fixed to the range defined by the "
-        "selected animation clip.")
+        "selected animation clip."
+    )
     USE_GPU_RAY_TRACING_LABEL: Final[str] = "Use GPU Ray Tracing"
     USE_GPU_RAY_TRACING_LABEL_DESCRIPTION: Final[str] = "Use GPU Ray Tracing."
     VERY_LONG_TEXT_ENTRY_WIDTH: Final[int] = 700
     VERY_SHORT_TEXT_ENTRY_WIDTH: Final[int] = 150
     VRED_ALL_FILES_FILTER: Final[str] = "All Files (*.*)"
-    VRED_IMAGE_EXPORT_FILTER: Final[str] = ("*.png (*.png);;*.bmp (*.bmp);;*.dds (*.dds);;*.dib (*.dib);;"
-                                            "*.exr (*.exr);;*.hdr (*.hdr);;*.jfif (*.jfif);;*.jpe (*.jpe);;"
-                                            "*.jpeg (*.jpeg);;*.jpg (*.jpg);;*.nrrd (*.nrrd);;*.pbm (*.pbm);;"
-                                            "*.pgm (*.pgm);;*.png (*.png);;*.pnm (*.pnm);;*.ppm (*.ppm);;"
-                                            "*.psb (*.psb);;*.psd (*.psd);;*.rle (*.rle);;*.tif (*.tif);;"
-                                            "*.tiff (*.tiff);;*.vif (*.vif)")
+    VRED_IMAGE_EXPORT_FILTER: Final[str] = (
+        "*.png (*.png);;*.bmp (*.bmp);;*.dds (*.dds);;*.dib (*.dib);;"
+        "*.exr (*.exr);;*.hdr (*.hdr);;*.jfif (*.jfif);;*.jpe (*.jpe);;"
+        "*.jpeg (*.jpeg);;*.jpg (*.jpg);;*.nrrd (*.nrrd);;*.pbm (*.pbm);;"
+        "*.pgm (*.pgm);;*.png (*.png);;*.pnm (*.pnm);;*.ppm (*.ppm);;"
+        "*.psb (*.psb);;*.psd (*.psd);;*.rle (*.rle);;*.tif (*.tif);;"
+        "*.tiff (*.tiff);;*.vif (*.vif)"
+    )
 
     def __new__(cls):
         """Prevent instantiation of this class."""
