@@ -10,6 +10,7 @@ Acts as the main control point for branching out these responsibilities to other
 import itertools
 from typing import Type
 
+from ...data_classes import RenderSubmitterUISettings
 from .constants import Constants
 from ...qt_components import AutoSizedComboBox, AutoSizedButton, CustomGroupBox
 from .scene_settings_callbacks import SceneSettingsCallbacks
@@ -20,7 +21,6 @@ from PySide6.QtGui import (QDoubleValidator, QIntValidator)
 from PySide6.QtWidgets import (
     QCheckBox,
     QGridLayout,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -35,7 +35,7 @@ class SceneSettingsWidget(QWidget):
 
     DEFAULT_WIDGET_ALIGNMENT = Qt.AlignLeft | Qt.AlignTop
 
-    def __init__(self, initial_settings: "RenderSubmitterUISettings", parent: "QWidget" = None):
+    def __init__(self, initial_settings: RenderSubmitterUISettings, parent: QWidget = None):
         """
         Builds the UI, connects UI elements to their respective callbacks, initializes a UI logic handler.
         param: initial_settings: maintains values for all render submission parameters.
@@ -128,7 +128,7 @@ class SceneSettingsWidget(QWidget):
         param: grid_layout: the grid layout to which UI elements are added
         param: row_counter: tracks row number that UI elements added
         """
-        iter_value = lambda x: int(x.__reduce__()[1][0])
+        def iter_value(x): int(x.__reduce__()[1][0])
         self._add_render_output_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
         self.render_view_widget = self._add_label_and_widget(
             grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value, Constants.RENDER_VIEW_LABEL,
@@ -167,7 +167,7 @@ class SceneSettingsWidget(QWidget):
         param: grid_layout: the grid layout to which UI elements are added
         param: row_counter: tracks row number that UI elements added
         """
-        iter_value = lambda x: int(x.__reduce__()[1][0])
+        def iter_value(x): int(x.__reduce__()[1][0])
         self.sequence_name_label = QLabel(Constants.SEQUENCE_NAME_LABEL)
         self.sequence_name_label.setToolTip(Constants.SEQUENCE_NAME_LABEL_DESCRIPTION)
         grid_layout.addWidget(self.sequence_name_label, iter_value(row_counter), 0, self.DEFAULT_WIDGET_ALIGNMENT)
@@ -181,7 +181,7 @@ class SceneSettingsWidget(QWidget):
         param: grid_layout: the grid layout to which UI elements are added
         param: row_counter: tracks row number that UI elements added
         """
-        iter_value = lambda x: int(x.__reduce__()[1][0])
+        def iter_value(x): int(x.__reduce__()[1][0])
         self._add_region_rendering_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_tiles_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
         self._add_assembly_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT, iter_value)
@@ -510,7 +510,7 @@ class SceneSettingsWidget(QWidget):
         background_image_layout.addWidget(self.background_image_button)
         grid_layout.addLayout(background_image_layout, iter_value(row_counter), 1, alignment)
 
-    def update_settings(self, settings: "RenderSubmitterUISettings") -> None:
+    def update_settings(self, settings: RenderSubmitterUISettings) -> None:
         """
         Update a scene settings object with the latest UI values using the OpenJD typing convention.
         Note: this callback is invoked by the Deadline Cloud API; callback is unreferenced in submitter code.
