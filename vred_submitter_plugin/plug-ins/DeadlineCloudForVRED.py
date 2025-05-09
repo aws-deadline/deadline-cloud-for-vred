@@ -158,6 +158,7 @@ class DeadlineCloudForVRED:
         """
         try:
             from deadline.vred_submitter import vred_submitter_wrapper  # type: ignore
+
             vred_submitter_wrapper.add_deadline_cloud_menu()
             return True
         except Exception as e:
