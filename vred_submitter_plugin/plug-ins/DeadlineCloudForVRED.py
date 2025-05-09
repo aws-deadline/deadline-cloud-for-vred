@@ -27,10 +27,9 @@ import os
 import sys
 import traceback
 
-from pathlib import Path
-from typing import Optional
+import vrController  # noqa: F401
 
-import vrController  # pylint: disable=import-error
+from pathlib import Path
 
 # It's recommended to maintain these variables (below) - to be in sync with convention changes
 #
@@ -42,9 +41,9 @@ ERROR_MSG_CLIENT_MISSING = (
     "   %USERPROFILE\\DeadlineCloudSubmitter\\DeadlineClient\n"
 )
 
-ERROR_MSG_LOAD_CLIENT = 'Encountered an error while loading the Deadline Cloud Client'
-ERROR_MSG_LOAD_SUBMITTER = 'Encountered an error while loading the Deadline Cloud Submitter'
-ERROR_MSG_MENU_INIT = 'An error occurred when attempting to add Deadline menu.'
+ERROR_MSG_LOAD_CLIENT = "Encountered an error while loading the Deadline Cloud Client"
+ERROR_MSG_LOAD_SUBMITTER = "Encountered an error while loading the Deadline Cloud Submitter"
+ERROR_MSG_MENU_INIT = "An error occurred when attempting to add Deadline menu."
 ERROR_MSG_SCRIPT_NOT_FOUND = (
     "The vred_submitter.py script could not be found in the Deadline Cloud Client directory for "
     "VRED. Please ensure that Deadline Cloud for VRED has been fully installed on this machine. "
@@ -52,7 +51,7 @@ ERROR_MSG_SCRIPT_NOT_FOUND = (
     "   C:\\DeadlineCloudSubmitter\\DeadlineClient\\Submitters\\VRED\\scripts\n"
     "   %USERPROFILE\\DeadlineCloudSubmitter\\DeadlineClient\\Submitters\\VRED\\scripts\n"
 )
-PATH_FIELD = 'PATH'
+PATH_FIELD = "PATH"
 SUBMITTER_BASE_FOLDER_NAME = "DeadlineCloudSubmitter"
 SUBMITTER_PYTHON_MODULES_SUB_PATH = "Submitters/VRED/python/modules"
 SUBMITTER_PYTHON_SCRIPTS_SUB_PATH = "Submitters/VRED/scripts"
@@ -62,7 +61,7 @@ class DeadlineCloudForVRED:
     """Provides logic for initializing the Deadline Cloud menu bar and its related dependencies."""
 
     def __init__(self):
-        """"
+        """
         Initialize the Deadline Cloud for VRED Submitter.
         """
 
@@ -71,8 +70,11 @@ class DeadlineCloudForVRED:
         # Note: stricter matching criteria can be applied in the future (including separate environment
         # variables, binaries within, especially if naming conventions change.)
         #
-        self.base_dc_installation_path = DeadlineCloudForVRED.find_first_existing_environment_path_containing(
-            SUBMITTER_BASE_FOLDER_NAME)
+        self.base_dc_installation_path = (
+            DeadlineCloudForVRED.find_first_existing_environment_path_containing(
+                SUBMITTER_BASE_FOLDER_NAME
+            )
+        )
         if not self.base_dc_installation_path:
             vrController.vrLogError(ERROR_MSG_CLIENT_MISSING)
         else:
@@ -103,15 +105,15 @@ class DeadlineCloudForVRED:
         #
         try:
             modules_path = os.path.join(
-                self.base_dc_installation_path,
-                SUBMITTER_PYTHON_MODULES_SUB_PATH
+                self.base_dc_installation_path, SUBMITTER_PYTHON_MODULES_SUB_PATH
             )
             modules_path = os.path.realpath(modules_path).replace("\\", "/")
             if not os.path.isdir(modules_path):
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), modules_path)
             if modules_path not in sys.path:
                 sys.path.append(modules_path)
-            import deadline.client
+            import deadline.client  # noqa: F401
+
             return True
         except FileNotFoundError:
             vrController.vrLogError(ERROR_MSG_CLIENT_MISSING)
@@ -120,7 +122,7 @@ class DeadlineCloudForVRED:
             vrController.vrLogError(traceback.format_exc())
         return False
 
-    def _setup_vred_scripts(self) -> None:
+    def _setup_vred_scripts(self) -> bool:
         """
         Set up VRED-specific Python scripts to be in Python search path, validate.
         raises:
@@ -132,15 +134,15 @@ class DeadlineCloudForVRED:
             # Determine the VRED-specific Python Scripts folder within Deadline Cloud
             #
             scripts_path = os.path.join(
-                self.base_dc_installation_path,
-                SUBMITTER_PYTHON_SCRIPTS_SUB_PATH
+                self.base_dc_installation_path, SUBMITTER_PYTHON_SCRIPTS_SUB_PATH
             )
             scripts_path = os.path.realpath(scripts_path).replace("\\", "/")
             if not os.path.isdir(scripts_path):
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), scripts_path)
             if scripts_path not in sys.path:
                 sys.path.append(scripts_path)
-            import deadline.vred_submitter
+            import deadline.vred_submitter  # noqa: F401
+
             return True
         except FileNotFoundError:
             vrController.vrLogError(ERROR_MSG_SCRIPT_NOT_FOUND)
@@ -155,8 +157,9 @@ class DeadlineCloudForVRED:
         returns: True if initialization succeeds, False otherwise.
         """
         try:
-            from deadline.vred_submitter import vred_submitter
-            vred_submitter.add_deadline_cloud_menu()
+            from deadline.vred_submitter import vred_submitter_wrapper  # type: ignore
+
+            vred_submitter_wrapper.add_deadline_cloud_menu()
             return True
         except Exception as e:
             vrController.vrLogError(f"{ERROR_MSG_MENU_INIT}: {str(e)}")
@@ -164,16 +167,16 @@ class DeadlineCloudForVRED:
             return False
 
     @staticmethod
-    def find_first_existing_environment_path_containing(search_string: str) -> Optional[str]:
+    def find_first_existing_environment_path_containing(search_string: str) -> str:
         """
         Finds the first existing path in the PATH environment variable that contains the specified string.
         param: search_string: string to search for in path environment
-        return: the portion of the existing path that matches up to and including the search string, None otherwise
+        return: the portion of the existing path that matches up to and including the search string, "" otherwise
         """
         try:
-            path_env = os.environ.get(PATH_FIELD, '')
+            path_env = os.environ.get(PATH_FIELD, "")
             if not path_env:
-                return None
+                return ""
             paths = path_env.split(os.pathsep)
             for path in paths:
                 try:
@@ -185,6 +188,7 @@ class DeadlineCloudForVRED:
                         return str(path_obj)[:index]
                 except (OSError, PermissionError):
                     continue
-            return None
-        except:
-            return None
+            return ""
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return ""
