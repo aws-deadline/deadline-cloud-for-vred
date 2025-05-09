@@ -27,10 +27,9 @@ import os
 import sys
 import traceback
 
-from pathlib import Path
-from typing import Optional
+import vrController  # noqa: F401
 
-import vrController  # pylint: disable=import-error
+from pathlib import Path
 
 # It's recommended to maintain these variables (below) - to be in sync with convention changes
 #
@@ -158,9 +157,9 @@ class DeadlineCloudForVRED:
         returns: True if initialization succeeds, False otherwise.
         """
         try:
-            from deadline.vred_submitter import vred_submitter
+            from deadline.vred_submitter import vred_submitter_wrapper  # type: ignore
 
-            vred_submitter.add_deadline_cloud_menu()
+            vred_submitter_wrapper.add_deadline_cloud_menu()
             return True
         except Exception as e:
             vrController.vrLogError(f"{ERROR_MSG_MENU_INIT}: {str(e)}")
@@ -168,16 +167,16 @@ class DeadlineCloudForVRED:
             return False
 
     @staticmethod
-    def find_first_existing_environment_path_containing(search_string: str) -> Optional[str]:
+    def find_first_existing_environment_path_containing(search_string: str) -> str:
         """
         Finds the first existing path in the PATH environment variable that contains the specified string.
         param: search_string: string to search for in path environment
-        return: the portion of the existing path that matches up to and including the search string, None otherwise
+        return: the portion of the existing path that matches up to and including the search string, "" otherwise
         """
         try:
             path_env = os.environ.get(PATH_FIELD, "")
             if not path_env:
-                return None
+                return ""
             paths = path_env.split(os.pathsep)
             for path in paths:
                 try:
@@ -189,7 +188,7 @@ class DeadlineCloudForVRED:
                         return str(path_obj)[:index]
                 except (OSError, PermissionError):
                     continue
-            return None
+            return ""
         except Exception as e:
             print(f"An error occurred: {e}")
-            return None
+            return ""
