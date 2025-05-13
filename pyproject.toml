@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "deadline-cloud-for-vred"
 dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 description = "AWS Deadline Cloud for VRED"
 
 dependencies = [
@@ -52,7 +52,7 @@ packages = [
 ]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 check_untyped_defs = true
 show_error_codes = true
 pretty = true
