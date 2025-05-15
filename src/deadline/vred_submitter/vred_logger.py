@@ -8,7 +8,7 @@ import logging.handlers
 import os
 import tempfile
 
-import vrController  # pylint: disable=import-error
+import vrController
 
 
 class VREDConsoleHandler(logging.Handler):
