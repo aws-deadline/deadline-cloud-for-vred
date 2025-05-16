@@ -27,7 +27,7 @@ import os
 import sys
 import traceback
 
-import vrController  # noqa: F401
+from vrController import vrLogError
 
 from pathlib import Path
 
@@ -76,7 +76,7 @@ class DeadlineCloudForVRED:
             )
         )
         if not self.base_dc_installation_path:
-            vrController.vrLogError(ERROR_MSG_CLIENT_MISSING)
+            vrLogError(ERROR_MSG_CLIENT_MISSING)
         else:
             self.initialize_deadline_cloud_submitter()
 
@@ -116,10 +116,10 @@ class DeadlineCloudForVRED:
 
             return True
         except FileNotFoundError:
-            vrController.vrLogError(ERROR_MSG_CLIENT_MISSING)
+            vrLogError(ERROR_MSG_CLIENT_MISSING)
         except Exception as e:
-            vrController.vrLogError(f"{ERROR_MSG_LOAD_CLIENT}: {str(e)}")
-            vrController.vrLogError(traceback.format_exc())
+            vrLogError(f"{ERROR_MSG_LOAD_CLIENT}: {str(e)}")
+            vrLogError(traceback.format_exc())
         return False
 
     def _setup_vred_scripts(self) -> bool:
@@ -145,10 +145,10 @@ class DeadlineCloudForVRED:
 
             return True
         except FileNotFoundError:
-            vrController.vrLogError(ERROR_MSG_SCRIPT_NOT_FOUND)
+            vrLogError(ERROR_MSG_SCRIPT_NOT_FOUND)
         except Exception as e:
-            vrController.vrLogError(f"{ERROR_MSG_LOAD_SUBMITTER}: {str(e)}")
-            vrController.vrLogError(traceback.format_exc())
+            vrLogError(f"{ERROR_MSG_LOAD_SUBMITTER}: {str(e)}")
+            vrLogError(traceback.format_exc())
         return False
 
     def _initialize_deadline_cloud_menu(self) -> bool:
@@ -162,8 +162,8 @@ class DeadlineCloudForVRED:
             vred_submitter_wrapper.add_deadline_cloud_menu()
             return True
         except Exception as e:
-            vrController.vrLogError(f"{ERROR_MSG_MENU_INIT}: {str(e)}")
-            vrController.vrLogError(traceback.format_exc())
+            vrLogError(f"{ERROR_MSG_MENU_INIT}: {str(e)}")
+            vrLogError(traceback.format_exc())
             return False
 
     @staticmethod

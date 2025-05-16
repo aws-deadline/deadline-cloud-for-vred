@@ -16,7 +16,7 @@ from .assets import AssetIntrospector
 from .constants import Constants
 from .data_classes import RenderSubmitterUISettings
 from .qt_utils import get_qt_yes_no_dialog_prompt_result
-from .scene import Animation, Scene
+from .scene import Scene
 from .ui.components.scene_settings_widget import SceneSettingsWidget
 from .utils import get_yaml_contents
 from .vred_logger import get_logger
@@ -138,9 +138,6 @@ class VREDSubmitter:
         # Note: further render settings will be populated through the SceneSettingsWidget's
         # update_settings()/update_settings_callback() mechanism.
         render_settings.name = Path(Scene.name()).name
-        render_settings.frame_list = str(Animation.frame_list())
-        render_settings.project_path = Scene.project_path()
-        render_settings.output_path = Scene.output_path()
         return render_settings
 
     def _setup_attachments(
@@ -218,7 +215,7 @@ class VREDSubmitter:
                 default_to_yes=False,
             )
             if dialog_result:
-                save_scene_file(Scene.name)
+                save_scene_file(Scene.name())
         self._create_job_bundle(
             job_bundle_dir, settings, queue_parameters, asset_references, host_requirements
         )
