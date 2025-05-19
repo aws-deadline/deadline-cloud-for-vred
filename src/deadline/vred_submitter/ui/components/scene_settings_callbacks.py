@@ -524,7 +524,7 @@ class SceneSettingsCallbacks:
         enabled = self.parent.enable_region_rendering_widget.isChecked() and (
             self.parent.assemble_over_widget.currentText() == Constants.SELECTED_IMAGE_LABEL
         )
-        self.parent.backgroundImageLabel.setEnabled(enabled)
+        self.parent.background_image_label.setEnabled(enabled)
         self.parent.background_image_widget.setEnabled(enabled)
         self.parent.background_image_button.setEnabled(enabled)
 

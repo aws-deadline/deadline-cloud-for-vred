@@ -1,11 +1,12 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
-"""VRED-specific Convenients/Utility Functions"""
+"""VRED-specific Convenience/Utility Functions"""
 
 import os
 import re
 
-from typing import Dict, List, Tuple
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
 
 from .constants import Constants
 from .utils import is_numerically_defined
@@ -14,7 +15,7 @@ from PySide6.QtCore import QObject
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QDialog, QMainWindow, QToolBar, QToolButton
 
-from builtins import vrCameraService, vrFileIOService, vrMainWindow  # type: ignore[attr-defined]
+from builtins import vrCameraService, vrFileIOService, vrMainWindow, vrReferenceService  # type: ignore[attr-defined]
 from vrAnimWidgets import getAnimClips, getAnimClipNodes, getCurrentFrame
 from vrController import getVredVersionYear
 from vrOSGWidget import getRenderWindowHeight, getRenderWindowWidth
@@ -139,6 +140,18 @@ def get_populated_animation_clip_ranges() -> Dict[str, List[float]]:
             clip_max = clip_min + (duration * render_fps)
             animation_clip_ranges_map[clip_name] = [clip_min, clip_max]
     return animation_clip_ranges_map
+
+
+def get_all_file_references() -> Set[Path]:
+    """
+    return: a set of all references in the scene
+    """
+    return {
+        Path(path)
+        for node in vrReferenceService.getSceneReferences()
+        for path in (os.path.normpath(node.getSourcePath()), os.path.normpath(node.getSmartPath()))
+        if path != "."
+    }
 
 
 def get_render_window_size() -> List[int]:
