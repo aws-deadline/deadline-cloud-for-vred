@@ -370,22 +370,16 @@ class DeadlineCloudRenderer:
         Loads path mapping rules
         Returns True if successful; False otherwise
         """
-        file_handle = None
         try:
-            file_handle = open(self.render_parameters.PathMappingRulesFile, "r")
-        except Exception as exc:
-            self.logger.error(exc)
-            return False
-        else:
-            with file_handle:
+            with open(self.render_parameters.PathMappingRulesFile, "r") as file_handle:
                 data = json.load(file_handle)
                 self.path_mapping_rules = [
                     PathMappingRule(**mapping)
                     for mapping in data.get(self.PATH_MAPPING_RULES_FIELD)
                 ]
-        finally:
-            if file_handle and not file_handle.closed:
-                file_handle.close()
+        except Exception as exc:
+            self.logger.error(exc)
+            return False
         return True
 
     def map_path(self, path) -> str:

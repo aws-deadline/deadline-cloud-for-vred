@@ -441,10 +441,10 @@ steps:
           range: "{{Param.StartFrame}}-{{Param.EndFrame}}:{{Param.FramesPerTask}}"
         - name: TileNumberX
           type: INT
-          range: '1-{{Param.NumXTiles}}'
+          range: "1-{{Param.NumXTiles}}"
         - name: TileNumberY
           type: INT
-          range: '1-{{Param.NumYTiles}}'
+          range: "1-{{Param.NumYTiles}}"
     description: Invokes VRED Core, supplying it with render parameter data.
     script:
       embeddedFiles:
