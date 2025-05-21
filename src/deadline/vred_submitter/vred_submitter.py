@@ -10,6 +10,7 @@ import os
 from copy import deepcopy
 from dataclasses import fields
 from pathlib import Path
+from shutil import copy
 from typing import Any, Optional
 
 from .assets import AssetIntrospector
@@ -135,9 +136,12 @@ class VREDSubmitter:
         return: configured settings
         """
         render_settings = RenderSubmitterUISettings()
-        # Note: further render settings will be populated through the SceneSettingsWidget's
-        # update_settings()/update_settings_callback() mechanism.
-        render_settings.name = Path(Scene.name()).name
+        # Note: all UI-based render settings populate through the SceneSettingsWidget - update_settings() callback!
+        # Note: render_settings.input_directories is kept empty to avoid including more content than intended
+        # Note: render_settings.output_directories is kept dynamic/user-defined (via update_settings() callback)
+        #
+        render_settings.name = Scene.name()
+        render_settings.input_filenames = Scene.get_input_filenames()
         return render_settings
 
     def _setup_attachments(
@@ -153,7 +157,6 @@ class VREDSubmitter:
         auto_detected_attachments.input_filenames = {
             os.path.normpath(path) for path in introspector.parse_scene_assets()
         }
-        # Note: additional logic can be added here for auto_detected_attachments.output_directories
         user_defined_attachments = AssetReferences(
             input_filenames=set(render_settings.input_filenames),
             input_directories=set(render_settings.input_directories),
@@ -173,7 +176,9 @@ class VREDSubmitter:
         return: configured dialog instance
         """
         auto_detected_attachments, user_attachments = attachments
-        conda_packages = f"{Constants.VRED_PRODUCT_NAME.lower()}={get_major_version()}*"
+        conda_packages = (
+            f"{Constants.VRED_CORE_CONDA_PACKAGE_PREFIX.lower()}={get_major_version()}*"
+        )
         return SubmitJobToDeadlineDialog(
             job_setup_widget_type=SceneSettingsWidget,
             initial_job_settings=render_settings,
@@ -217,7 +222,7 @@ class VREDSubmitter:
             if dialog_result:
                 save_scene_file(Scene.name())
         self._create_job_bundle(
-            job_bundle_dir, settings, queue_parameters, asset_references, host_requirements
+            Path(job_bundle_dir), settings, queue_parameters, asset_references, host_requirements
         )
         attachments: AssetReferences = widget.job_attachments.attachments
         settings.input_filenames = sorted(attachments.input_filenames)
@@ -225,7 +230,7 @@ class VREDSubmitter:
 
     def _create_job_bundle(
         self,
-        job_bundle_dir: str,
+        job_bundle_path: Path,
         settings: RenderSubmitterUISettings,
         queue_parameters: list[dict[str, Any]],
         asset_references: AssetReferences,
@@ -233,15 +238,27 @@ class VREDSubmitter:
     ) -> None:
         """
         Create job bundle files (template, parameter values, asset references)
-        param: job_bundle_dir: directory path where bundle files will be written
+        param: job_bundle_path: directory path where bundle files will be written
         param: settings: render settings for the submitter UI
         param: queue_parameters: parameters from the queue tab of the submitter UI
         param: asset_references: collection of asset paths/references
         param: host_requirements: constraints on host requirements
-        raise: IOError: If unable to write any of the bundle files
+        raise: IOError: If unable to write any of the bundle-related files
         raise: OSError: If the bundle directory is not accessible
         """
-        job_bundle_path = Path(job_bundle_dir)
+        # Keep the job bundle render script contained in its own directory to avoid accumulating recursive references.
+        # Ensure no spaces in the job bundle render script path (spaces can interfere with module path searches).
+        #
+        settings.JobScriptDir = Constants.JOB_BUNDLE_SCRIPTS_FOLDER_PATH
+        try:
+            if not os.path.exists(settings.JobScriptDir):
+                os.mkdir(settings.JobScriptDir)
+            copy(
+                str(Path(__file__).parent / Constants.VRED_RENDER_SCRIPT_FILENAME),
+                settings.JobScriptDir,
+            )
+        except Exception as exc:
+            raise IOError(f"{Constants.ERROR_FILE_WRITE_ISSUE}: {settings.JobScriptDir} {exc}")
         job_template = self._get_job_template(
             default_job_template=self.default_job_template, settings=settings
         )

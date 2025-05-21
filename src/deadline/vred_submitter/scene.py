@@ -3,7 +3,6 @@
 import os
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Iterator, Optional
 
 from .vred_utils import (
@@ -11,6 +10,7 @@ from .vred_utils import (
     get_frame_start,
     get_frame_stop,
     get_frame_step,
+    get_render_filename,
     get_scene_full_path,
 )
 
@@ -89,7 +89,7 @@ class Animation:
 
 class Scene:
     """
-    Functionality for retrieving settings from the active scene
+    Functionality for retrieving global default settings from the active scene
     """
 
     @staticmethod
@@ -100,25 +100,36 @@ class Scene:
         return get_scene_full_path()
 
     @staticmethod
+    def get_input_directories() -> list[str]:
+        """
+        Returns a list of directories where render data originates.
+        """
+        return [Scene.project_path()]
+
+    @staticmethod
+    def get_input_filenames() -> list[str]:
+        """
+        Returns a list of filenames comprising the render-related input data.
+        """
+        return [Scene.name()]
+
+    @staticmethod
     def get_output_directories() -> list[str]:
         """
-        Returns a list of directories files will be output to.
+        Returns a list of directories where render output will be generated.
         """
-        """
-        return [os.path.dirname(path) for path in image_paths]
-        """
-        return [""]
+        return [Scene.output_path()]
 
     @staticmethod
-    def project_path() -> Path:
+    def project_path() -> str:
         """
-        Returns the base path to the project the current scene is in
+        Returns the base path of the current scene file
         """
-        return Path(os.path.normpath(get_scene_full_path())).parent
+        return os.path.normpath(os.path.dirname(get_scene_full_path()))
 
     @staticmethod
-    def output_path() -> Path:
+    def output_path() -> str:
         """
         Returns the path to the default output directory.
         """
-        return Scene.project_path()
+        return os.path.normpath(os.path.dirname(get_render_filename()))

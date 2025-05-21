@@ -592,9 +592,11 @@ class SceneSettingsWidget(QWidget):
         param: row_counter: tracks row number that UI elements added
         param: alignment: alignment for the label and widget
         """
-        self.backgroundImageLabel = QLabel(Constants.BACKGROUND_IMAGE_LABEL)
-        self.backgroundImageLabel.setToolTip(Constants.BACKGROUND_IMAGE_LABEL_DESCRIPTION)
-        grid_layout.addWidget(self.backgroundImageLabel, iterator_value(row_counter), 0, alignment)
+        self.background_image_label = QLabel(Constants.BACKGROUND_IMAGE_LABEL)
+        self.background_image_label.setToolTip(Constants.BACKGROUND_IMAGE_LABEL_DESCRIPTION)
+        grid_layout.addWidget(
+            self.background_image_label, iterator_value(row_counter), 0, alignment
+        )
         self.background_image_widget = QLineEdit("")
         self.background_image_widget.setFixedWidth(Constants.LONG_TEXT_ENTRY_WIDTH)
         self.background_image_button = AutoSizedButton(Constants.ELLIPSIS_LABEL)

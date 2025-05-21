@@ -2,6 +2,7 @@
 
 """Provides a Constants class that focuses on the backend submitter component"""
 
+from pathlib import Path
 from typing import List, Final
 
 
@@ -32,6 +33,7 @@ class Constants(metaclass=ConstantsMeta):
         "deadline-cloud-for-vred-submitter-version"
     )
     DEADLINE_CLOUD_MENU_NAME: Final[str] = "Deadline Cloud"
+    DEADLINE_HOME: Final[str] = str(Path.home() / ".deadline")
     DEFAULT_FIELD: Final[str] = "default"
     DEFAULT_JOB_TEMPLATE_FILENAME: Final[str] = "default_vred_job_template.yaml"
     DEFAULT_SCENE_FILE_FPS_COUNT: Final[float] = 24.0
@@ -40,6 +42,7 @@ class Constants(metaclass=ConstantsMeta):
     ENVIRONMENT_FIELD: Final[str] = "environment"
     ERROR_ANIMATION_SETTINGS_DIALOG_NOT_FOUND: Final[str] = "Animation settings dialog not found"
     ERROR_FILE_PERMISSIONS_ISSUE: Final[str] = "Permission denied accessing file"
+    ERROR_FILE_WRITE_ISSUE: Final[str] = "Permission denied writing file"
     ERROR_FRAME_RANGE_FORMAT: Final[str] = "Invalid frame range format"
     ERROR_PREFERENCES_BUTTON_NOT_FOUND: Final[str] = "Preferences button not found"
     ERROR_QUEUE_PARAM_CONFLICT: Final[str] = (
@@ -55,6 +58,7 @@ class Constants(metaclass=ConstantsMeta):
     FRAME_RANGE_REGEX: Final[str] = r"^(-?\d+)-(-?\d+)(?:x(\d+))?$"
     FRAME_START_STOP_DELIMITER: Final[str] = "-"
     HOST_REQUIREMENTS_FIELD: Final[str] = "hostRequirements"
+    JOB_BUNDLE_SCRIPTS_FOLDER_PATH: Final[str] = str(Path(DEADLINE_HOME) / "scripts")
     JOB_ENVIRONMENTS_FIELD: Final[str] = "jobEnvironments"
     MESSAGE_BOX_MIN_WIDTH: Final[int] = 300
     MESSAGE_BOX_SPACER_PREFERRED_WIDTH: Final[int] = 400
@@ -105,10 +109,10 @@ class Constants(metaclass=ConstantsMeta):
     UTF8_FLAG: Final[str] = "utf-8"
     VALUE_FIELD: Final[str] = "value"
     VERY_LONG_TEXT_ENTRY_WIDTH: Final[int] = 700
-    VRED_PRODUCT_NAME: Final[str] = "VRED"
+    VRED_CORE_CONDA_PACKAGE_PREFIX: Final[str] = "vredcore"
+    VRED_PRO_CONDA_PACKAGE_PREFIX: Final[str] = "vred"
     VRED_RENDER_SCRIPT_FILENAME: Final[str] = "VRED_RenderScript_DeadlineCloud.py"
     VRED_VERSION_FIELD: Final[str] = "vred-version"
-    WORKER_SUBFOLDER_NAME = "worker"
     WRITE_FLAG: Final[str] = "w"
 
     def __new__(cls):

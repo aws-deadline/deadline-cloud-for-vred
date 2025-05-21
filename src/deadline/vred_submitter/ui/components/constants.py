@@ -62,7 +62,7 @@ class Constants(metaclass=ConstantsMeta):
     DLSS_QUALITY_OPTIONS: Final[List[str]] = [
         "Off",
         "Performance",
-        "Balance",
+        "Balanced",
         "Quality",
         "Ultra Performance",
     ]

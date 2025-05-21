@@ -197,102 +197,68 @@ class SceneSettingsPopulator:
         Note: important to synchronize to the data fields exposed in template.yaml - matching those to Qt controls.
         Note: if an attribute's value isn't exporting to the parameters YAML, first check that its attribute is
               included in the RenderSubmitterUISettings (settings) dataclass definition.
-        Note: some values are set to False - they aren't currently implemented or are pending implementation
+        Note: some values are set to False defaults - they aren't currently UI exposed or are pending implementation
+        Note: some settings like input_filenames, input_directories are determined automatically in AssetIntrospector
         """
         settings.StartFrame, settings.EndFrame, settings.FrameStep = get_frame_range_components(
             self.parent.frame_range_widget.text()
         )
-        attrs = DynamicKeyValueObject(settings.__dict__)
+        attrs: Any = DynamicKeyValueObject(settings.__dict__)
         settings.__dict__.update(
             {
-                attrs.AbortOnMissingBackground.__name__: bool_to_str(  # type: ignore[attr-defined]
+                attrs.output_directories.__name__: [
+                    os.path.normpath(os.path.dirname(self.parent.render_output_widget.text()))
+                ],
+                attrs.AbortOnMissingBackground.__name__: bool_to_str(
                     self.parent.abort_on_missing_background_widget.isChecked()
                 ),
-                attrs.AbortOnMissingTiles.__name__: bool_to_str(  # type: ignore[attr-defined]
+                attrs.AbortOnMissingTiles.__name__: bool_to_str(
                     self.parent.abort_on_missing_tiles_widget.isChecked()
                 ),
-                attrs.AnimationClip.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.animation_clip_widget.currentText()
-                ),
-                attrs.AnimationType.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.animation_type_widget.currentText()
-                ),
-                attrs.AssembleOver.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.assemble_over_widget.currentText()
-                ),
-                attrs.BackgroundImage.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.background_image_widget.text()
-                ),
-                attrs.CleanupTilesAfterAssembly.__name__: bool_to_str(  # type: ignore[attr-defined]
+                attrs.AnimationClip.__name__: str(self.parent.animation_clip_widget.currentText()),
+                attrs.AnimationType.__name__: str(self.parent.animation_type_widget.currentText()),
+                attrs.AssembleOver.__name__: str(self.parent.assemble_over_widget.currentText()),
+                attrs.BackgroundImage.__name__: str(self.parent.background_image_widget.text()),
+                attrs.CleanupTilesAfterAssembly.__name__: bool_to_str(
                     self.parent.cleanup_tiles_widget.isChecked()
                 ),
-                attrs.DLSSQuality.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.dlss_quality_widget.currentText()
-                ),
-                attrs.DPI.__name__: int(  # type: ignore[attr-defined]
-                    self.parent.resolution_widget.text()
-                ),
-                attrs.FramesPerTask.__name__: int(  # type: ignore[attr-defined]
-                    self.parent.frames_per_task_widget.value()
-                ),
-                attrs.GPURaytracing.__name__: bool_to_str(  # type: ignore[attr-defined]
+                attrs.DLSSQuality.__name__: str(self.parent.dlss_quality_widget.currentText()),
+                attrs.DPI.__name__: int(self.parent.resolution_widget.text()),
+                attrs.FramesPerTask.__name__: int(self.parent.frames_per_task_widget.value()),
+                attrs.GPURaytracing.__name__: bool_to_str(
                     self.parent.gpu_ray_tracing_widget.isChecked()
                 ),
-                attrs.ImageHeight.__name__: int(  # type: ignore[attr-defined]
-                    self.parent.image_size_y_widget.text()
-                ),
-                attrs.ImageWidth.__name__: int(  # type: ignore[attr-defined]
-                    self.parent.image_size_x_widget.text()
-                ),
-                attrs.IncludeAlphaChannel.__name__: bool_to_str(False),  # type: ignore[attr-defined]
-                attrs.JobType.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.render_job_type_widget.currentText()
-                ),
-                attrs.OutputDir.__name__: str(  # type: ignore[attr-defined]
+                attrs.ImageHeight.__name__: int(self.parent.image_size_y_widget.text()),
+                attrs.ImageWidth.__name__: int(self.parent.image_size_x_widget.text()),
+                attrs.IncludeAlphaChannel.__name__: bool_to_str(False),
+                attrs.JobType.__name__: str(self.parent.render_job_type_widget.currentText()),
+                attrs.NumXTiles.__name__: int(self.parent.tiles_in_x_widget.value()),
+                attrs.NumYTiles.__name__: int(self.parent.tiles_in_y_widget.value()),
+                attrs.OutputDir.__name__: str(
                     os.path.normpath(os.path.dirname(self.parent.render_output_widget.text()))
                 ),
-                attrs.OutputFileNamePrefix.__name__: str(  # type: ignore[attr-defined]
-                    os.path.basename(self.parent.render_output_widget.text())
+                attrs.OutputFileNamePrefix.__name__: str(
+                    os.path.splitext(os.path.basename(self.parent.render_output_widget.text()))[0]
                 ),
-                attrs.OutputFormat.__name__: str(  # type: ignore[attr-defined]
+                attrs.OutputFormat.__name__: str(
                     os.path.splitext(self.parent.render_output_widget.text())[1][1:].upper()
                 ),
-                attrs.OverrideRenderPass.__name__: bool_to_str(False),  # type: ignore[attr-defined]
-                attrs.PremultiplyAlpha.__name__: bool_to_str(False),  # type: ignore[attr-defined]
-                attrs.RegionRendering.__name__: bool_to_str(  # type: ignore[attr-defined]
+                attrs.OverrideRenderPass.__name__: bool_to_str(False),
+                attrs.PremultiplyAlpha.__name__: bool_to_str(False),
+                attrs.RegionRendering.__name__: bool_to_str(
                     self.parent.enable_region_rendering_widget.isChecked()
                 ),
-                attrs.RenderAnimation.__name__: bool_to_str(  # type: ignore[attr-defined]
+                attrs.RenderAnimation.__name__: bool_to_str(
                     self.parent.render_animation_widget.isChecked()
                 ),
-                attrs.RegionLeft.__name__: int(  # type: ignore[attr-defined]
-                    self.parent.tiles_in_x_widget.value()
-                ),
-                attrs.RegionRight.__name__: int(  # type: ignore[attr-defined]
-                    self.parent.tiles_in_x_widget.value()
-                ),
-                attrs.RegionBottom.__name__: int(  # type: ignore[attr-defined]
-                    self.parent.tiles_in_y_widget.value()
-                ),
-                attrs.RegionTop.__name__: int(  # type: ignore[attr-defined]
-                    self.parent.tiles_in_y_widget.value()
-                ),
-                attrs.RenderQuality.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.render_quality_widget.currentText()
-                ),
-                attrs.SSQuality.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.ss_quality_widget.currentText()
-                ),
-                attrs.SceneFile.__name__: str(get_scene_full_path()),  # type: ignore[attr-defined]
-                attrs.SequenceName.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.sequence_name_widget.text()
-                ),
-                attrs.SubmitDependentAssemblyJob.__name__: bool_to_str(  # type: ignore[attr-defined]
+                attrs.RenderQuality.__name__: str(self.parent.render_quality_widget.currentText()),
+                attrs.SSQuality.__name__: str(self.parent.ss_quality_widget.currentText()),
+                attrs.SceneFile.__name__: get_scene_full_path(),
+                attrs.SequenceName.__name__: str(self.parent.sequence_name_widget.text()),
+                attrs.SubmitDependentAssemblyJob.__name__: bool_to_str(
                     self.parent.submit_dependent_assembly_widget.isChecked()
                 ),
-                attrs.TonemapHDR.__name__: bool_to_str(False),  # type: ignore[attr-defined]
-                attrs.View.__name__: str(  # type: ignore[attr-defined]
-                    self.parent.render_view_widget.currentText()
-                ),
+                attrs.TonemapHDR.__name__: bool_to_str(False),
+                attrs.View.__name__: str(self.parent.render_view_widget.currentText()),
             }
         )
