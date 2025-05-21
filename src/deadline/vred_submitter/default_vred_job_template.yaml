@@ -53,7 +53,6 @@ parameterDefinitions:
     default: 'Render'
     allowedValues:
       - 'Render'
-      - 'Render Queue'
       - 'Sequencer'
     description: Type of job to submit.
   - name: SequenceName
@@ -334,15 +333,6 @@ parameterDefinitions:
       - 'true'
       - 'false'
     description: Enables tone mapping when rendering to a HDR image format.
-  - name: AbortOnMissingBackground
-    type: STRING
-    userInterface:
-      control: HIDDEN
-    default: 'false'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: If enabled, the render will fail if the background image specified does not exist.
   - name: AbortOnMissingTiles
     type: STRING
     userInterface:
@@ -352,20 +342,6 @@ parameterDefinitions:
       - 'true'
       - 'false'
     description: If enabled, the assembly job will fail if it cannot find any of its expected tiles.
-  - name: AssembleOver
-    type: PATH
-    objectType: FILE
-    userInterface:
-      control: HIDDEN
-    default: ''
-    description: The initial image to assemble over.
-  - name: BackgroundImage
-    type: PATH
-    objectType: FILE
-    userInterface:
-      control: HIDDEN
-    default: ''
-    description: The background image file to assemble over.
   - name: CleanupTilesAfterAssembly
     type: STRING
     userInterface:
@@ -375,15 +351,6 @@ parameterDefinitions:
       - 'true'
       - 'false'
     description: If enabled, tiles will be deleted after the assembly job is completed.
-  - name: SubmitDependentAssemblyJob
-    type: STRING
-    userInterface:
-      control: HIDDEN
-    default: 'false'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: If this option is enabled then an assembly job will be submitted.
   - name: JobFailureOnErrors
     type: STRING
     userInterface:
@@ -505,8 +472,10 @@ steps:
                 end_frame = min(start_frame + frames_per_task - 1, int({{Param.EndFrame}}))
                 str_to_bool = lambda s: s.lower() == 'true'
                 return {
+                    'AbortOnMissingTiles': str_to_bool('{{Param.AbortOnMissingTiles}}'),
                     'AnimationClip': str('{{Param.AnimationClip}}'),
                     'AnimationType': str('{{Param.AnimationType}}'),
+                    'CleanupTilesAfterAssembly': str_to_bool('{{Param.CleanupTilesAfterAssembly}}'),
                     'DLSSQuality': str('{{Param.DLSSQuality}}'),
                     'DPI': int({{Param.DPI}}),
                     'EndFrame': int(end_frame),

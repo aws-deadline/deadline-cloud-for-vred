@@ -32,12 +32,9 @@ class RenderSubmitterUISettings:
 
     # Render settings - note settings that are listed as False aren't currently implemented
     #
-    AbortOnMissingBackground: bool = field(default=False)
     AbortOnMissingTiles: bool = field(default=False)
     AnimationClip: str = field(default="")
     AnimationType: str = field(default="Clip")
-    AssembleOver: str = field(default="")
-    BackgroundImage: str = field(default="")
     CleanupTilesAfterAssembly: bool = field(default=False)
     DLSSQuality: str = field(default="Off")
     DPI: int = field(default=72)
@@ -63,7 +60,6 @@ class RenderSubmitterUISettings:
     SceneFile: str = field(default="")
     SequenceName: str = field(default="")
     StartFrame: int = field(default=0)
-    SubmitDependentAssemblyJob: bool = field(default=False)
     TonemapHDR: bool = field(default=False)
     View: str = field(default="")
     JobScriptDir: str = field(default=os.path.normpath(os.path.join(Path(__file__).parent)))

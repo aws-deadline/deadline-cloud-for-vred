@@ -26,6 +26,7 @@ from vrRenderSettings import (
     getRenderStartFrame,
     getRenderStopFrame,
 )
+from vrSequencer import getSequenceList
 
 
 def assign_scene_transition_event(callback_function) -> None:
@@ -152,6 +153,13 @@ def get_all_file_references() -> Set[Path]:
         for path in (os.path.normpath(node.getSourcePath()), os.path.normpath(node.getSmartPath()))
         if path != "."
     }
+
+
+def get_all_sequences() -> List[str]:
+    """
+    return: a set of all sequence names in the scene
+    """
+    return getSequenceList()
 
 
 def get_render_window_size() -> List[int]:

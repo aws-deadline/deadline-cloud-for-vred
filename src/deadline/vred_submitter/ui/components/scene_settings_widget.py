@@ -188,17 +188,13 @@ class SceneSettingsWidget(QWidget):
         param: grid_layout: the grid layout to which UI elements are added
         param: row_counter: tracks row number that UI elements added
         """
-
         self.sequence_name_label = QLabel(Constants.SEQUENCE_NAME_LABEL)
         self.sequence_name_label.setToolTip(Constants.SEQUENCE_NAME_LABEL_DESCRIPTION)
-        grid_layout.addWidget(
-            self.sequence_name_label, iterator_value(row_counter), 0, self.DEFAULT_WIDGET_ALIGNMENT
-        )
-        self.sequence_name_widget = QLineEdit("")
-        self.sequence_name_widget.setFixedWidth(Constants.LONG_TEXT_ENTRY_WIDTH)
-        grid_layout.addWidget(
-            self.sequence_name_widget, iterator_value(row_counter), 1, self.DEFAULT_WIDGET_ALIGNMENT
-        )
+        self.sequence_name_widget = AutoSizedComboBox()
+        sequence_layout = QHBoxLayout()
+        sequence_layout.addWidget(self.sequence_name_label)
+        sequence_layout.addWidget(self.sequence_name_widget)
+        grid_layout.addLayout(sequence_layout, next(row_counter), 0, self.DEFAULT_WIDGET_ALIGNMENT)
 
     def _build_tiling_settings(self, grid_layout: QGridLayout, row_counter: Iterator[int]) -> None:
         """
@@ -210,9 +206,6 @@ class SceneSettingsWidget(QWidget):
         self._add_region_rendering_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_tiles_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_assembly_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
-        self._add_abort_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
-        self._add_assemble_over_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
-        self._add_background_image_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
 
     def _add_label_and_widget(
         self,
@@ -518,33 +511,6 @@ class SceneSettingsWidget(QWidget):
         param: row_counter: tracks row number that UI elements added
         param: alignment: alignment for the label and widget
         """
-        self.submit_dependent_assembly_widget = QCheckBox(
-            Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL
-        )
-        self.submit_dependent_assembly_widget.setToolTip(
-            Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL_DESCRIPTION
-        )
-        grid_layout.addWidget(
-            self.submit_dependent_assembly_widget, iterator_value(row_counter), 0, alignment
-        )
-        self.cleanup_tiles_widget = QCheckBox(Constants.CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL)
-        self.cleanup_tiles_widget.setToolTip(
-            Constants.SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL_DESCRIPTION
-        )
-        grid_layout.addWidget(self.cleanup_tiles_widget, next(row_counter), 1, alignment)
-
-    def _add_abort_controls(
-        self,
-        grid_layout: QGridLayout,
-        row_counter: Iterator[int],
-        alignment: Qt.Alignment,
-    ) -> None:
-        """
-        Add abort handling UI elements to the grid layout.
-        param: grid_layout: the grid layout to which UI elements are added
-        param: row_counter: tracks row number that UI elements added
-        param: alignment: alignment for the label and widget
-        """
         self.abort_on_missing_tiles_widget = QCheckBox(Constants.ABORT_ON_MISSING_TILES_LABEL)
         self.abort_on_missing_tiles_widget.setToolTip(
             Constants.ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION
@@ -552,58 +518,11 @@ class SceneSettingsWidget(QWidget):
         grid_layout.addWidget(
             self.abort_on_missing_tiles_widget, iterator_value(row_counter), 0, alignment
         )
-        self.abort_on_missing_background_widget = QCheckBox(
-            Constants.ABORT_ON_MISSING_BACKGROUND_LABEL
+        self.cleanup_tiles_widget = QCheckBox(Constants.CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL)
+        self.cleanup_tiles_widget.setToolTip(
+            Constants.CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL_DESCRIPTION
         )
-        self.abort_on_missing_background_widget.setToolTip(
-            Constants.ABORT_ON_MISSING_BACKGROUND_LABEL_DESCRIPTION
-        )
-        grid_layout.addWidget(
-            self.abort_on_missing_background_widget, next(row_counter), 1, alignment
-        )
-
-    def _add_assemble_over_controls(
-        self,
-        grid_layout: QGridLayout,
-        row_counter: Iterator[int],
-        alignment: Qt.Alignment,
-    ) -> None:
-        """
-        Add assemble over UI elements to the grid layout.
-        param: grid_layout: the grid layout to which UI elements are added
-        param: row_counter: tracks row number that UI elements added
-        param: alignment: alignment for the label and widget
-        """
-        self.assemble_over_label = QLabel(Constants.ASSEMBLE_OVER_LABEL)
-        self.assemble_over_label.setToolTip(Constants.ASSEMBLE_OVER_LABEL_DESCRIPTION)
-        grid_layout.addWidget(self.assemble_over_label, iterator_value(row_counter), 0, alignment)
-        self.assemble_over_widget = AutoSizedComboBox()
-        grid_layout.addWidget(self.assemble_over_widget, next(row_counter), 1, alignment)
-
-    def _add_background_image_controls(
-        self,
-        grid_layout: QGridLayout,
-        row_counter: Iterator[int],
-        alignment: Qt.Alignment,
-    ) -> None:
-        """
-        Add background image UI elements to the grid layout.
-        param: grid_layout: the grid layout to which UI elements are added
-        param: row_counter: tracks row number that UI elements added
-        param: alignment: alignment for the label and widget
-        """
-        self.background_image_label = QLabel(Constants.BACKGROUND_IMAGE_LABEL)
-        self.background_image_label.setToolTip(Constants.BACKGROUND_IMAGE_LABEL_DESCRIPTION)
-        grid_layout.addWidget(
-            self.background_image_label, iterator_value(row_counter), 0, alignment
-        )
-        self.background_image_widget = QLineEdit("")
-        self.background_image_widget.setFixedWidth(Constants.LONG_TEXT_ENTRY_WIDTH)
-        self.background_image_button = AutoSizedButton(Constants.ELLIPSIS_LABEL)
-        background_image_layout = QHBoxLayout()
-        background_image_layout.addWidget(self.background_image_widget)
-        background_image_layout.addWidget(self.background_image_button)
-        grid_layout.addLayout(background_image_layout, iterator_value(row_counter), 1, alignment)
+        grid_layout.addWidget(self.cleanup_tiles_widget, next(row_counter), 1, alignment)
 
     def update_settings(self, settings: RenderSubmitterUISettings) -> None:
         """
