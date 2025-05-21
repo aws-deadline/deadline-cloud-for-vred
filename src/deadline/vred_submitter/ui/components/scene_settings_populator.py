@@ -11,6 +11,7 @@ from ...data_classes import RenderSubmitterUISettings
 from ...utils import bool_to_str, DynamicKeyValueObject
 from ...vred_utils import (
     get_active_camera_name,
+    get_all_sequences,
     get_animation_clips_list,
     get_frame_range_string,
     get_frame_range_components,
@@ -58,12 +59,9 @@ class SceneSettingsPopulator:
         Note: excluded (pending implementation changes) - settings exposed as one aggregate field:
            EndFrame, FrameStep, StartFrame
         """
-        self.parent.abort_on_missing_background_widget.setChecked(settings.AbortOnMissingBackground)
         self.parent.abort_on_missing_tiles_widget.setChecked(settings.AbortOnMissingTiles)
         self.parent.animation_clip_widget.setCurrentText(settings.AnimationClip)
         self.parent.animation_type_widget.setCurrentText(settings.AnimationType)
-        self.parent.assemble_over_widget.setCurrentText(settings.AssembleOver)
-        self.parent.background_image_widget.setText(settings.BackgroundImage)
         self.parent.cleanup_tiles_widget.setChecked(settings.CleanupTilesAfterAssembly)
         self.parent.dlss_quality_widget.setCurrentText(settings.DLSSQuality)
         self.parent.resolution_widget.setText(str(settings.DPI))
@@ -78,8 +76,7 @@ class SceneSettingsPopulator:
         self.parent.tiles_in_y_widget.setValue(Constants.MIN_TILES_PER_DIMENSION)
         self.parent.render_quality_widget.setCurrentText(settings.RenderQuality)
         self.parent.ss_quality_widget.setCurrentText(settings.SSQuality)
-        self.parent.sequence_name_widget.setText(settings.SequenceName)
-        self.parent.submit_dependent_assembly_widget.setChecked(settings.SubmitDependentAssemblyJob)
+        self.parent.sequence_name_widget.setCurrentText(settings.SequenceName)
         self.parent.render_view_widget.setCurrentText(str(settings.View))
 
     def _configure_ui_settings_base_options(self) -> None:
@@ -96,10 +93,9 @@ class SceneSettingsPopulator:
         self.parent.render_animation_widget.setChecked(get_render_animation())
 
         # Configure camera view settings
-        active_camera_name = get_active_camera_name()
         views_list = get_views_list()
         self.parent.render_view_widget.addItems(views_list)
-        self.parent.render_view_widget.setCurrentIndex(views_list.index(active_camera_name))
+        self.parent.render_view_widget.setCurrentIndex(views_list.index(get_active_camera_name()))
 
         # Animation Clips Support - includes 'empty' clip
         self.parent.animation_clip_widget.setEnabled(False)
@@ -130,11 +126,13 @@ class SceneSettingsPopulator:
         self.parent.image_size_presets_widget.setCurrentIndex(image_size_preset_index)
         self.parent.callbacks.image_size_preset_selection_changed_callback()
 
-        # Configure animation and assembly settings
+        # Configure animation settings
         self.parent.animation_type_widget.addItems(Constants.ANIMATION_TYPE_OPTIONS)
         self.parent.animation_type_widget.setCurrentIndex(0)
-        self.parent.submit_dependent_assembly_widget.setChecked(True)
-        self.parent.assemble_over_widget.addItems(Constants.BACKGROUND_IMAGE_OPTIONS)
+
+        # Configure sequencer settings
+        self.parent.sequence_name_widget.addItems(get_all_sequences())
+        self.parent.sequence_name_widget.setCurrentIndex(0)
 
     def _load_persisted_settings_states(self) -> None:
         """
@@ -209,16 +207,11 @@ class SceneSettingsPopulator:
                 attrs.output_directories.__name__: [
                     os.path.normpath(os.path.dirname(self.parent.render_output_widget.text()))
                 ],
-                attrs.AbortOnMissingBackground.__name__: bool_to_str(
-                    self.parent.abort_on_missing_background_widget.isChecked()
-                ),
                 attrs.AbortOnMissingTiles.__name__: bool_to_str(
                     self.parent.abort_on_missing_tiles_widget.isChecked()
                 ),
                 attrs.AnimationClip.__name__: str(self.parent.animation_clip_widget.currentText()),
                 attrs.AnimationType.__name__: str(self.parent.animation_type_widget.currentText()),
-                attrs.AssembleOver.__name__: str(self.parent.assemble_over_widget.currentText()),
-                attrs.BackgroundImage.__name__: str(self.parent.background_image_widget.text()),
                 attrs.CleanupTilesAfterAssembly.__name__: bool_to_str(
                     self.parent.cleanup_tiles_widget.isChecked()
                 ),
@@ -254,10 +247,7 @@ class SceneSettingsPopulator:
                 attrs.RenderQuality.__name__: str(self.parent.render_quality_widget.currentText()),
                 attrs.SSQuality.__name__: str(self.parent.ss_quality_widget.currentText()),
                 attrs.SceneFile.__name__: get_scene_full_path(),
-                attrs.SequenceName.__name__: str(self.parent.sequence_name_widget.text()),
-                attrs.SubmitDependentAssemblyJob.__name__: bool_to_str(
-                    self.parent.submit_dependent_assembly_widget.isChecked()
-                ),
+                attrs.SequenceName.__name__: str(self.parent.sequence_name_widget.currentText()),
                 attrs.TonemapHDR.__name__: bool_to_str(False),
                 attrs.View.__name__: str(self.parent.render_view_widget.currentText()),
             }

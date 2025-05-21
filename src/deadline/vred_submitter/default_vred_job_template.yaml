@@ -1,0 +1,652 @@
+specificationVersion: jobtemplate-2023-09
+name: VRED Renderer
+description: |
+  This render job depends on Autodesk VRED Core to perform rendering and supports versions 2025.X (17.X) and 2026.X 
+  (18.X) on Windows and Linux platforms. Please review official system requirements and software dependencies
+  on Autodesk's official website.
+
+  Render jobs take a VPB project file as input, and produce render output per the chosen output format.
+
+  To run the job without a conda virtual environment created by a Deadline Cloud queue environment,
+  you must ensure that VREDCore is reachable from the PATH environment variable.
+
+  If you're using a conda queue environment, then please ensure that the channels in your CondaChannels list include all
+  of the packages for these software dependencies. On Deadline Cloud service-managed fleets, there are two channels 
+  (deadline-cloud, conda-forge) that provide those packages.
+
+  This job bundle also depends on the latest code located here:
+      https://github.com/aws-deadline/deadline-cloud-for-vred
+  
+  You can also create a custom conda channel on S3 using the approach documented below:
+      https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html
+  (At that point, you can build conda package recipes and deadline.)
+
+  Source code link:
+    git_url: https://github.com/aws-deadline/deadline-cloud-for-vred.git
+    git_rev: mainline
+
+parameterDefinitions:
+  - name: SceneFile
+    type: PATH
+    objectType: FILE
+    dataFlow: IN
+    userInterface:
+      control: CHOOSE_INPUT_FILE
+      label: VRED Scene File
+      fileFilters:
+        - label: VRED Scene Files
+          patterns:
+            - '*.vpb'
+        - label: All Files
+          patterns:
+            - '*'
+    description: >
+      Choose the VRED scene file that you want to render.
+      Use the 'Job Attachments' tab of the submitter GUI to add
+      other dependent files that the job needs.
+  - name: JobType
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: Job Type
+      groupLabel: VRED Settings
+    default: 'Render'
+    allowedValues:
+      - 'Render'
+      - 'Sequencer'
+    description: Type of job to submit.
+  - name: SequenceName
+    type: STRING
+    userInterface:
+      control: LINE_EDIT
+      label: Sequence Name
+      groupLabel: VRED Settings
+    default: ""
+    description: The name of the sequence to render; if empty, then all sequences will be rendered.
+  - name: View
+    type: STRING
+    userInterface:
+      control: LINE_EDIT
+      label: Viewpoint/Camera
+      groupLabel: VRED Settings
+    default: ""
+    description: The name of the viewpoint or camera from which to render.
+  - name: ImageWidth
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Image Width
+      groupLabel: VRED Settings
+    minValue: 1
+    default: 800
+    description: The rendered image size width in pixels.
+  - name: ImageHeight
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Image Height
+      groupLabel: VRED Settings
+    minValue: 1
+    default: 600
+    description: The rendered image size height in pixels.
+  - name: DPI
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: DPI
+      groupLabel: VRED Settings
+    minValue: 1
+    default: 72
+    description: Dots per inch when rendering a still frame.
+  - name: RenderQuality
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: Render Quality
+      groupLabel: VRED Settings
+    default: 'Realistic High'
+    allowedValues:
+      - 'Analytic Low'
+      - 'Analytic High'
+      - 'Realistic Low'
+      - 'Realistic High'
+      - 'Raytracing'
+      - 'NPR'
+    description: Sets the render quality.
+  - name: DLSSQuality
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: DLSS Quality
+      groupLabel: VRED Settings
+    default: 'Off'
+    allowedValues:
+      - 'Off'
+      - 'Performance'
+      - 'Balanced'
+      - 'Quality'
+      - 'Ultra Performance'
+    description: Sets the deep learning supersampling (DLSS) quality.
+  - name: SSQuality
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: Supersampling Quality
+      groupLabel: VRED Settings
+    default: 'Off'
+    allowedValues:
+      - 'Off'
+      - 'Low'
+      - 'Medium'
+      - 'High'
+      - 'Ultra High'
+    description: Sets the regular (non-DLSS) supersampling quality. DLSS quality takes precedence.
+  - name: GPURaytracing
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Enable GPU Raytracing
+      groupLabel: VRED Settings
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Attempts to apply GPU raytracing to the rendering process (if sufficient hardware is available).
+  - name: RenderAnimation
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Render Animation Sequence
+      groupLabel: VRED Settings
+    default: 'true'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Enables rendering of an animation sequence.
+  - name: IncludeAlphaChannel
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Include Alpha Channel
+      groupLabel: VRED Settings
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Enables export of images with an alpha channel.
+  - name: RegionRendering
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: >
+      Ensures that frames are split into multiple tiles that are rendered individually and can then be assembled 
+      (combined) afterwards.
+  - name: NumXTiles
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Tiles across width
+    minValue: 1
+    default: 1
+    description: The number of tiles across the x axis.
+  - name: NumYTiles
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Tiles across height
+    minValue: 1
+    default: 1
+    description: The number of tiles across the y axis.
+  - name: AnimationType
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: Animation Type
+      groupLabel: VRED Settings
+    default: 'Clip'
+    allowedValues:
+      - 'Clip'
+      - 'Timeline'
+    description: The type of the animation to render.
+  - name: AnimationClip
+    type: STRING
+    userInterface:
+      control: LINE_EDIT
+      label: Animation Clip Name
+      groupLabel: VRED Settings
+    default: ""
+    description: The name of the animation clip to render.
+  - name: StartFrame
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Start Frame
+      groupLabel: Frame Range
+    default: 0
+    description: The first frame of a range to render.
+  - name: EndFrame
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: End Frame
+      groupLabel: Frame Range
+    default: 20
+    description: The last frame of a range to render.
+  - name: FrameStep
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Frame Step
+      groupLabel: Frame Range
+    default: 1
+    description: The frame step for the frame range (i.e. 2 for rendering every second frame). Leave blank to ignore.
+  - name: FramesPerTask
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Frames Per Task
+      groupLabel: VRED Settings
+    minValue: 1
+    default: 1
+    description: The amount of frames that a worker node should render in one complete task.
+  - name: OutputDir
+    type: PATH
+    objectType: DIRECTORY
+    dataFlow: OUT
+    userInterface:
+      control: CHOOSE_DIRECTORY
+      label: Output Directory
+    description: The render output directory.
+  - name: OutputFileNamePrefix
+    type: STRING
+    userInterface:
+      control: LINE_EDIT
+      label: Output File Name Prefix
+    default: output
+    description: The output filename prefix (without extension).
+  - name: OutputFormat
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: Output File Format
+    description: The file format for rendered images.
+    default: PNG
+    allowedValues:
+      - BMP
+      - DDS
+      - DIB
+      - EXR
+      - HDR
+      - JFIF
+      - JPE
+      - JPEG
+      - JPG
+      - NRRD
+      - PBM
+      - PGM
+      - PNG
+      - PNM
+      - PPM
+      - PSB
+      - PSD
+      - RLE
+      - TIF
+      - TIFF
+      - VIF
+      - ZIP
+  - name: OverrideRenderPass
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Override Render Pass
+      groupLabel: VRED Settings
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: >
+      Enables the exporting of render passes when rendering to a file. If enabled, then the render pass  
+      settings via the job properties will be used; otherwise the settings defined in the scene will be used.
+  - name: PremultiplyAlpha
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Premultiply Alpha
+      groupLabel: VRED Settings
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Enables premultiplied alpha.
+  - name: TonemapHDR
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Tone map HDR
+      groupLabel: VRED Settings
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Enables tone mapping when rendering to a HDR image format.
+  - name: AbortOnMissingTiles
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: If enabled, the assembly job will fail if it cannot find any of its expected tiles.
+  - name: CleanupTilesAfterAssembly
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: If enabled, tiles will be deleted after the assembly job is completed.
+  - name: JobFailureOnErrors
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Job Failure on Errors
+      groupLabel: VRED Settings
+    default: 'true'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Determines whether render jobs should fast fail (as they already do for warnings) on errors.
+  - name: JobFailureOnWarnings
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Job Failure on Warnings
+      groupLabel: VRED Settings
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Determines whether render jobs should fast fail (as they already do for errors) on warnings.
+  - name: JobScriptDir
+    userInterface:
+      control: HIDDEN
+    type: PATH
+    objectType: DIRECTORY
+    dataFlow: IN
+    default: scripts
+    description: Directory containing bundled scripts.
+  - name: CondaPackages
+    userInterface:
+      control: HIDDEN
+    type: STRING
+    default: 'vred=18'
+    description: >
+      A list of conda packages to install. If a queue accepts this parameter, then it will create a conda virtual
+      environment.
+  - name: submitter_name
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: 'VRED'
+    description: >
+      The type of submitter that is used to submit the render job.
+  - name: name
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: ''
+    description: >
+      The name of the render job.
+  - name: description
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: ''
+    description: >
+      The description of the render job.
+  - name: input_filenames
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: ''
+    description: >
+      Input filenames.
+  - name: input_directories
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: ''
+    description: >
+      Input directories.
+  - name: output_directories
+    type: STRING
+    userInterface:
+      control: HIDDEN
+    default: ''
+    description: >
+      Output directories.
+
+steps:
+  - name: VREDLaunch
+    parameterSpace:
+      taskParameterDefinitions:
+        - name: StartFrameFromCurrentChunk
+          type: INT
+          range: "{{Param.StartFrame}}-{{Param.EndFrame}}:{{Param.FramesPerTask}}"
+        - name: TileNumberX
+          type: INT
+          range: "1-{{Param.NumXTiles}}"
+        - name: TileNumberY
+          type: INT
+          range: "1-{{Param.NumYTiles}}"
+    description: Invokes VRED Core, supplying it with render parameter data.
+    script:
+      embeddedFiles:
+        - name: LoadRenderParameterValues
+          filename: load_render_parameter_values.py
+          type: TEXT
+          data: |-
+            from typing import Any, Dict
+            
+            def get_vred_render_parameters() -> Dict[str, Any]:
+                """
+                *WARNING*: it is imperative to maintain correct value typing for all parameters that you add using
+                the conversion schemes below (for int, str, bool) as a guide. Value types are VRED API
+                sensitive -- they need to be synchronized with future VRED API changes (if any). Please
+                also keep value typing pairwise with parameterDefinitions-supported types (above).
+            
+                :return: a dictionary containing appropriately-typed values (non-inferred) for use in VRED API calls.
+                """
+            
+                # Depending on implementation, a frame chunk ID or an actual starting frame number that 
+                # corresponds to that ID could be provided.
+                #
+                start_frame = int({{Task.Param.StartFrameFromCurrentChunk}})
+                frames_per_task = int({{Param.FramesPerTask}})
+                end_frame = min(start_frame + frames_per_task - 1, int({{Param.EndFrame}}))
+                str_to_bool = lambda s: s.lower() == 'true'
+                return {
+                    'AbortOnMissingTiles': str_to_bool('{{Param.AbortOnMissingTiles}}'),
+                    'AnimationClip': str('{{Param.AnimationClip}}'),
+                    'AnimationType': str('{{Param.AnimationType}}'),
+                    'CleanupTilesAfterAssembly': str_to_bool('{{Param.CleanupTilesAfterAssembly}}'),
+                    'DLSSQuality': str('{{Param.DLSSQuality}}'),
+                    'DPI': int({{Param.DPI}}),
+                    'EndFrame': int(end_frame),
+                    'FrameStep': int({{Param.FrameStep}}),
+                    'FramesPerTask': int(frames_per_task),
+                    'GPURaytracing': int(str_to_bool('{{Param.GPURaytracing}}')),
+                    'ImageHeight': int({{Param.ImageHeight}}),
+                    'ImageWidth': int({{Param.ImageWidth}}),
+                    'IncludeAlphaChannel': str_to_bool('{{Param.IncludeAlphaChannel}}'),
+                    'JobFailureOnWarnings': str_to_bool('{{Param.JobFailureOnWarnings}}'),
+                    'JobType': str('{{Param.JobType}}'),
+                    'NumXTiles': int({{Param.NumXTiles}}),
+                    'NumYTiles': int({{Param.NumYTiles}}),
+                    'OutputDir': str(r'{{Param.OutputDir}}'),
+                    'OutputFileNamePrefix': str('{{Param.OutputFileNamePrefix}}'),
+                    'OutputFormat': str('{{Param.OutputFormat}}'),
+                    'OverrideRenderPass': str_to_bool('{{Param.OverrideRenderPass}}'),
+                    'PathMappingRulesFile': str(r'{{Session.PathMappingRulesFile}}'),
+                    'PremultiplyAlpha': str_to_bool('{{Param.PremultiplyAlpha}}'),
+                    'RegionRendering': str_to_bool('{{Param.RegionRendering}}'),
+                    'RenderAnimation': str_to_bool('{{Param.RenderAnimation}}'),
+                    'RenderQuality': str('{{Param.RenderQuality}}'),
+                    'SceneFile': str(r'{{Param.SceneFile}}'),
+                    'SequenceName': str('{{Param.SequenceName}}'),
+                    'SSQuality': str('{{Param.SSQuality}}'),
+                    'StartFrame': int(start_frame),
+                    'TileNumberX': int({{Task.Param.TileNumberX}}),
+                    'TileNumberY': int({{Task.Param.TileNumberY}}),
+                    'TonemapHDR': str_to_bool('{{Param.TonemapHDR}}'),
+                    'View': str('{{Param.View}}'),
+                }
+        - name: VREDInvocation
+          filename: invoke-vred.py
+          type: TEXT
+          runnable: True
+          data: |-
+            # Please set one of the following environment variables: "VREDCORE" or "VREDPRO".
+            # Please ensure that it resolves to a VRED binary executable that is reachable.
+            # You can find relevant executables in paths similar to:
+            #   (Linux): /opt/Autodesk/VREDCluster-{version}/bin/VREDCore
+            #   (Windows): C:/Program Files/Autodesk/VREDPro-{version}/bin/WIN64/VREDCore.exe"
+            # Note: if both of these environment variables are assigned, then "VREDCORE" will be take precedence.
+            #
+
+            import os
+            import platform
+            import subprocess
+            from pathlib import Path
+
+            CODE_PASSING_ENV_VAR = "BOOTSTRAP_CODE"
+            CONSOLE_DEBUG_PARAM = "-console"
+            DISABLE_PYTHON_SANDBOX_PARAM = "-insecure_python"
+            DISABLE_WEBINTERFACE_ENV_VAR = "VRED_DISABLE_WEBINTERFACE"
+            ERROR_UNKNOWN_VRED_PATH = (
+                "Cannot determine valid VRED binary to invoke from VREDCORE and VREDPRO environment "
+                "variables."
+            )
+            HIDE_GUI_PARAM = "-hide_gui"
+            IS_WINDOWS = platform.system().lower() == "windows"
+            LICENSE_RELEASE_TIME_ENV_VAR = "VRED_IDLE_LICENSE_TIME"
+            LICENSE_RELEASE_TIME_SECONDS_LIMIT = "60"
+            POST_PYTHON_PARAM = "-postpython"
+            VRED_CORE_ENV_VAR = "VREDCORE"
+            VRED_PRO_ENV_VAR = "VREDPRO"
+
+            # Invoke code found in VRED_PYTHON_BOOTSTRAP_CODE via CODE_PASSING_ENV_VAR without using import statements.
+            # Remove all spaces to prevent VRED from assuming non-intended arguments.
+            #
+            VRED_PYTHON_PRE_BOOTSTRAP_CODE = fr"""
+            load_module = getattr(__builtins__, '__import__');
+            os = load_module('os');
+            exec(os.environ.get('{CODE_PASSING_ENV_VAR}'));
+            """.replace(
+                "\n", ""
+            ).replace(
+                " ", ""
+            )
+            # Inject render parameters into render script, loading both of them at startup, enforce universal exit
+            #
+            VRED_PYTHON_BOOTSTRAP_CODE = r"""
+            import importlib;
+            import os;
+            import sys;
+            from vrController import terminateVred, vrLogError;
+
+            sys.path.extend([r'{{Param.JobScriptDir}}', os.path.dirname(r'{{Task.File.LoadRenderParameterValues}}')]);
+
+            render_module_name='VRED_RenderScript_DeadlineCloud';
+            render_param_module_name='load_render_parameter_values';
+
+            render_module = importlib.util.find_spec(render_module_name) is not None and importlib.import_module(
+            render_module_name) or None;
+
+            render_param_module = importlib.util.find_spec(render_param_module_name) is not None and importlib.import_module(
+            render_param_module_name) or None;
+
+            render_module.deadline_cloud_render(
+            render_param_module.get_vred_render_parameters()) if render_module and render_param_module else vrLogError(
+            'failed to import module for render script and/or render parameters');
+
+            terminateVred();
+            """.replace(
+                "\n", ""
+            ).replace(
+                "\\", "/"
+            )
+
+
+            def get_vred_executable() -> str:
+                """
+                Determine VRED binary to use based on environment variable state and binary availability
+                return: path to VRED binary
+                raise: OSError: if a valid binary can't be determined.
+                """
+                try:
+                    vred_executable = os.environ[VRED_CORE_ENV_VAR]
+                    if not os.path.isfile(vred_executable):
+                        raise FileNotFoundError(f"VREDCORE binary not found at: {vred_executable}")
+                except (KeyError, FileNotFoundError):
+                    try:
+                        vred_executable = os.environ[VRED_PRO_ENV_VAR]
+                        if not os.path.isfile(vred_executable):
+                            raise FileNotFoundError(f"VREDPRO binary not found at: {vred_executable}")
+                    except (KeyError, FileNotFoundError):
+                        raise OSError(ERROR_UNKNOWN_VRED_PATH)
+                return vred_executable
+
+
+            def setup_vred_environment() -> None:
+                """
+                Disable VRED's web interface, release license on idle, pass bootstrapping code via environment variable
+                """
+                os.environ[DISABLE_WEBINTERFACE_ENV_VAR]="1"
+                os.environ[LICENSE_RELEASE_TIME_ENV_VAR]=LICENSE_RELEASE_TIME_SECONDS_LIMIT
+                os.environ[CODE_PASSING_ENV_VAR]=VRED_PYTHON_BOOTSTRAP_CODE
+
+            def invoke_vred(vred_executable: str) -> None:
+                """
+                Invoke VRED binary, passing it parameters to run headless, grant script access, load scene file,
+                and execute code for the render process to complete
+                param: vred_executable: path to VRED binary
+                """
+                executable = f'"{vred_executable}"' if IS_WINDOWS else vred_executable
+                scene_file_path = r'"{{Param.SceneFile}}"' if IS_WINDOWS else r"{{Param.SceneFile}}"
+                command_and_arg_list: list[str] = [
+                    executable,
+                    scene_file_path,
+                    DISABLE_PYTHON_SANDBOX_PARAM,
+                    HIDE_GUI_PARAM,
+                    POST_PYTHON_PARAM,
+                    VRED_PYTHON_PRE_BOOTSTRAP_CODE,
+                ]
+                try:
+                    invocation = " ".join(command_and_arg_list) if IS_WINDOWS else command_and_arg_list
+                    output = subprocess.run(invocation, stderr=subprocess.STDOUT, check=True, text=True)
+                    print(output)
+                except subprocess.CalledProcessError as error:
+                    print(
+                        f"Command: [{invocation}] failed with output: \n{error.output}\n"
+                        f"and return code {error.returncode}"
+                    )
+
+            setup_vred_environment()
+            invoke_vred(get_vred_executable())
+      actions:
+        onRun:
+          command: python
+          args: [ '{{Task.File.VREDInvocation}}' ]
+    hostRequirements:
+      attributes:
+        - name: attr.worker.os.family
+          anyOf:
+            - linux
+            - windows

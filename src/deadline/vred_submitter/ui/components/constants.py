@@ -25,27 +25,12 @@ class Constants(metaclass=ConstantsMeta):
     ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION: Final[str] = (
         "If enabled, the assembly job will fail if it cannot find any of the tiles."
     )
-    ABORT_ON_MISSING_BACKGROUND_LABEL: Final[str] = "Abort on Missing Background"
-    ABORT_ON_MISSING_BACKGROUND_LABEL_DESCRIPTION: Final[str] = (
-        "If enabled, the render will fail if the background image specified does not exist."
-    )
     ANIMATION_SETTINGS_DIALOG_NAME: Final[str] = "Animation Settings"
     ANIMATION_CLIP_LABEL: Final[str] = "Animation Clip"
     ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The specific animation clip to render."
     ANIMATION_TYPE_LABEL: Final[str] = "Animation Type"
     ANIMATION_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of animation."
     ANIMATION_TYPE_OPTIONS: Final[List[str]] = ["Clip", "Timeline"]
-    ASSEMBLE_OVER_LABEL: Final[str] = "Assemble Over"
-    ASSEMBLE_OVER_LABEL_DESCRIPTION: Final[str] = "The initial image to assemble over."
-    BACKGROUND_IMAGE_LABEL: Final[str] = "Background Image"
-    BACKGROUND_IMAGE_LABEL_DESCRIPTION: Final[str] = (
-        "The background image file to be used for the assemble over option."
-    )
-    BACKGROUND_IMAGE_OPTIONS: Final[List[str]] = [
-        "Blank Image",
-        "Previous Output",
-        "Selected Image",
-    ]
     CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL: Final[str] = "Cleanup Tiles After Assembly"
     CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL_DESCRIPTION: Final[str] = (
         "If enabled, tiles will be deleted after the assembly job is completed."
@@ -134,11 +119,9 @@ class Constants(metaclass=ConstantsMeta):
     JOB_TYPE_LABEL: Final[str] = "Job Type"
     JOB_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of job to Render."
     JOB_TYPE_RENDER: Final[str] = "Render"
-    JOB_TYPE_RENDER_QUEUE: Final[str] = "Render Queue"
     JOB_TYPE_SEQUENCER: Final[str] = "Sequencer"
     JOB_TYPE_OPTIONS: Final[List[str]] = [
         JOB_TYPE_RENDER,
-        JOB_TYPE_RENDER_QUEUE,
         JOB_TYPE_SEQUENCER,
     ]
     LONG_TEXT_ENTRY_WIDTH: Final[int] = 500
@@ -161,7 +144,7 @@ class Constants(metaclass=ConstantsMeta):
         "The animation to use, if left blank it will use all enabled clips."
     )
     RENDER_QUALITY_LABEL: Final[str] = "Render Quality"
-    RENDER_QUALITY_LABEL_DESCRIPTION: Final[str] = "The Render quality to use."
+    RENDER_QUALITY_LABEL_DESCRIPTION: Final[str] = "The render quality to apply."
     RENDER_QUALITY_OPTIONS: Final[List[str]] = [
         "Analytic Low",
         "Analytic High",

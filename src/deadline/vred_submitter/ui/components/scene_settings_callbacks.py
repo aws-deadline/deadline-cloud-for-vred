@@ -69,10 +69,6 @@ class SceneSettingsCallbacks:
         self.parent.enable_region_rendering_widget.stateChanged.connect(
             self.enable_region_rendering_changed_callback
         )
-        self.parent.assemble_over_widget.currentIndexChanged.connect(
-            self.assemble_over_changed_callback
-        )
-        self.parent.background_image_button.pressed.connect(self.select_background_file_callback)
 
     def deregister_all_callbacks(self) -> None:
         """Deregister all callbacks to avoid unintentional triggering and prepare for new scene file state reset"""
@@ -90,8 +86,6 @@ class SceneSettingsCallbacks:
         self.parent.animation_type_widget.currentIndexChanged.disconnect()
         self.parent.animation_clip_widget.currentIndexChanged.disconnect()
         self.parent.enable_region_rendering_widget.stateChanged.disconnect()
-        self.parent.assemble_over_widget.currentIndexChanged.disconnect()
-        self.parent.background_image_button.pressed.disconnect()
         self.invoked_once = False
 
     def job_type_changed_callback(self) -> None:
@@ -106,6 +100,7 @@ class SceneSettingsCallbacks:
 
         self.parent.group_box_render_options.setVisible(is_render_job)
         self.parent.group_box_sequencer_options.setVisible(not is_render_job)
+        self.parent.group_box_tiling_settings.setVisible(is_render_job)
 
         render_controls = [
             self.parent.render_output_widget,
@@ -149,17 +144,11 @@ class SceneSettingsCallbacks:
             self.parent.tiles_in_x_widget,
             self.parent.tiles_in_y_label,
             self.parent.tiles_in_y_widget,
-            self.parent.submit_dependent_assembly_widget,
             self.parent.cleanup_tiles_widget,
             self.parent.abort_on_missing_tiles_widget,
-            self.parent.abort_on_missing_background_widget,
-            self.parent.assemble_over_label,
-            self.parent.assemble_over_widget,
         ]
         for control in region_rendering_controls:
             control.setEnabled(enabled)
-        # Update dependent UI elements
-        self.assemble_over_changed_callback()
 
     def image_size_preset_selection_changed_callback(self) -> None:
         """
@@ -519,15 +508,6 @@ class SceneSettingsCallbacks:
         else:
             self.parent.frame_range_widget.setText(get_frame_range_string())
 
-    def assemble_over_changed_callback(self) -> None:
-        """Adjusts options based on the active "assemble over" option being enabled"""
-        enabled = self.parent.enable_region_rendering_widget.isChecked() and (
-            self.parent.assemble_over_widget.currentText() == Constants.SELECTED_IMAGE_LABEL
-        )
-        self.parent.background_image_label.setEnabled(enabled)
-        self.parent.background_image_widget.setEnabled(enabled)
-        self.parent.background_image_button.setEnabled(enabled)
-
     def select_render_output_callback(self) -> None:
         """Opens a file dialog to select a background image file."""
         new_output_file = QFileDialog.getSaveFileName(
@@ -542,21 +522,6 @@ class SceneSettingsCallbacks:
                 if not new_output_file:
                     return
             self.parent.render_output_widget.setText(new_output_file)
-
-    def select_background_file_callback(self) -> None:
-        """Opens a file dialog to select a background image file."""
-        new_background_file = QFileDialog.getOpenFileName(
-            self.parent,
-            Constants.BACKGROUND_IMAGE_LABEL,
-            self.parent.background_image_widget.text(),
-            Constants.VRED_ALL_FILES_FILTER,
-        )
-        if new_background_file:
-            if isinstance(new_background_file, tuple) and len(new_background_file) > 0:
-                new_background_file = new_background_file[0]
-                if not new_background_file:
-                    return
-            self.parent.background_image_widget.setText(new_background_file)
 
     def scene_file_changed_callback(self, *dummy_args) -> None:
         """
