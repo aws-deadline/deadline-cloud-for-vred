@@ -1,22 +1,27 @@
 specificationVersion: jobtemplate-2023-09
 name: VRED Renderer
 description: |
-  This render job depends on Autodesk VRED Core to perform rendering and supports versions 2025.X (17.X) and 2026.X 
-  (18.X) on Windows and Linux platforms. Please review official system requirements and software dependencies
-  on Autodesk's official website.
+  This render job template depends on Autodesk VRED Core (or optionally VRED Pro) to perform rendering and supports 
+  versions 2025.X (17.X) and 2026.X (18.X) on Windows and Linux platforms. Please review official system requirements
+  and software dependencies on Autodesk's official website.
 
-  Render jobs take a VPB project file as input, and produce render output per the chosen output format.
-
-  To run the job without a conda virtual environment created by a Deadline Cloud queue environment,
-  you must ensure that VREDCore is reachable from the PATH environment variable.
-
-  If you're using a conda queue environment, then please ensure that the channels in your CondaChannels list include all
-  of the packages for these software dependencies. On Deadline Cloud service-managed fleets, there are two channels 
-  (deadline-cloud, conda-forge) that provide those packages.
-
-  This job bundle also depends on the latest code located here:
-      https://github.com/aws-deadline/deadline-cloud-for-vred
+  Render jobs take a VPB project file (including its file references) as input, and produce render output per 
+  the chosen output format and additional render settings.
+   
+  To run the render job without a conda virtual environment created by a Deadline Cloud queue environment,
+  you must ensure that the environment variable "VREDCORE" (for VRED Core) or "VREDPRO" (for VRED Pro) is defined by a 
+  valid path to its product's executable file. You can find these executable files in paths similar to:
+    (Linux): /opt/Autodesk/VREDCluster-{version}/bin/VREDCore
+    (Windows): C:/Program Files/Autodesk/VREDPro-{version}/bin/WIN64/VREDCore.exe"
+  Note: if both of these environment variables are assigned, then "VREDCORE" will be take precedence. 
   
+  If you're using a conda queue environment, then please ensure that the channels listed in your CondaChannels list 
+  include all of the packages for these software dependencies. On Deadline Cloud service-managed fleets, there are 
+  two channels (deadline-cloud, conda-forge) that provide those packages.
+
+  This job bundle also depends on the latest code that is located here (which also includes the latest job bundle):
+      https://github.com/aws-deadline/deadline-cloud-for-vred
+    
   You can also create a custom conda channel on S3 using the approach documented below:
       https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html
   (At that point, you can build conda package recipes and deadline.)
@@ -385,7 +390,7 @@ parameterDefinitions:
     userInterface:
       control: HIDDEN
     type: STRING
-    default: 'vred=18'
+    default: 'vredcore=2026*'
     description: >
       A list of conda packages to install. If a queue accepts this parameter, then it will create a conda virtual
       environment.
@@ -454,6 +459,8 @@ steps:
           data: |-
             from typing import Any, Dict
             
+            def str_to_bool(s:str)->bool: return s.lower() == 'true'
+
             def get_vred_render_parameters() -> Dict[str, Any]:
                 """
                 *WARNING*: it is imperative to maintain correct value typing for all parameters that you add using
@@ -470,7 +477,6 @@ steps:
                 start_frame = int({{Task.Param.StartFrameFromCurrentChunk}})
                 frames_per_task = int({{Param.FramesPerTask}})
                 end_frame = min(start_frame + frames_per_task - 1, int({{Param.EndFrame}}))
-                str_to_bool = lambda s: s.lower() == 'true'
                 return {
                     'AbortOnMissingTiles': str_to_bool('{{Param.AbortOnMissingTiles}}'),
                     'AnimationClip': str('{{Param.AnimationClip}}'),
@@ -523,16 +529,16 @@ steps:
             import os
             import platform
             import subprocess
-            from pathlib import Path
 
             CODE_PASSING_ENV_VAR = "BOOTSTRAP_CODE"
-            CONSOLE_DEBUG_PARAM = "-console"
             DISABLE_PYTHON_SANDBOX_PARAM = "-insecure_python"
+            DISABLE_PYTHON_SANDBOX_ENV_VAR = "DISABLE_VRED_PYTHON_SANDBOX"
             DISABLE_WEBINTERFACE_ENV_VAR = "VRED_DISABLE_WEBINTERFACE"
             ERROR_UNKNOWN_VRED_PATH = (
                 "Cannot determine valid VRED binary to invoke from VREDCORE and VREDPRO environment "
                 "variables."
             )
+            FAST_START_PARAM = "-fast_start"
             HIDE_GUI_PARAM = "-hide_gui"
             IS_WINDOWS = platform.system().lower() == "windows"
             LICENSE_RELEASE_TIME_ENV_VAR = "VRED_IDLE_LICENSE_TIME"
@@ -560,18 +566,13 @@ steps:
             import os;
             import sys;
             from vrController import terminateVred, vrLogError;
-
             sys.path.extend([r'{{Param.JobScriptDir}}', os.path.dirname(r'{{Task.File.LoadRenderParameterValues}}')]);
-
             render_module_name='VRED_RenderScript_DeadlineCloud';
             render_param_module_name='load_render_parameter_values';
-
             render_module = importlib.util.find_spec(render_module_name) is not None and importlib.import_module(
             render_module_name) or None;
-
             render_param_module = importlib.util.find_spec(render_param_module_name) is not None and importlib.import_module(
             render_param_module_name) or None;
-
             render_module.deadline_cloud_render(
             render_param_module.get_vred_render_parameters()) if render_module and render_param_module else vrLogError(
             'failed to import module for render script and/or render parameters');
@@ -623,7 +624,8 @@ steps:
                 command_and_arg_list: list[str] = [
                     executable,
                     scene_file_path,
-                    DISABLE_PYTHON_SANDBOX_PARAM,
+                    DISABLE_PYTHON_SANDBOX_PARAM if os.environ.get(DISABLE_PYTHON_SANDBOX_ENV_VAR) else "",
+                    FAST_START_PARAM,
                     HIDE_GUI_PARAM,
                     POST_PYTHON_PARAM,
                     VRED_PYTHON_PRE_BOOTSTRAP_CODE,
@@ -633,10 +635,7 @@ steps:
                     output = subprocess.run(invocation, stderr=subprocess.STDOUT, check=True, text=True)
                     print(output)
                 except subprocess.CalledProcessError as error:
-                    print(
-                        f"Command: [{invocation}] failed with output: \n{error.output}\n"
-                        f"and return code {error.returncode}"
-                    )
+                    print(f"Command: [{invocation}] failed: \n{error.output}\n with return code {error.returncode}")
 
             setup_vred_environment()
             invoke_vred(get_vred_executable())
@@ -645,8 +644,88 @@ steps:
           command: python
           args: [ '{{Task.File.VREDInvocation}}' ]
     hostRequirements:
+      amounts:
+        - name: amount.worker.gpu
+          min: 1
       attributes:
         - name: attr.worker.os.family
           anyOf:
             - linux
             - windows
+  - name: TileAssembly
+    description: Combines tiles into individual frames. (step can be excluded as needed.)
+    dependencies:
+    - dependsOn: VREDLaunch
+    script:
+      actions:
+        onRun:
+          command: python
+          args: [ "{{Task.File.Assembler}}"]
+      embeddedFiles:
+      - name: Assembler
+        type: TEXT
+        runnable: True
+        data: |-
+          import concurrent.futures
+          import os
+          import platform
+          import subprocess
+
+          CONCATENATE_MODE_PARAM = "-mode concatenate"
+          END_FRAME = int("{{Param.EndFrame}}")
+          IS_WINDOWS = platform.system().lower() == "windows"
+          MAGICK_BIN = os.path.normpath(os.environ.get("MAGICK") or "").replace("\\", "/")
+          GEOMETRY_PARAM = "-geometry"
+          MIN_WORKERS_IF_UNKNOWN = 4
+          MONTAGE_PARAM = "montage"
+          NUM_X_TILES = int("{{Param.NumXTiles}}")
+          NUM_Y_TILES = int("{{Param.NumYTiles}}")
+          OUTPUT_DIR = os.path.normpath(r"{{Param.OutputDir}}").replace("\\", "/")
+          OUTPUT_FILE_PREFIX = "{{Param.OutputFileNamePrefix}}"
+          OUTPUT_FORMAT = "{{Param.OutputFormat}}".lower()
+          REGION_RENDERING = "{{Param.RegionRendering}}".lower()=="true"
+          START_FRAME = int("{{Param.StartFrame}}")
+          SOURCE_IMAGE_HEIGHT = int("{{Param.ImageHeight}}")
+          SOURCE_IMAGE_WIDTH = int("{{Param.ImageWidth}}")
+          TILE_HEIGHT = SOURCE_IMAGE_HEIGHT // NUM_Y_TILES
+          TILE_PARAM = "-tile"
+          TILE_WIDTH = SOURCE_IMAGE_WIDTH // NUM_X_TILES
+          TRIM_PARAM = "-trim"
+
+          def assemble_frame(frame_num: int) -> None:
+              """
+              Assembles a given frame from the tiles that comprise it. Filename format: prefix_XxY_AxB.suffix.
+              Assumes that output folder contains tiles in sequential order: left to right from top to bottom.
+              :param: frame_num: frame number
+              """
+              frame_str = f"{frame_num:05d}"
+              # Compute desired tile size (with no spacing). Trim option will remove black borders; the geometry
+              # constraint is used to reach final image resolution, but may still have gaps. Trim option (by itself)
+              # would remove a 1-pixel border from each tile and removes surrounding pixels that match the 
+              # corner pixel color.
+              geometry_value = f"{TILE_WIDTH}x{TILE_HEIGHT}+0+0"
+              input_file_mask = rf"{OUTPUT_DIR}/*{frame_str}.*"
+              tile_value = f"{NUM_X_TILES}x{NUM_Y_TILES}"
+              output_file = rf"{OUTPUT_DIR}/{OUTPUT_FILE_PREFIX}-{frame_str}.{OUTPUT_FORMAT}"
+              command_and_arg_list: list[str] = [
+                  MAGICK_BIN,
+                  MONTAGE_PARAM,
+                  TRIM_PARAM,
+                  CONCATENATE_MODE_PARAM,
+                  TILE_PARAM,
+                  tile_value,
+                  input_file_mask,
+                  output_file,
+              ]
+              try:
+                  invocation = " ".join(command_and_arg_list) if IS_WINDOWS else command_and_arg_list
+                  output = subprocess.run(invocation, stderr=subprocess.STDOUT, check=True, text=True)
+                  print(output)
+              except subprocess.CalledProcessError as error:
+                  print(f"Command: [{invocation}] failed: \n{error.output}\n with return code {error.returncode}")
+
+          # Parallel processing of frames
+          max_workers = os.cpu_count() or MIN_WORKERS_IF_UNKNOWN
+          with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+              for frame in range(START_FRAME, END_FRAME + 1):
+                  future = executor.submit(assemble_frame, frame)

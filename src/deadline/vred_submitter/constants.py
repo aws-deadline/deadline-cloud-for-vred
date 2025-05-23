@@ -26,7 +26,10 @@ class Constants(metaclass=ConstantsMeta):
     BASE_TEN: Final[int] = 10
     COMBO_BOX_MIN_WIDTH: Final[int] = 100
     COMBO_BOX_PADDING: Final[int] = 60
+    CONDA_CHANNELS_FIELD: Final[str] = "CondaChannels"
+    CONDA_CHANNELS_OVERRIDE_ENV_VAR: Final[str] = "CONDA_CHANNELS"
     CONDA_PACKAGES_FIELD: Final[str] = "CondaPackages"
+    CONDA_PACKAGES_OVERRIDE_ENV_VAR: Final[str] = "CONDA_PACKAGES"
     CUSTOM_SPEED_FIELD_NAME: Final[str] = "_customSpeed"
     DEADLINE_CLOUD_FOR_VRED_PACKAGE_PREFIX: Final[str] = "deadline_cloud_for_vred"
     DEADLINE_CLOUD_FOR_VRED_SUBMITTER_VERSION_FIELD: Final[str] = (
@@ -43,10 +46,19 @@ class Constants(metaclass=ConstantsMeta):
     ERROR_ANIMATION_SETTINGS_DIALOG_NOT_FOUND: Final[str] = "Animation settings dialog not found"
     ERROR_FILE_PERMISSIONS_ISSUE: Final[str] = "Permission denied accessing file"
     ERROR_FILE_WRITE_ISSUE: Final[str] = "Permission denied writing file"
-    ERROR_FRAME_RANGE_FORMAT: Final[str] = "Invalid frame range format"
+    ERROR_FRAME_RANGE_FORMAT_INVALID: Final[str] = (
+        "Invalid frame range format. Please revise and retry."
+    )
+    ERROR_OUTPUT_FILENAME_INVALID: Final[str] = (
+        "Output filename contains invalid characters. Please revise and retry."
+    )
     ERROR_PREFERENCES_BUTTON_NOT_FOUND: Final[str] = "Preferences button not found"
     ERROR_QUEUE_PARAM_CONFLICT: Final[str] = (
         "The following queue parameters conflict with the VRED job parameters:\n"
+    )
+    ERROR_SCENE_FILE_UNDEFINED_BODY: Final[str] = (
+        "The active scene has not yet been saved to a file. Please save the scene file prior to submitting a render "
+        "job or exporting to a job bundle."
     )
     ERROR_SPEED_SETTINGS_WIDGET_NOT_FOUND: Final[str] = "Speed widget not found"
     ERROR_TIMELINE_ACTION_NOT_FOUND: Final[str] = "Timeline action not found"
@@ -55,7 +67,8 @@ class Constants(metaclass=ConstantsMeta):
     ERROR_YAML_INVALID_FORMAT: Final[str] = "Invalid YAML format in"
     ERROR_YAML_OBJECT_NOT_FOUND: Final[str] = "YAML file must contain a dictionary/object, got"
     ERROR_YAML_NOT_FOUND: Final[str] = "YAML file not found"
-    FRAME_RANGE_REGEX: Final[str] = r"^(-?\d+)-(-?\d+)(?:x(\d+))?$"
+    FILENAME_REGEX: Final[str] = r"^[a-zA-Z0-9_\-\.]+$"
+    FRAME_RANGE_FORMAT_REGEX: Final[str] = r"^(-?\d+)-(-?\d+)(?:x(\d+))?$"
     FRAME_START_STOP_DELIMITER: Final[str] = "-"
     HOST_REQUIREMENTS_FIELD: Final[str] = "hostRequirements"
     JOB_BUNDLE_SCRIPTS_FOLDER_PATH: Final[str] = str(Path(DEADLINE_HOME) / "scripts")
@@ -63,7 +76,6 @@ class Constants(metaclass=ConstantsMeta):
     MESSAGE_BOX_MIN_WIDTH: Final[int] = 300
     MESSAGE_BOX_SPACER_PREFERRED_WIDTH: Final[int] = 400
     MESSAGE_BOX_MAX_WIDTH: Final[int] = 800
-    MINIMUM_WINDOW_SIZE: Final[List[int]] = [1500, 1500]
     NAME_FIELD: Final[str] = "name"
     NAN: Final[str] = "NaN"
     NEGATIVE_INFINITY: Final[str] = "-inf"
@@ -102,7 +114,9 @@ class Constants(metaclass=ConstantsMeta):
     SELECT_FILE_PROMPT: Final[str] = "Select File"
     SUBMIT_TO_DEADLINE_CLOUD_ACTION_NAME: Final[str] = "Submit To Deadline Cloud"
     STEPS_FIELD: Final[str] = "steps"
+    SUBMITTER_DIALOG_WINDOW_DIMENSIONS: Final[List[int]] = [1500, 1200]
     TEMPLATE_FILENAME: Final[str] = "template.yaml"
+    TILE_ASSEMBLY_STEP_NAME: Final[str] = "TileAssembly"
     TIMELINE_ACTION_NAME: Final[str] = "Timeline"
     TIMELINE_ANIMATION_PREFS_BUTTON_NAME: Final[str] = "_prefs"
     TIMELINE_TOOLBAR_NAME: Final[str] = "Timeline_Toolbar"

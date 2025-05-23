@@ -35,7 +35,6 @@ class SceneSettingsCallbacks:
         #
         if not self.invoked_once:
             assign_scene_transition_event(self.scene_file_changed_callback)
-            self.enable_region_rendering_changed_callback()
             self.invoked_once = True
         self._updating_values = False
 
@@ -137,7 +136,6 @@ class SceneSettingsCallbacks:
         """
         Updates UI elements when region rendering is enabled/disabled.
         """
-        enabled = self.parent.enable_region_rendering_widget.isChecked()
         # All UI elements that should be enabled/disabled together
         region_rendering_controls = [
             self.parent.tiles_in_x_label,
@@ -148,7 +146,7 @@ class SceneSettingsCallbacks:
             self.parent.abort_on_missing_tiles_widget,
         ]
         for control in region_rendering_controls:
-            control.setEnabled(enabled)
+            control.setEnabled(self.parent.enable_region_rendering_widget.isChecked())
 
     def image_size_preset_selection_changed_callback(self) -> None:
         """

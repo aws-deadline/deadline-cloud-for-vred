@@ -2,14 +2,13 @@
 
 """VRED-specific Convenience/Utility Functions"""
 
-import os
 import re
 
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 from .constants import Constants
-from .utils import is_numerically_defined
+from .utils import get_normalized_path, is_numerically_defined
 
 from PySide6.QtCore import QObject
 from PySide6.QtGui import QAction
@@ -150,8 +149,11 @@ def get_all_file_references() -> Set[Path]:
     return {
         Path(path)
         for node in vrReferenceService.getSceneReferences()
-        for path in (os.path.normpath(node.getSourcePath()), os.path.normpath(node.getSmartPath()))
-        if path != "."
+        for path in (
+            get_normalized_path(node.getSourcePath()),
+            get_normalized_path(node.getSmartPath()),
+        )
+        if path
     }
 
 
@@ -173,7 +175,7 @@ def get_scene_full_path() -> str:
     """
     return: full path of the current scene file
     """
-    return os.path.normpath(vrFileIOService.getFileName())
+    return get_normalized_path(vrFileIOService.getFileName())
 
 
 def get_scene_fps() -> float:
@@ -266,7 +268,7 @@ def get_render_filename() -> str:
     """
     return: filename of the image sequence to render
     """
-    return getRenderFilename()
+    return get_normalized_path(getRenderFilename())
 
 
 def get_views_list() -> List[str]:
@@ -296,7 +298,7 @@ def save_scene_file(filename: str) -> None:
     """
     if not filename:
         return
-    vrFileIOService.saveFile(filename)
+    vrFileIOService.saveFile(get_normalized_path(filename))
 
 
 def get_frame_range_components(frame_string: str) -> Tuple[int, int, int]:
@@ -317,13 +319,13 @@ def get_frame_range_components(frame_string: str) -> Tuple[int, int, int]:
             frame = int(frame_string)
             return frame, frame, 1
         except ValueError:
-            raise ValueError(f"{Constants.ERROR_FRAME_RANGE_FORMAT}: {frame_string}")
+            raise ValueError(f"{Constants.ERROR_FRAME_RANGE_FORMAT_INVALID}: {frame_string}")
 
     # Case: frame range with optional step
-    match = re.match(Constants.FRAME_RANGE_REGEX, frame_string)
+    match = re.match(Constants.FRAME_RANGE_FORMAT_REGEX, frame_string)
 
     if not match:
-        raise ValueError(f"{Constants.ERROR_FRAME_RANGE_FORMAT}: {frame_string}")
+        raise ValueError(f"{Constants.ERROR_FRAME_RANGE_FORMAT_INVALID}: {frame_string}")
 
     start_frame, end_frame = int(match.group(1)), int(match.group(2))
 

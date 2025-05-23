@@ -14,4 +14,4 @@ class AssetIntrospector:
         Adds the current scene file and file references to the set of assets to pass to Deadline Cloud for rendering.
         return: a set containing file paths of assets needed for rendering.
         """
-        return {Path(Scene.name())} | set(get_all_file_references())
+        return {Path(Scene.project_full_path())} | set(get_all_file_references())

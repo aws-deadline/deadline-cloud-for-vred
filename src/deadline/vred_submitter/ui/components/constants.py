@@ -36,6 +36,7 @@ class Constants(metaclass=ConstantsMeta):
         "If enabled, tiles will be deleted after the assembly job is completed."
     )
     CLIP_LABEL: Final[str] = "Clip"
+    COLUMN_SMALL_SPACING_OFFSET_PIXELS: Final[int] = 40
     CUSTOM_SPEED_FIELD_NAME: Final[str] = "_customSpeed"
     DEFAULT_IMAGE_SIZE_PRESET: Final[str] = "SVGA (800 x 600)"
     DEFAULT_SCENE_FILE_FPS_COUNT: Final[float] = 24.0
@@ -57,9 +58,11 @@ class Constants(metaclass=ConstantsMeta):
     ENABLE_REGION_RENDERING_LABEL_DESCRIPTION: Final[str] = (
         "If this option is enabled, then the image will be divided into multiple tasks and assembled afterwards."
     )
+    FILE_PATH_REGEX_FILTER: Final[str] = r"^[a-zA-Z0-9_\-\. /\\:]+$"
     FRAME_RANGE_BASIC_FORMAT: Final[str] = "%d-%d"
     FRAME_RANGE_LABEL: Final[str] = "Frame Range"
     FRAME_RANGE_LABEL_DESCRIPTION: Final[str] = "The list of frames to render."
+    FRAME_RANGE_REGEX_FILTER: Final[str] = r"^[0-9x\-]+$"
     FRAMES_PER_TASK_LABEL: Final[str] = "Frames Per Task"
     FRAMES_PER_TASK_LABEL_DESCRIPTION: Final[str] = (
         "The number of frames that will be rendered at a time for each job's task."

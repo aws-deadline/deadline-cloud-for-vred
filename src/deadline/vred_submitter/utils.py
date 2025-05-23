@@ -3,6 +3,8 @@
 """General Convenience/Utility Functions"""
 
 import math
+import os
+import re
 import time
 import yaml
 
@@ -201,3 +203,17 @@ def clamp(
     if isinstance(value, int) and isinstance(min_val, int) and isinstance(max_val, int):
         return int(result)
     return result
+
+
+def get_normalized_path(path: str) -> str:
+    """
+    return: empty path if path is None/empty/".", else normalized absolute path
+    """
+    return os.path.normpath(path) if str(path) != "." and path else ""
+
+
+def is_valid_filename(filename: str) -> bool:
+    """
+    return: True if filename consists of characters comprising a valid filename; False otherwise
+    """
+    return bool(re.match(Constants.FILENAME_REGEX, filename))

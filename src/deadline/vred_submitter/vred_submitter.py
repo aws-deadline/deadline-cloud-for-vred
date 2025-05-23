@@ -19,7 +19,7 @@ from .data_classes import RenderSubmitterUISettings
 from .qt_utils import get_qt_yes_no_dialog_prompt_result
 from .scene import Scene
 from .ui.components.scene_settings_widget import SceneSettingsWidget
-from .utils import get_yaml_contents
+from .utils import get_normalized_path, get_yaml_contents, is_valid_filename
 from .vred_logger import get_logger
 from .vred_utils import is_scene_file_modified, get_major_version, save_scene_file
 from ._version import version
@@ -27,7 +27,7 @@ from ._version import version
 from deadline.client.api import (
     get_deadline_cloud_library_telemetry_client,
 )
-from deadline.client.exceptions import DeadlineOperationError
+from deadline.client.exceptions import DeadlineOperationError, UserInitiatedCancel
 from deadline.client.job_bundle._yaml import deadline_yaml_dump
 from deadline.client.job_bundle.submission import AssetReferences
 from deadline.client.ui.dialogs.submit_job_to_deadline_dialog import (
@@ -73,6 +73,14 @@ class VREDSubmitter:
         job_template[Constants.NAME_FIELD] = settings.name
         if settings.description:
             job_template[Constants.DESCRIPTION_FIELD] = settings.description
+        if not settings.RegionRendering:
+            # For regular render jobs (not relying on region rendering), exclude tile assembly step from job template
+            #
+            job_template[Constants.STEPS_FIELD] = [
+                step
+                for step in job_template[Constants.STEPS_FIELD]
+                if step.get(Constants.NAME_FIELD) != Constants.TILE_ASSEMBLY_STEP_NAME
+            ]
         return job_template
 
     def _get_parameter_values(
@@ -86,10 +94,20 @@ class VREDSubmitter:
         param: queue_parameters: parameters from the queue tab of the submitter UI
         return: list of parameter value dictionaries
         """
+
+        # Note: represent the bool-typed settings values as string-equivalents of "true" or "false" value for OpenJD
         parameter_values = [
-            {Constants.NAME_FIELD: field.name, Constants.VALUE_FIELD: getattr(settings, field.name)}
+            {
+                Constants.NAME_FIELD: field.name,
+                Constants.VALUE_FIELD: (
+                    str(getattr(settings, field.name)).lower()
+                    if isinstance(getattr(settings, field.name), bool)
+                    else getattr(settings, field.name)
+                ),
+            }
             for field in fields(type(settings))
         ]
+
         # Check for any overlap between the job parameters we've defined and the queue parameters. This is an error,
         # as we weren't synchronizing the values between the two different tabs where they came from.
         #
@@ -125,7 +143,8 @@ class VREDSubmitter:
         )
         submitter_dialog = self._create_submitter_dialog(render_settings, attachments)
         submitter_dialog.setMinimumSize(
-            Constants.MINIMUM_WINDOW_SIZE[0], Constants.MINIMUM_WINDOW_SIZE[1]
+            Constants.SUBMITTER_DIALOG_WINDOW_DIMENSIONS[0],
+            Constants.SUBMITTER_DIALOG_WINDOW_DIMENSIONS[1],
         )
         submitter_dialog.show()
         return submitter_dialog
@@ -155,7 +174,7 @@ class VREDSubmitter:
         auto_detected_attachments = AssetReferences()
         introspector = AssetIntrospector()
         auto_detected_attachments.input_filenames = {
-            os.path.normpath(path) for path in introspector.parse_scene_assets()
+            get_normalized_path(str(path)) for path in introspector.parse_scene_assets()
         }
         user_defined_attachments = AssetReferences(
             input_filenames=set(render_settings.input_filenames),
@@ -171,6 +190,7 @@ class VREDSubmitter:
     ) -> SubmitJobToDeadlineDialog:
         """
         Configures and creates a job submission dialog for Deadline Cloud.
+        Supports overriding conda packages and channels via environment variables (CONDA_CHANNELS, CONDA_PACKAGES)
         param: render_settings: render settings for the submitter UI
         param: attachments auto-detected asset references and user-defined asset references
         return: configured dialog instance
@@ -179,12 +199,16 @@ class VREDSubmitter:
         conda_packages = (
             f"{Constants.VRED_CORE_CONDA_PACKAGE_PREFIX.lower()}={get_major_version()}*"
         )
+        conda_packages = os.getenv(Constants.CONDA_PACKAGES_OVERRIDE_ENV_VAR) or conda_packages
+        conda_channels = os.getenv(Constants.CONDA_CHANNELS_OVERRIDE_ENV_VAR)
+        shared_parameter_values = {Constants.CONDA_PACKAGES_FIELD: conda_packages}
+        if conda_channels:
+            shared_parameter_values[Constants.CONDA_CHANNELS_FIELD] = conda_channels
+
         return SubmitJobToDeadlineDialog(
             job_setup_widget_type=SceneSettingsWidget,
             initial_job_settings=render_settings,
-            initial_shared_parameter_values={
-                Constants.CONDA_PACKAGES_FIELD: conda_packages,
-            },
+            initial_shared_parameter_values=shared_parameter_values,
             auto_detected_attachments=auto_detected_attachments,
             attachments=user_attachments,
             on_create_job_bundle_callback=self._create_job_bundle_callback,
@@ -205,6 +229,7 @@ class VREDSubmitter:
     ) -> None:
         """
         Triggered (via on_create_job_bundle_callback) when there is a dialog-based request to create a job bundle
+        Note: if the current scene file isn't saved, then a job_bundle won't be created
         param: widget: reference to the widget hosting the dialog, which triggered this callback
         param: job_bundle_dir: directory path where bundle files will be written
         param: settings: render settings for the submitter UI
@@ -212,6 +237,7 @@ class VREDSubmitter:
         param: asset_references: collection of asset paths/references
         param: host_requirements: constraints on host requirements
         param: purpose: catalyst for creating the job bundle
+        raises: UserInitiatedCancel: settings validation failure (cancels job/export attempts, displays error message)
         """
         if is_scene_file_modified() and purpose == JobBundlePurpose.SUBMISSION:
             dialog_result = get_qt_yes_no_dialog_prompt_result(
@@ -220,13 +246,25 @@ class VREDSubmitter:
                 default_to_yes=False,
             )
             if dialog_result:
-                save_scene_file(Scene.name())
-        self._create_job_bundle(
-            Path(job_bundle_dir), settings, queue_parameters, asset_references, host_requirements
-        )
-        attachments: AssetReferences = widget.job_attachments.attachments
-        settings.input_filenames = sorted(attachments.input_filenames)
-        settings.input_directories = sorted(attachments.input_directories)
+                save_scene_file(Scene.project_full_path())
+        if Scene.name():
+            if not is_valid_filename(f"{settings.OutputFileNamePrefix}.{settings.OutputFormat}"):
+                raise UserInitiatedCancel(Constants.ERROR_OUTPUT_FILENAME_INVALID)
+            if not settings.FrameStep:
+                raise UserInitiatedCancel(Constants.ERROR_FRAME_RANGE_FORMAT_INVALID)
+            self._create_job_bundle(
+                Path(job_bundle_dir),
+                settings,
+                queue_parameters,
+                asset_references,
+                host_requirements,
+            )
+            attachments: AssetReferences = widget.job_attachments.attachments
+            settings.input_filenames = sorted(attachments.input_filenames)
+            settings.input_directories = sorted(attachments.input_directories)
+        else:
+            # This scene was never saved to a scene file (i.e. none to upload/submit). Bail with a message.
+            raise UserInitiatedCancel(Constants.ERROR_SCENE_FILE_UNDEFINED_BODY)
 
     def _create_job_bundle(
         self,
