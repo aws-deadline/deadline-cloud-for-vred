@@ -21,20 +21,12 @@ class ConstantsMeta(type):
 class Constants(metaclass=ConstantsMeta):
     """Constants class for UI settings."""
 
-    ABORT_ON_MISSING_TILES_LABEL: Final[str] = "Abort on Missing Tiles"
-    ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION: Final[str] = (
-        "If enabled, the assembly job will fail if it cannot find any of the tiles."
-    )
     ANIMATION_SETTINGS_DIALOG_NAME: Final[str] = "Animation Settings"
     ANIMATION_CLIP_LABEL: Final[str] = "Animation Clip"
     ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The specific animation clip to render."
     ANIMATION_TYPE_LABEL: Final[str] = "Animation Type"
     ANIMATION_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of animation."
     ANIMATION_TYPE_OPTIONS: Final[List[str]] = ["Clip", "Timeline"]
-    CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL: Final[str] = "Cleanup Tiles After Assembly"
-    CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL_DESCRIPTION: Final[str] = (
-        "If enabled, tiles will be deleted after the assembly job is completed."
-    )
     CLIP_LABEL: Final[str] = "Clip"
     COLUMN_SMALL_SPACING_OFFSET_PIXELS: Final[int] = 40
     CUSTOM_SPEED_FIELD_NAME: Final[str] = "_customSpeed"

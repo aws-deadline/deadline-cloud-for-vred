@@ -248,6 +248,10 @@ class VREDSubmitter:
             if dialog_result:
                 save_scene_file(Scene.project_full_path())
         if Scene.name():
+            # Note: file permissions checks further handled by Deadline Cloud API
+            #
+            if not settings.OutputDir or not os.path.exists(settings.OutputDir):
+                raise UserInitiatedCancel(Constants.ERROR_OUTPUT_PATH_INVALID)
             if not is_valid_filename(f"{settings.OutputFileNamePrefix}.{settings.OutputFormat}"):
                 raise UserInitiatedCancel(Constants.ERROR_OUTPUT_FILENAME_INVALID)
             if not settings.FrameStep:

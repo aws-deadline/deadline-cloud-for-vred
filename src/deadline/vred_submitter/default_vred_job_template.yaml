@@ -338,46 +338,6 @@ parameterDefinitions:
       - 'true'
       - 'false'
     description: Enables tone mapping when rendering to a HDR image format.
-  - name: AbortOnMissingTiles
-    type: STRING
-    userInterface:
-      control: HIDDEN
-    default: 'false'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: If enabled, the assembly job will fail if it cannot find any of its expected tiles.
-  - name: CleanupTilesAfterAssembly
-    type: STRING
-    userInterface:
-      control: HIDDEN
-    default: 'false'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: If enabled, tiles will be deleted after the assembly job is completed.
-  - name: JobFailureOnErrors
-    type: STRING
-    userInterface:
-      control: CHECK_BOX
-      label: Job Failure on Errors
-      groupLabel: VRED Settings
-    default: 'true'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: Determines whether render jobs should fast fail (as they already do for warnings) on errors.
-  - name: JobFailureOnWarnings
-    type: STRING
-    userInterface:
-      control: CHECK_BOX
-      label: Job Failure on Warnings
-      groupLabel: VRED Settings
-    default: 'false'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: Determines whether render jobs should fast fail (as they already do for errors) on warnings.
   - name: JobScriptDir
     userInterface:
       control: HIDDEN
@@ -478,10 +438,8 @@ steps:
                 frames_per_task = int({{Param.FramesPerTask}})
                 end_frame = min(start_frame + frames_per_task - 1, int({{Param.EndFrame}}))
                 return {
-                    'AbortOnMissingTiles': str_to_bool('{{Param.AbortOnMissingTiles}}'),
                     'AnimationClip': str('{{Param.AnimationClip}}'),
                     'AnimationType': str('{{Param.AnimationType}}'),
-                    'CleanupTilesAfterAssembly': str_to_bool('{{Param.CleanupTilesAfterAssembly}}'),
                     'DLSSQuality': str('{{Param.DLSSQuality}}'),
                     'DPI': int({{Param.DPI}}),
                     'EndFrame': int(end_frame),
@@ -491,7 +449,6 @@ steps:
                     'ImageHeight': int({{Param.ImageHeight}}),
                     'ImageWidth': int({{Param.ImageWidth}}),
                     'IncludeAlphaChannel': str_to_bool('{{Param.IncludeAlphaChannel}}'),
-                    'JobFailureOnWarnings': str_to_bool('{{Param.JobFailureOnWarnings}}'),
                     'JobType': str('{{Param.JobType}}'),
                     'NumXTiles': int({{Param.NumXTiles}}),
                     'NumYTiles': int({{Param.NumYTiles}}),

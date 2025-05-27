@@ -73,7 +73,7 @@ from vrSequencer import runAllSequences, runSequence
 class DynamicKeyValueObject:
     def __init__(self, data_dict: Dict[str, Any]) -> None:
         """
-        Assigns attributes and values to this object that reflect contents of the data_dict
+        Assigns attributes and values to this object; reflect the contents of data_dict for easy attribute-based access.
         :param: data_dict: attributes/properties and values
         """
         for k, v in data_dict.items():
@@ -81,8 +81,12 @@ class DynamicKeyValueObject:
 
 
 class JobType(StrEnum):
-    RENDER = "Render"
-    SEQUENCER = "Sequencer"
+    @staticmethod
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list[str]) -> str:
+        return name.capitalize()
+
+    RENDER = auto()
+    SEQUENCER = auto()
 
 
 class AnimationFormat(IntEnum):

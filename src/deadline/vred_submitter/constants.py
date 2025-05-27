@@ -52,6 +52,9 @@ class Constants(metaclass=ConstantsMeta):
     ERROR_OUTPUT_FILENAME_INVALID: Final[str] = (
         "Output filename contains invalid characters. Please revise and retry."
     )
+    ERROR_OUTPUT_PATH_INVALID: Final[str] = (
+        "Output path does not exist or is invalid. Please revise and retry."
+    )
     ERROR_PREFERENCES_BUTTON_NOT_FOUND: Final[str] = "Preferences button not found"
     ERROR_QUEUE_PARAM_CONFLICT: Final[str] = (
         "The following queue parameters conflict with the VRED job parameters:\n"

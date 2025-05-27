@@ -52,15 +52,26 @@ class NamedValue:
         return self.value == other
 
 
-class DynamicKeyValueObject:
+class DynamicKeyNamedValueObject:
     def __init__(self, data_dict: Dict[str, Any]) -> None:
         """
-        Assigns attributes and values to this object that reflect the contents of data_dict
+        Assigns attributes and values to this object that reflect the contents of data_dict and provides support for
+        getting the names of primitives
         param: data_dict: attributes/properties and associated values
         """
         for k, v in data_dict.items():
             named_value = NamedValue(name=k, value=v)
             setattr(self, k, named_value)
+
+
+class DynamicKeyValueObject:
+    def __init__(self, data_dict: Dict[str, Any]) -> None:
+        """
+        Assigns attributes and values to this object; reflect the contents of data_dict for easy attribute-based access.
+        :param: data_dict: attributes/properties and values
+        """
+        for k, v in data_dict.items():
+            setattr(self, k, v)
 
 
 def timed_func(func: Callable[..., TypeName]) -> Callable[..., TypeName]:

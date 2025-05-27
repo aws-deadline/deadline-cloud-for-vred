@@ -48,9 +48,10 @@ class SceneSettingsWidget(QWidget):
         self._build_ui()
         self.callbacks = SceneSettingsCallbacks(self)
         self.parent.installEventFilter(self)
-        # Order matters - want callbacks to trigger
+        # Init order matters - want earlier-defined UI callbacks to trigger when settings are repopulated into UI
         self.populator = SceneSettingsPopulator(self, initial_settings)
         self.init_complete = True
+        self.populator.populate_post_ui_setup()
 
     def eventFilter(self, obj, event):
         """
@@ -206,7 +207,6 @@ class SceneSettingsWidget(QWidget):
 
         self._add_region_rendering_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_tiles_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
-        self._add_assembly_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
 
     def _add_label_and_widget(
         self,
@@ -504,34 +504,6 @@ class SceneSettingsWidget(QWidget):
         self.tiles_in_x_widget.setMaximum(Constants.MAX_TILES_PER_DIMENSION)
         self.tiles_in_y_widget.setMinimum(Constants.MIN_TILES_PER_DIMENSION)
         self.tiles_in_y_widget.setMaximum(Constants.MAX_TILES_PER_DIMENSION)
-
-    def _add_assembly_controls(
-        self,
-        grid_layout: QGridLayout,
-        row_counter: Iterator[int],
-        alignment: Qt.Alignment,
-    ) -> None:
-        """
-        Add assembly job UI elements to the grid layout.
-        param: grid_layout: the grid layout to which UI elements are added
-        param: row_counter: tracks row number that UI elements added
-        param: alignment: alignment for the label and widget
-        """
-        assembly_layout = QHBoxLayout()
-        self.abort_on_missing_tiles_widget = QCheckBox(Constants.ABORT_ON_MISSING_TILES_LABEL)
-        self.abort_on_missing_tiles_widget.setToolTip(
-            Constants.ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION
-        )
-        self.cleanup_tiles_widget = QCheckBox(Constants.CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL)
-        self.cleanup_tiles_widget.setToolTip(
-            Constants.CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL_DESCRIPTION
-        )
-        self.abort_on_missing_tiles_widget.setVisible(False)
-        self.cleanup_tiles_widget.setVisible(False)
-        assembly_layout.addWidget(self.abort_on_missing_tiles_widget)
-        assembly_layout.addWidget(self.cleanup_tiles_widget)
-        assembly_layout.setSpacing(Constants.COLUMN_SMALL_SPACING_OFFSET_PIXELS)
-        grid_layout.addLayout(assembly_layout, next(row_counter), 0, alignment)
 
     def update_settings(self, settings: RenderSubmitterUISettings) -> None:
         """

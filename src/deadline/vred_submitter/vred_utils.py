@@ -159,9 +159,9 @@ def get_all_file_references() -> Set[Path]:
 
 def get_all_sequences() -> List[str]:
     """
-    return: a set of all sequence names in the scene
+    return: a sorted list of all sequence names in the scene
     """
-    return getSequenceList()
+    return sorted(getSequenceList())
 
 
 def get_render_window_size() -> List[int]:
