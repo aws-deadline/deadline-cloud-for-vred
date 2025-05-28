@@ -86,6 +86,13 @@ class AutoSizedComboBox(QComboBox):
         self.model().rowsInserted.connect(self.adjust_size_callback)
         self.model().rowsRemoved.connect(self.adjust_size_callback)
 
+    def set_current_entry(self, entry_name: str) -> None:
+        """
+        Sets the current entry of the combo box to match entry_name; else sets the 0th index as active entry.
+        param: entry_name: entry to match
+        """
+        super().setCurrentIndex(max(0, super().findText(entry_name)))
+
     def adjust_size_callback(self) -> None:
         """
         Adjust the size of the combo box based on the maximum length of its entries.

@@ -21,21 +21,14 @@ class ConstantsMeta(type):
 class Constants(metaclass=ConstantsMeta):
     """Constants class for UI settings."""
 
-    ABORT_ON_MISSING_TILES_LABEL: Final[str] = "Abort on Missing Tiles"
-    ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION: Final[str] = (
-        "If enabled, the assembly job will fail if it cannot find any of the tiles."
-    )
     ANIMATION_SETTINGS_DIALOG_NAME: Final[str] = "Animation Settings"
     ANIMATION_CLIP_LABEL: Final[str] = "Animation Clip"
     ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The specific animation clip to render."
     ANIMATION_TYPE_LABEL: Final[str] = "Animation Type"
     ANIMATION_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of animation."
     ANIMATION_TYPE_OPTIONS: Final[List[str]] = ["Clip", "Timeline"]
-    CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL: Final[str] = "Cleanup Tiles After Assembly"
-    CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL_DESCRIPTION: Final[str] = (
-        "If enabled, tiles will be deleted after the assembly job is completed."
-    )
     CLIP_LABEL: Final[str] = "Clip"
+    COLUMN_SMALL_SPACING_OFFSET_PIXELS: Final[int] = 40
     CUSTOM_SPEED_FIELD_NAME: Final[str] = "_customSpeed"
     DEFAULT_IMAGE_SIZE_PRESET: Final[str] = "SVGA (800 x 600)"
     DEFAULT_SCENE_FILE_FPS_COUNT: Final[float] = 24.0
@@ -57,9 +50,11 @@ class Constants(metaclass=ConstantsMeta):
     ENABLE_REGION_RENDERING_LABEL_DESCRIPTION: Final[str] = (
         "If this option is enabled, then the image will be divided into multiple tasks and assembled afterwards."
     )
+    FILE_PATH_REGEX_FILTER: Final[str] = r"^[a-zA-Z0-9_\-\. /\\:]+$"
     FRAME_RANGE_BASIC_FORMAT: Final[str] = "%d-%d"
     FRAME_RANGE_LABEL: Final[str] = "Frame Range"
     FRAME_RANGE_LABEL_DESCRIPTION: Final[str] = "The list of frames to render."
+    FRAME_RANGE_REGEX_FILTER: Final[str] = r"^[0-9x\-]+$"
     FRAMES_PER_TASK_LABEL: Final[str] = "Frames Per Task"
     FRAMES_PER_TASK_LABEL_DESCRIPTION: Final[str] = (
         "The number of frames that will be rendered at a time for each job's task."

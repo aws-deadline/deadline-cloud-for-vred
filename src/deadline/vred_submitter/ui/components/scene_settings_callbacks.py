@@ -3,10 +3,10 @@
 """Represents backend callbacks and UX interaction logic for UI within ("Job-specific settings")"""
 
 from .constants import Constants
+from .scene_settings_populator import SceneSettingsPopulator
 from ...utils import ceil, clamp, is_all_numbers
 from ...vred_utils import (
     assign_scene_transition_event,
-    get_frame_range_string,
     get_populated_animation_clip_ranges,
     get_render_window_size,
 )
@@ -33,19 +33,30 @@ class SceneSettingsCallbacks:
         self._register_all_qt_callbacks()
         # Support scene transition events (new scene and project load resetting settings persistent state and UI)
         #
-        if not self.invoked_once:
+        if not SceneSettingsCallbacks.invoked_once:
             assign_scene_transition_event(self.scene_file_changed_callback)
-            self.enable_region_rendering_changed_callback()
-            self.invoked_once = True
+            SceneSettingsCallbacks.invoked_once = True
         self._updating_values = False
 
     def _register_all_qt_callbacks(self) -> None:
-        """Register all UI element-related callbacks"""
-        self.parent.render_job_type_widget.currentIndexChanged.connect(
-            self.job_type_changed_callback
+        """Registers all UI element-related callbacks"""
+        self.parent.animation_clip_widget.currentIndexChanged.connect(
+            self.animation_clip_selection_changed_callback
         )
-        self.parent.use_clip_range_widget.stateChanged.connect(self.use_clip_range_changed_callback)
-        self.parent.render_output_button.pressed.connect(self.select_render_output_callback)
+        self.parent.animation_type_widget.currentIndexChanged.connect(
+            self.animation_type_selection_changed_callback
+        )
+        self.parent.dlss_quality_widget.currentIndexChanged.connect(
+            self.dlss_quality_changed_callback
+        )
+        self.parent.enable_region_rendering_widget.stateChanged.connect(
+            self.enable_region_rendering_changed_callback
+        )
+        self.parent.frame_range_widget.textChanged.connect(self.frame_range_changed_callback)
+        self.parent.frames_per_task_widget.valueChanged.connect(
+            self.frames_per_task_changed_callback
+        )
+        self.parent.gpu_ray_tracing_widget.stateChanged.connect(self.job_type_changed_callback)
         self.parent.image_size_presets_widget.currentIndexChanged.connect(
             self.image_size_preset_selection_changed_callback
         )
@@ -57,36 +68,55 @@ class SceneSettingsCallbacks:
         self.parent.printing_size_y_widget.textChanged.connect(
             self.printing_size_text_changed_callback
         )
-        self.parent.resolution_widget.textChanged.connect(self.resolution_text_changed_callback)
         self.parent.render_animation_widget.stateChanged.connect(self.job_type_changed_callback)
-        self.parent.gpu_ray_tracing_widget.stateChanged.connect(self.job_type_changed_callback)
-        self.parent.animation_type_widget.currentIndexChanged.connect(
-            self.animation_type_selection_changed_callback
+        self.parent.render_job_type_widget.currentIndexChanged.connect(
+            self.job_type_changed_callback
         )
-        self.parent.animation_clip_widget.currentIndexChanged.connect(
-            self.animation_clip_selection_changed_callback
+        self.parent.render_output_button.pressed.connect(self.render_output_file_dialog_callback)
+        self.parent.render_output_widget.textChanged.connect(
+            self.render_output_path_changed_callback
         )
-        self.parent.enable_region_rendering_widget.stateChanged.connect(
-            self.enable_region_rendering_changed_callback
+        self.parent.render_quality_widget.currentIndexChanged.connect(
+            self.render_quality_changed_callback
         )
+        self.parent.render_view_widget.currentIndexChanged.connect(
+            self.render_view_changed_callback
+        )
+        self.parent.resolution_widget.textChanged.connect(self.resolution_changed_callback)
+        self.parent.ss_quality_widget.currentIndexChanged.connect(self.ss_quality_changed_callback)
+        self.parent.sequence_name_widget.currentIndexChanged.connect(
+            self.sequence_name_changed_callback
+        )
+        self.parent.tiles_in_x_widget.valueChanged.connect(self.tiles_in_x_changed_callback)
+        self.parent.tiles_in_y_widget.valueChanged.connect(self.tiles_in_y_changed_callback)
+        self.parent.use_clip_range_widget.stateChanged.connect(self.use_clip_range_changed_callback)
 
     def deregister_all_callbacks(self) -> None:
-        """Deregister all callbacks to avoid unintentional triggering and prepare for new scene file state reset"""
-        self.parent.render_job_type_widget.currentIndexChanged.disconnect()
-        self.parent.use_clip_range_widget.stateChanged.disconnect()
-        self.parent.render_output_button.pressed.disconnect()
+        """Deregister most callbacks to avoid unintentional triggering and prepare for new scene file state reset"""
+        self.parent.animation_clip_widget.currentIndexChanged.disconnect()
+        self.parent.animation_type_widget.currentIndexChanged.disconnect()
+        self.parent.dlss_quality_widget.currentIndexChanged.disconnect()
+        self.parent.enable_region_rendering_widget.stateChanged.disconnect()
+        self.parent.frame_range_widget.textChanged.disconnect()
+        self.parent.frames_per_task_widget.valueChanged.disconnect()
+        self.parent.gpu_ray_tracing_widget.stateChanged.disconnect()
         self.parent.image_size_presets_widget.currentIndexChanged.disconnect()
         self.parent.image_size_x_widget.textChanged.disconnect()
         self.parent.image_size_y_widget.textChanged.disconnect()
         self.parent.printing_size_x_widget.textChanged.disconnect()
         self.parent.printing_size_y_widget.textChanged.disconnect()
-        self.parent.resolution_widget.textChanged.disconnect()
         self.parent.render_animation_widget.stateChanged.disconnect()
-        self.parent.gpu_ray_tracing_widget.stateChanged.disconnect()
-        self.parent.animation_type_widget.currentIndexChanged.disconnect()
-        self.parent.animation_clip_widget.currentIndexChanged.disconnect()
-        self.parent.enable_region_rendering_widget.stateChanged.disconnect()
-        self.invoked_once = False
+        self.parent.render_job_type_widget.currentIndexChanged.disconnect()
+        self.parent.render_output_button.pressed.disconnect()
+        self.parent.render_output_widget.textChanged.disconnect()
+        self.parent.render_quality_widget.currentIndexChanged.disconnect()
+        self.parent.render_view_widget.currentIndexChanged.disconnect()
+        self.parent.resolution_widget.textChanged.disconnect()
+        self.parent.sequence_name_widget.currentIndexChanged.disconnect()
+        self.parent.ss_quality_widget.currentIndexChanged.disconnect()
+        self.parent.tiles_in_x_widget.valueChanged.disconnect()
+        self.parent.tiles_in_y_widget.valueChanged.disconnect()
+        self.parent.use_clip_range_widget.stateChanged.disconnect()
 
     def job_type_changed_callback(self) -> None:
         """
@@ -125,41 +155,137 @@ class SceneSettingsCallbacks:
 
         # Update persisted settings if initialization is complete
         if self.parent.init_complete:
-            self.parent.populator.persisted_settings_states.update(
-                {
-                    Constants.JOB_TYPE_LABEL: render_job_type,
-                    Constants.RENDER_ANIMATION_LABEL: is_render_animation_job,
-                    Constants.USE_GPU_RAY_TRACING_LABEL: self.parent.gpu_ray_tracing_widget.isChecked(),
-                }
+            self.parent.populator.persisted_ui_settings_states.job_type = render_job_type
+            self.parent.populator.persisted_ui_settings_states.render_animation = (
+                is_render_animation_job
             )
+            self.parent.populator.persisted_ui_settings_states.use_gpu_ray_tracing = (
+                self.parent.gpu_ray_tracing_widget.isChecked()
+            )
+
+    def sequence_name_changed_callback(self) -> None:
+        """
+        Persists sequence name state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.sequence_name = (
+            self.parent.sequence_name_widget.currentText()
+        )
+
+    def render_view_changed_callback(self) -> None:
+        """
+        Persists render view state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.view = (
+            self.parent.render_view_widget.currentText()
+        )
+
+    def render_output_path_changed_callback(self) -> None:
+        """
+        Persists render output path
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.render_output = (
+            self.parent.render_output_widget.text()
+        )
+
+    def render_quality_changed_callback(self) -> None:
+        """
+        Persists render quality state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.render_quality = (
+            self.parent.render_quality_widget.currentText()
+        )
+
+    def dlss_quality_changed_callback(self) -> None:
+        """
+        Persists DLSS quality state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.dlss_quality = (
+            self.parent.dlss_quality_widget.currentText()
+        )
+
+    def ss_quality_changed_callback(self) -> None:
+        """
+        Persists Supersampling quality state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.ss_quality = (
+            self.parent.ss_quality_widget.currentText()
+        )
+
+    def frame_range_changed_callback(self) -> None:
+        """
+        Persists frame range state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.frame_range = (
+            self.parent.frame_range_widget.text()
+        )
+
+    def frames_per_task_changed_callback(self) -> None:
+        """
+        Persists frame per task state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.frames_per_task = int(
+            self.parent.frames_per_task_widget.value()
+        )
 
     def enable_region_rendering_changed_callback(self) -> None:
         """
         Updates UI elements when region rendering is enabled/disabled.
         """
-        enabled = self.parent.enable_region_rendering_widget.isChecked()
+        if not self.parent.init_complete:
+            return
+        state = self.parent.enable_region_rendering_widget.isChecked()
+        self.parent.populator.persisted_ui_settings_states.enable_render_regions = state
         # All UI elements that should be enabled/disabled together
         region_rendering_controls = [
             self.parent.tiles_in_x_label,
             self.parent.tiles_in_x_widget,
             self.parent.tiles_in_y_label,
             self.parent.tiles_in_y_widget,
-            self.parent.cleanup_tiles_widget,
-            self.parent.abort_on_missing_tiles_widget,
         ]
         for control in region_rendering_controls:
-            control.setEnabled(enabled)
+            control.setEnabled(state)
+
+    def tiles_in_x_changed_callback(self) -> None:
+        """
+        Persists horizontal tiles count state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.tiles_in_x = (
+            self.parent.tiles_in_x_widget.value()
+        )
+
+    def tiles_in_y_changed_callback(self) -> None:
+        """
+        Persists vertical tiles count state
+        """
+        if not self.parent.init_complete:
+            return
+        self.parent.populator.persisted_ui_settings_states.tiles_in_y = (
+            self.parent.tiles_in_y_widget.value()
+        )
 
     def image_size_preset_selection_changed_callback(self) -> None:
         """
         Updates image dimensions and resolution when an image size preset is selected.
-        Persists the selection if initialization is complete.
         """
         preset_name = self.parent.image_size_presets_widget.currentText()
-        if self.parent.init_complete:
-            self.parent.populator.persisted_settings_states[Constants.IMAGE_SIZE_PRESETS_LABEL] = (
-                self.parent.image_size_presets_widget.currentIndex()
-            )
         if preset_name == Constants.IMAGE_SIZE_PRESET_CUSTOM:
             return
         elif preset_name == Constants.IMAGE_SIZE_PRESET_FROM_RENDER_WINDOW:
@@ -178,6 +304,9 @@ class SceneSettingsCallbacks:
         It recalculates the printing dimensions based on the new pixel dimensions.
         Note: this callback is triggered when the user changes the image width or height.
         """
+        if not self.parent.init_complete:
+            return
+
         # Avoid recursive updates and validate inputs
         if self._updating_values:
             return
@@ -189,12 +318,20 @@ class SceneSettingsCallbacks:
             ]
         ):
             return
+
         self._updating_values = True
+        self.parent.populator.persisted_ui_settings_states.image_size_x = int(
+            self.parent.image_size_x_widget.text()
+        )
+        self.parent.populator.persisted_ui_settings_states.image_size_y = int(
+            self.parent.image_size_y_widget.text()
+        )
+        width, height, resolution = 0, 0, 0
+
         try:
             # Set to custom preset
             self.parent.image_size_presets_widget.setCurrentIndex(0)
             # Apply clamping constraints to dimensions and resolution and only update UI if values match
-            #
             width = int(
                 clamp(
                     int(self.parent.image_size_x_widget.text()),
@@ -216,7 +353,6 @@ class SceneSettingsCallbacks:
             )
             self._update_dimension_fields_if_changed(width, height, resolution)
             # Compute and update printing size
-            #
             printing_width = float(
                 ceil(
                     width * Constants.INCH_TO_CM_FACTOR / resolution,
@@ -236,7 +372,7 @@ class SceneSettingsCallbacks:
 
     def _update_dimension_fields_if_changed(self, width: int, height: int, resolution: int) -> None:
         """
-        Updates dimension fields their values were changed.
+        Updates dimension fields if their values were changed.
         param: width : Clamped width value
         param: height: Clamped height value
         param: resolution: Clamped resolution value
@@ -271,6 +407,13 @@ class SceneSettingsCallbacks:
         self.parent.image_size_y_widget.blockSignals(True)
         self.parent.image_size_x_widget.setText(str(width))
         self.parent.image_size_y_widget.setText(str(height))
+        if self.parent.init_complete:
+            self.parent.populator.persisted_ui_settings_states.image_size_x = int(
+                self.parent.image_size_x_widget.text()
+            )
+            self.parent.populator.persisted_ui_settings_states.image_size_y = int(
+                self.parent.image_size_y_widget.text()
+            )
         self.parent.image_size_x_widget.blockSignals(False)
         self.parent.image_size_y_widget.blockSignals(False)
 
@@ -290,7 +433,10 @@ class SceneSettingsCallbacks:
             ]
         ):
             return
+
         self._updating_values = True
+        width, height, resolution = 0, 0, 0
+
         try:
             # Set to custom preset
             self.parent.image_size_presets_widget.setCurrentIndex(0)
@@ -304,7 +450,7 @@ class SceneSettingsCallbacks:
             # Update resolution if it was clamped
             if int(self.parent.resolution_widget.text()) != resolution:
                 self.parent.resolution_widget.setText(str(resolution))
-            resolution = int(self.parent.resolution_widget.text())
+
             width = int(
                 self._calculate_clamped_pixel_dimension(
                     printing_width,
@@ -323,7 +469,6 @@ class SceneSettingsCallbacks:
             )
             self._update_image_size_fields(width, height)
             # Recalculate printing dimensions based on clamped values
-            #
             self._recalculate_and_update_printing_dimensions_if_needed(
                 width, height, printing_width, printing_height, resolution
             )
@@ -435,8 +580,12 @@ class SceneSettingsCallbacks:
             preset_index = render_dimensions_list.index(changed_render_dimension)
         self.parent.image_size_presets_widget.setCurrentIndex(preset_index)
 
-    def resolution_text_changed_callback(self) -> None:
+    def resolution_changed_callback(self) -> None:
         """Adjusts image resolution based on constant printing size and DPI"""
+        if self.parent.init_complete:
+            self.parent.populator.persisted_ui_settings_states.resolution = int(
+                self.parent.resolution_widget.text()
+            )
         self.printing_size_text_changed_callback()
 
     def animation_clip_selection_changed_callback(self) -> None:
@@ -445,12 +594,12 @@ class SceneSettingsCallbacks:
         """
         if not self.parent.init_complete:
             return
-        anim_clip_name = self.parent.animation_clip_widget.currentText()
-        self.parent.populator.persisted_settings_states[Constants.ANIMATION_CLIP_LABEL] = (
-            self.parent.animation_clip_widget.currentIndex()
+        self.parent.populator.persisted_ui_settings_states.animation_clip = (
+            self.parent.animation_clip_widget.currentText()
         )
         if not self.parent.use_clip_range_widget.isChecked():
             return
+        anim_clip_name = self.parent.animation_clip_widget.currentText()
         # Set frame range based on selected clip
         if anim_clip_name and anim_clip_name in self.parent.populator.animation_clip_ranges_map:
             start_frame, end_frame = self.parent.populator.animation_clip_ranges_map[anim_clip_name]
@@ -466,10 +615,10 @@ class SceneSettingsCallbacks:
         if not self.parent.init_complete:
             return
         clip_type_enabled = self.parent.animation_type_widget.currentText() == Constants.CLIP_LABEL
-        self.parent.populator.persisted_settings_states[Constants.ANIMATION_TYPE_LABEL] = (
-            self.parent.animation_type_widget.currentIndex()
+        self.parent.populator.persisted_ui_settings_states.animation_type = (
+            self.parent.animation_type_widget.currentText()
         )
-        # Update UI controls based on animation type
+        # Update UI controls based on the animation type
         self.parent.animation_clip_widget.setEnabled(clip_type_enabled)
         self.parent.use_clip_range_widget.setEnabled(clip_type_enabled)
         if clip_type_enabled:
@@ -488,7 +637,7 @@ class SceneSettingsCallbacks:
         if not self.parent.init_complete:
             return
         enabled = self.parent.use_clip_range_widget.isChecked()
-        self.parent.populator.persisted_settings_states[Constants.USE_CLIP_RANGE_LABEL] = enabled
+        self.parent.populator.persisted_ui_settings_states.use_clip_range = enabled
         self.parent.frame_range_widget.setEnabled(not enabled)
         if enabled:
             # Check if there are animation clips available (beyond the empty one)
@@ -505,10 +654,8 @@ class SceneSettingsCallbacks:
                     ]
                     frame_range_text = Constants.FRAME_RANGE_BASIC_FORMAT % (start_frame, end_frame)
                     self.parent.frame_range_widget.setText(frame_range_text)
-        else:
-            self.parent.frame_range_widget.setText(get_frame_range_string())
 
-    def select_render_output_callback(self) -> None:
+    def render_output_file_dialog_callback(self) -> None:
         """Opens a file dialog to select a background image file."""
         new_output_file = QFileDialog.getSaveFileName(
             self.parent,
@@ -528,4 +675,6 @@ class SceneSettingsCallbacks:
         Removes persisted settings (normally called on scene file reset)
         param: dummy_args: conventional variable arguments passed by signal connections (unused)
         """
-        self.parent.populator.persisted_settings_states.clear()
+        if SceneSettingsPopulator.persisted_ui_settings_states:
+            SceneSettingsPopulator.persisted_ui_settings_states.__dict__.clear()
+            SceneSettingsPopulator.persisted_ui_settings_states = None

@@ -32,10 +32,8 @@ class RenderSubmitterUISettings:
 
     # Render settings - note settings that are listed as False aren't currently implemented
     #
-    AbortOnMissingTiles: bool = field(default=False)
     AnimationClip: str = field(default="")
     AnimationType: str = field(default="Clip")
-    CleanupTilesAfterAssembly: bool = field(default=False)
     DLSSQuality: str = field(default="Off")
     DPI: int = field(default=72)
     EndFrame: int = field(default=24)

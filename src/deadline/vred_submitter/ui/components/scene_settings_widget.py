@@ -17,8 +17,8 @@ from .constants import Constants
 from .scene_settings_callbacks import SceneSettingsCallbacks
 from .scene_settings_populator import SceneSettingsPopulator
 
-from PySide6.QtCore import Qt, QEvent
-from PySide6.QtGui import QDoubleValidator, QIntValidator
+from PySide6.QtCore import Qt, QEvent, QRegularExpression
+from PySide6.QtGui import QDoubleValidator, QIntValidator, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QCheckBox,
     QGridLayout,
@@ -48,8 +48,10 @@ class SceneSettingsWidget(QWidget):
         self._build_ui()
         self.callbacks = SceneSettingsCallbacks(self)
         self.parent.installEventFilter(self)
+        # Init order matters - want earlier-defined UI callbacks to trigger when settings are repopulated into UI
         self.populator = SceneSettingsPopulator(self, initial_settings)
         self.init_complete = True
+        self.populator.populate_post_ui_setup()
 
     def eventFilter(self, obj, event):
         """
@@ -205,7 +207,6 @@ class SceneSettingsWidget(QWidget):
 
         self._add_region_rendering_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_tiles_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
-        self._add_assembly_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
 
     def _add_label_and_widget(
         self,
@@ -254,6 +255,9 @@ class SceneSettingsWidget(QWidget):
         render_output_layout.addWidget(self.render_output_widget)
         render_output_layout.addWidget(self.render_output_button)
         grid_layout.addLayout(render_output_layout, next(row_counter), 1, alignment)
+        regex = QRegularExpression(Constants.FILE_PATH_REGEX_FILTER)
+        validator = QRegularExpressionValidator(regex)
+        self.render_output_widget.setValidator(validator)
 
     def _add_image_size_preset_controls(
         self,
@@ -427,6 +431,9 @@ class SceneSettingsWidget(QWidget):
         self.frame_range_widget = QLineEdit("")
         self.frame_range_widget.setFixedWidth(Constants.LONG_TEXT_ENTRY_WIDTH)
         grid_layout.addWidget(self.frame_range_widget, next(row_counter), 1, alignment)
+        regex = QRegularExpression(Constants.FRAME_RANGE_REGEX_FILTER)
+        validator = QRegularExpressionValidator(regex)
+        self.frame_range_widget.setValidator(validator)
 
     def _add_frames_per_task_controls(
         self,
@@ -482,47 +489,21 @@ class SceneSettingsWidget(QWidget):
         self.tiles_in_x_label.setToolTip(Constants.TILES_IN_X_LABEL_DESCRIPTION)
         self.tiles_in_x_widget = QSpinBox()
         self.tiles_in_x_widget.setFixedWidth(Constants.SHORT_TEXT_ENTRY_WIDTH)
-        tiles_in_x_layout = QHBoxLayout()
-        tiles_in_x_layout.addWidget(self.tiles_in_x_label)
-        tiles_in_x_layout.addWidget(self.tiles_in_x_widget)
-        grid_layout.addLayout(tiles_in_x_layout, iterator_value(row_counter), 0, alignment)
+        tiles_layout = QHBoxLayout()
+        tiles_layout.addWidget(self.tiles_in_x_label)
+        tiles_layout.addWidget(self.tiles_in_x_widget)
         self.tiles_in_y_label = QLabel(Constants.TILES_IN_Y_LABEL)
         self.tiles_in_y_label.setToolTip(Constants.TILES_IN_Y_LABEL_DESCRIPTION)
         self.tiles_in_y_widget = QSpinBox()
         self.tiles_in_y_widget.setFixedWidth(Constants.SHORT_TEXT_ENTRY_WIDTH)
-        tiles_in_y_layout = QHBoxLayout()
-        tiles_in_y_layout.addWidget(self.tiles_in_y_label)
-        tiles_in_y_layout.addWidget(self.tiles_in_y_widget)
-        grid_layout.addLayout(tiles_in_y_layout, next(row_counter), 1, alignment)
+        tiles_layout.addWidget(self.tiles_in_y_label)
+        tiles_layout.addWidget(self.tiles_in_y_widget)
+        tiles_layout.setSpacing(Constants.COLUMN_SMALL_SPACING_OFFSET_PIXELS)
+        grid_layout.addLayout(tiles_layout, next(row_counter), 0, alignment)
         self.tiles_in_x_widget.setMinimum(Constants.MIN_TILES_PER_DIMENSION)
         self.tiles_in_x_widget.setMaximum(Constants.MAX_TILES_PER_DIMENSION)
         self.tiles_in_y_widget.setMinimum(Constants.MIN_TILES_PER_DIMENSION)
         self.tiles_in_y_widget.setMaximum(Constants.MAX_TILES_PER_DIMENSION)
-
-    def _add_assembly_controls(
-        self,
-        grid_layout: QGridLayout,
-        row_counter: Iterator[int],
-        alignment: Qt.Alignment,
-    ) -> None:
-        """
-        Add assembly job UI elements to the grid layout.
-        param: grid_layout: the grid layout to which UI elements are added
-        param: row_counter: tracks row number that UI elements added
-        param: alignment: alignment for the label and widget
-        """
-        self.abort_on_missing_tiles_widget = QCheckBox(Constants.ABORT_ON_MISSING_TILES_LABEL)
-        self.abort_on_missing_tiles_widget.setToolTip(
-            Constants.ABORT_ON_MISSING_TILES_LABEL_DESCRIPTION
-        )
-        grid_layout.addWidget(
-            self.abort_on_missing_tiles_widget, iterator_value(row_counter), 0, alignment
-        )
-        self.cleanup_tiles_widget = QCheckBox(Constants.CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL)
-        self.cleanup_tiles_widget.setToolTip(
-            Constants.CLEAN_UP_TILES_AFTER_ASSEMBLY_LABEL_DESCRIPTION
-        )
-        grid_layout.addWidget(self.cleanup_tiles_widget, next(row_counter), 1, alignment)
 
     def update_settings(self, settings: RenderSubmitterUISettings) -> None:
         """

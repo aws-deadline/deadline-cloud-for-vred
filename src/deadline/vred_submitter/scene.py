@@ -95,9 +95,10 @@ class Scene:
     @staticmethod
     def name() -> str:
         """
-        Returns the full path to the active scene
+        Returns the name of the active scene file
         """
-        return get_scene_full_path()
+        name_without_ext = os.path.splitext(os.path.basename(get_scene_full_path()))[0]
+        return "" if name_without_ext == "." else name_without_ext
 
     @staticmethod
     def get_input_directories() -> list[str]:
@@ -109,9 +110,9 @@ class Scene:
     @staticmethod
     def get_input_filenames() -> list[str]:
         """
-        Returns a list of filenames comprising the render-related input data.
+        Returns a list of filenames comprising render-related input data.
         """
-        return [Scene.name()]
+        return [Scene.project_full_path()]
 
     @staticmethod
     def get_output_directories() -> list[str]:
@@ -123,13 +124,20 @@ class Scene:
     @staticmethod
     def project_path() -> str:
         """
-        Returns the base path of the current scene file
+        Returns the path of the current scene file's directory.
         """
-        return os.path.normpath(os.path.dirname(get_scene_full_path()))
+        return os.path.dirname(get_scene_full_path())
+
+    @staticmethod
+    def project_full_path() -> str:
+        """
+        Returns the entire path of the current scene file (including its filename).
+        """
+        return get_scene_full_path()
 
     @staticmethod
     def output_path() -> str:
         """
         Returns the path to the default output directory.
         """
-        return os.path.normpath(os.path.dirname(get_render_filename()))
+        return os.path.dirname(get_render_filename())
