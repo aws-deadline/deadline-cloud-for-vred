@@ -17,15 +17,75 @@ from PySide6.QtWidgets import QDialog, QMainWindow, QToolBar, QToolButton
 from builtins import vrCameraService, vrFileIOService, vrMainWindow, vrReferenceService  # type: ignore[attr-defined]
 from vrAnimWidgets import getAnimClips, getAnimClipNodes, getCurrentFrame
 from vrController import getVredVersionYear
-from vrOSGWidget import getRenderWindowHeight, getRenderWindowWidth
+from vrOSGWidget import (
+    getDLSSQuality,
+    getRenderWindowHeight,
+    getRenderWindowWidth,
+    getSuperSamplingQuality,
+    VR_QUALITY_ANALYTIC_HIGH,
+    VR_QUALITY_ANALYTIC_LOW,
+    VR_QUALITY_NPR,
+    VR_QUALITY_RAYTRACING,
+    VR_QUALITY_REALISTIC_HIGH,
+    VR_QUALITY_REALISTIC_LOW,
+    VR_SS_QUALITY_HIGH,
+    VR_SS_QUALITY_LOW,
+    VR_SS_QUALITY_MEDIUM,
+    VR_SS_QUALITY_OFF,
+    VR_SS_QUALITY_ULTRA_HIGH,
+    VR_DLSS_BALANCED,
+    VR_DLSS_PERFORMANCE,
+    VR_DLSS_OFF,
+    VR_DLSS_QUALITY,
+    VR_DLSS_ULTRA_PERFORMANCE,
+)
 from vrRenderSettings import (
+    getRaytracingMode,
+    getRenderAlpha,
     getRenderAnimation,
+    getRenderAnimationClip,
+    getRenderAnimationType,
     getRenderFilename,
     getRenderFrameStep,
+    getRenderPixelHeight,
+    getRenderPixelPerInch,
+    getRenderPixelWidth,
+    getRenderPremultiply,
     getRenderStartFrame,
     getRenderStopFrame,
+    getRenderTonemapHDR,
+    getRenderUseClipRange,
+    getRenderView,
+    getUseRenderRegion,
 )
 from vrSequencer import getSequenceList
+
+ANIMATION_TYPE_DICT: Dict[int, str] = {0: "Clip", 1: "Timeline"}
+
+DLSS_QUALITY_DICT: Dict[int, str] = {
+    VR_DLSS_OFF: "Off",
+    VR_DLSS_PERFORMANCE: "Performance",
+    VR_DLSS_BALANCED: "Balanced",
+    VR_DLSS_QUALITY: "Quality",
+    VR_DLSS_ULTRA_PERFORMANCE: "Ultra Performance",
+}
+
+RENDER_QUALITY_DICT: Dict[int, str] = {
+    VR_QUALITY_ANALYTIC_LOW: "Analytic Low",
+    VR_QUALITY_ANALYTIC_HIGH: "Analytic High",
+    VR_QUALITY_REALISTIC_LOW: "Realistic Low",
+    VR_QUALITY_REALISTIC_HIGH: "Realistic High",
+    VR_QUALITY_RAYTRACING: "Raytracing",
+    VR_QUALITY_NPR: "NPR",
+}
+
+SS_QUALITY_DICT: Dict[int, str] = {
+    VR_SS_QUALITY_OFF: "Off",
+    VR_SS_QUALITY_LOW: "Low",
+    VR_SS_QUALITY_MEDIUM: "Medium",
+    VR_SS_QUALITY_HIGH: "High",
+    VR_SS_QUALITY_ULTRA_HIGH: "Ultra High",
+}
 
 
 def assign_scene_transition_event(callback_function) -> None:
@@ -51,6 +111,38 @@ def get_animation_clips_list() -> List[str]:
     return: sorted list of the names of animation clips
     """
     return [""] + sorted(getAnimClips())
+
+
+def get_dlss_quality() -> str:
+    """
+    Returns the DLSS quality value
+    return: DLSS quality value
+    """
+    return DLSS_QUALITY_DICT.get(getDLSSQuality(), "")
+
+
+def get_supersampling_quality() -> str:
+    """
+    Returns the supersampling quality value
+    return: supersampling quality value
+    """
+    return SS_QUALITY_DICT.get(getSuperSamplingQuality(), "")
+
+
+def get_render_pixel_height() -> int:
+    """
+    Returns the pixel height for rendering
+    return: pixel height value
+    """
+    return getRenderPixelHeight()
+
+
+def get_render_pixel_width() -> int:
+    """
+    Returns the pixel height for rendering
+    return: pixel height value
+    """
+    return getRenderPixelWidth()
 
 
 def get_frame_range_string() -> str:
@@ -164,6 +256,20 @@ def get_all_sequences() -> List[str]:
     return sorted(getSequenceList())
 
 
+def get_animation_clip() -> str:
+    """
+    return: the name of the current animation clip
+    """
+    return getRenderAnimationClip()
+
+
+def get_animation_type() -> str:
+    """
+    return: the type of the current animation
+    """
+    return ANIMATION_TYPE_DICT.get(getRenderAnimationType(), "")
+
+
 def get_render_window_size() -> List[int]:
     """
     return: width and height of the render window
@@ -256,6 +362,13 @@ def get_scene_fps() -> float:
             timeline_action.activate(QAction.Trigger)
 
 
+def get_render_alpha() -> bool:
+    """
+    return: True if an alpha channel should be exported; False otherwise.
+    """
+    return getRenderAlpha()
+
+
 def get_render_animation() -> bool:
     """
     Get the render animation state.
@@ -264,11 +377,62 @@ def get_render_animation() -> bool:
     return getRenderAnimation()
 
 
+def get_render_pixel_per_inch() -> int:
+    """
+    Get the render pixel per inch value.
+    return: pixel per inch value
+    """
+    return int(getRenderPixelPerInch())
+
+
+def get_render_view() -> str:
+    """
+    Get the current render view (camera name).
+    return: name of current render view
+    """
+    return getRenderView()
+
+
 def get_render_filename() -> str:
     """
     return: filename of the image sequence to render
     """
     return get_normalized_path(getRenderFilename())
+
+
+def get_premultiply_alpha() -> bool:
+    """
+    return: True if premultiplied alpha is enabled; False otherwise.
+    """
+    return getRenderPremultiply()
+
+
+def get_tonemap_hdr() -> bool:
+    """
+    return: True if Tonemap HDR is enabled; False otherwise.
+    """
+    return getRenderTonemapHDR()
+
+
+def get_use_clip_range() -> bool:
+    """
+    return: True if clip range is enabled; False otherwise.
+    """
+    return getRenderUseClipRange()
+
+
+def get_use_gpu_ray_tracing() -> bool:
+    """
+    return: True if GPU raytracing is enabled, False otherwise
+    """
+    return getRaytracingMode()
+
+
+def get_use_render_region() -> bool:
+    """
+    return: True if render region is enabled; False otherwise.
+    """
+    return getUseRenderRegion()
 
 
 def get_views_list() -> List[str]:

@@ -9,14 +9,36 @@ from typing import Any
 
 from .constants import Constants
 from ...data_classes import RenderSubmitterUISettings
-from ...utils import get_normalized_path, DynamicKeyValueObject, DynamicKeyNamedValueObject
+from ...utils import (
+    DynamicKeyValueObject,
+    DynamicKeyNamedValueObject,
+    get_normalized_path,
+    get_file_name_path_components,
+)
 from ...vred_utils import (
-    get_active_camera_name,
     get_all_sequences,
+    get_animation_clip,
     get_animation_clips_list,
+    get_animation_type,
+    get_dlss_quality,
+    get_frame_start,
+    get_frame_step,
+    get_frame_stop,
     get_frame_range_components,
     get_populated_animation_clip_ranges,
+    get_premultiply_alpha,
+    get_render_alpha,
+    get_render_animation,
+    get_render_filename,
+    get_render_pixel_height,
+    get_render_pixel_per_inch,
+    get_render_pixel_width,
+    get_render_view,
     get_scene_full_path,
+    get_supersampling_quality,
+    get_tonemap_hdr,
+    get_use_render_region,
+    get_use_gpu_ray_tracing,
     get_views_list,
 )
 
@@ -78,18 +100,19 @@ class SceneSettingsPopulator:
         # See: SceneSettingsCallbacks.scene_file_changed_callback()
         #
         if SceneSettingsPopulator.persisted_ui_settings_states is None:
+            self._store_runtime_derived_settings(initial_settings)
             SceneSettingsPopulator.persisted_ui_settings_states = DynamicKeyValueObject(
                 {str(key).lower(): "" for key in PersistedUISettingsNames}
             )
             SceneSettingsPopulator._configure_ui_persisted_settings(initial_settings)
-        self._populate_runtime_ui_options_values()
+        self._populate_runtime_ui_options_values(initial_settings)
         # Persisted settings will take precedence (in UI elements) over initial settings/defaults
         self._restore_persisted_ui_settings_states()
 
     def populate_post_ui_setup(self):
         """
         Triggers UI callbacks (after UI values applied - without callbacks emitting) to adjust neighboring UI control
-        states in response and register correct values in those controls. Order of callback triggering will matter.
+        states in response and register correct states in those controls. Order of callback triggering will matter.
         """
         self.parent.enable_region_rendering_widget.stateChanged.emit(
             self.parent.enable_region_rendering_widget.checkState()
@@ -105,6 +128,47 @@ class SceneSettingsPopulator:
             int(self.parent.image_size_y_widget.text()),
             int(self.parent.resolution_widget.text()),
         )
+        # UX: keep uniform widget width for widgets known to contain fixed element content
+        widgets = [
+            self.parent.render_quality_widget,
+            self.parent.dlss_quality_widget,
+            self.parent.ss_quality_widget,
+            self.parent.animation_type_widget,
+            self.parent.image_size_presets_widget,
+        ]
+        max_width = max(widget.get_width() for widget in widgets)
+        [widget.set_width(max_width) for widget in widgets]
+        self.parent.animation_clip_widget.setFixedWidth(max_width)
+
+    @staticmethod
+    def _store_runtime_derived_settings(settings: RenderSubmitterUISettings) -> None:
+        """
+        Intended as a one-time call per scene file session. Initializes render settings values from the stock render
+        settings - they provide default values for the submitter (initially). Then, any changes made to the submitter
+        UI settings will override the stock settings in VRED upon submission.
+        Note: there isn't any synchronization of values occurring except during the initial opening of the submitter
+        in a new scene file session.
+        param: settings: maintains values for all render submission parameters.
+        """
+        directory, filename_prefix, extension = get_file_name_path_components(get_render_filename())
+        settings.AnimationClip = get_animation_clip()
+        settings.AnimationType = get_animation_type()
+        settings.DPI = get_render_pixel_per_inch()
+        settings.DLSSQuality = get_dlss_quality()
+        settings.EndFrame = get_frame_stop()
+        settings.FrameStep = get_frame_step()
+        settings.GPURaytracing = get_use_gpu_ray_tracing()
+        settings.ImageHeight = get_render_pixel_height()
+        settings.ImageWidth = get_render_pixel_width()
+        settings.OutputDir = directory
+        settings.OutputFileNamePrefix = filename_prefix
+        settings.OutputFormat = extension.upper()
+        settings.RenderAnimation = get_render_animation()
+        settings.RegionRendering = get_use_render_region()
+        settings.SceneFile = get_scene_full_path()
+        settings.SSQuality = get_supersampling_quality()
+        settings.StartFrame = get_frame_start()
+        settings.View = get_render_view()
 
     @staticmethod
     def _configure_ui_persisted_settings(settings: RenderSubmitterUISettings) -> None:
@@ -152,9 +216,10 @@ class SceneSettingsPopulator:
             }
         )
 
-    def _populate_runtime_ui_options_values(self) -> None:
+    def _populate_runtime_ui_options_values(self, settings: RenderSubmitterUISettings) -> None:
         """
         Populates runtime-derived values and standard option choices into UI elements and resets their state.
+        param: settings: maintains values for all render submission parameters.
         """
         # Populate job types
         self.parent.render_job_type_widget.addItems(Constants.JOB_TYPE_OPTIONS)
@@ -162,7 +227,7 @@ class SceneSettingsPopulator:
         # Populate camera view settings
         views_list = get_views_list()
         self.parent.render_view_widget.addItems(views_list)
-        self.parent.render_view_widget.set_current_entry(get_active_camera_name())
+        self.parent.render_view_widget.set_current_entry(settings.View)
 
         # Populate Animation Clips - includes 'empty' clip
         self.parent.animation_clip_widget.setEnabled(False)
@@ -175,19 +240,18 @@ class SceneSettingsPopulator:
 
         # Populate render quality-related options
         self.parent.dlss_quality_widget.addItems(Constants.DLSS_QUALITY_OPTIONS)
-        self.parent.dlss_quality_widget.setCurrentIndex(0)
+        self.parent.dlss_quality_widget.set_current_entry(settings.DLSSQuality)
         self.parent.render_quality_widget.addItems(Constants.RENDER_QUALITY_OPTIONS)
         self.parent.render_quality_widget.set_current_entry(Constants.RENDER_QUALITY_DEFAULT)
         self.parent.ss_quality_widget.addItems(Constants.SS_QUALITY_OPTIONS)
-        self.parent.ss_quality_widget.setCurrentIndex(0)
+        self.parent.ss_quality_widget.set_current_entry(settings.SSQuality)
 
-        # Populate image size presets options (for image size and resolution)
+        # Populate image size presets options (for image size and resolution). Entry set via image X/Y callbacks.
         self.parent.image_size_presets_widget.addItems(Constants.IMAGE_SIZE_PRESETS_MAP.keys())
-        self.parent.image_size_presets_widget.set_current_entry(Constants.DEFAULT_IMAGE_SIZE_PRESET)
 
         # Populate animation types
         self.parent.animation_type_widget.addItems(Constants.ANIMATION_TYPE_OPTIONS)
-        self.parent.animation_type_widget.setCurrentIndex(0)
+        self.parent.animation_type_widget.set_current_entry(settings.AnimationType)
 
         # Populate sequencer options
         self.parent.sequence_name_widget.addItems(get_all_sequences())
@@ -265,6 +329,7 @@ class SceneSettingsPopulator:
             settings.StartFrame, settings.EndFrame, settings.FrameStep = (0, 0, 0)
 
         render_output_path = self.parent.render_output_widget.text()
+        directory, filename_prefix, extension = get_file_name_path_components(render_output_path)
         attrs: Any = DynamicKeyNamedValueObject(settings.__dict__)
         settings.__dict__.update(
             {
@@ -279,28 +344,21 @@ class SceneSettingsPopulator:
                 attrs.GPURaytracing.__name__: self.parent.gpu_ray_tracing_widget.isChecked(),
                 attrs.ImageHeight.__name__: int(self.parent.image_size_y_widget.text()),
                 attrs.ImageWidth.__name__: int(self.parent.image_size_x_widget.text()),
-                attrs.IncludeAlphaChannel.__name__: False,
+                attrs.IncludeAlphaChannel.__name__: get_render_alpha(),
                 attrs.JobType.__name__: str(self.parent.render_job_type_widget.currentText()),
                 attrs.NumXTiles.__name__: int(self.parent.tiles_in_x_widget.value()),
                 attrs.NumYTiles.__name__: int(self.parent.tiles_in_y_widget.value()),
-                attrs.OutputDir.__name__: str(
-                    get_normalized_path(os.path.dirname(render_output_path))
-                ),
-                attrs.OutputFileNamePrefix.__name__: str(
-                    os.path.splitext(os.path.basename(render_output_path))[0]
-                ),
-                attrs.OutputFormat.__name__: str(
-                    os.path.splitext(render_output_path)[1][1:].upper()
-                ),
-                attrs.OverrideRenderPass.__name__: False,
-                attrs.PremultiplyAlpha.__name__: False,
+                attrs.OutputDir.__name__: str(directory),
+                attrs.OutputFileNamePrefix.__name__: str(filename_prefix),
+                attrs.OutputFormat.__name__: str(extension.upper()),
+                attrs.PremultiplyAlpha.__name__: get_premultiply_alpha(),
                 attrs.RegionRendering.__name__: self.parent.enable_region_rendering_widget.isChecked(),
                 attrs.RenderAnimation.__name__: self.parent.render_animation_widget.isChecked(),
                 attrs.RenderQuality.__name__: str(self.parent.render_quality_widget.currentText()),
                 attrs.SSQuality.__name__: str(self.parent.ss_quality_widget.currentText()),
                 attrs.SceneFile.__name__: get_scene_full_path(),
                 attrs.SequenceName.__name__: str(self.parent.sequence_name_widget.currentText()),
-                attrs.TonemapHDR.__name__: False,
+                attrs.TonemapHDR.__name__: get_tonemap_hdr(),
                 attrs.View.__name__: str(self.parent.render_view_widget.currentText()),
             }
         )

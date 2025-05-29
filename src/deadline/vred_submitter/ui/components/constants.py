@@ -5,6 +5,25 @@
 from types import MappingProxyType
 from typing import List, Final
 
+# Note: For all Qt Widgets, 1920x1080 @ 100% scale was used to determine baseline X,Y dimension values
+# (at DPIScale.factor=1.0). Changing resolution and scale will maintain the sizing/layout of widgets.
+# Avoid circular dependencies by storing DPI factor here and changing from outside.
+
+
+class DPIScale:
+    factor: float = 1.0
+
+
+_global_dpi_scale = DPIScale()
+
+
+class ClassProperty:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, owner):
+        return self.func(owner)
+
 
 class ConstantsMeta(type):
     """Metaclass to prevent modification of class attributes."""
@@ -25,17 +44,29 @@ class Constants(metaclass=ConstantsMeta):
     ANIMATION_CLIP_LABEL: Final[str] = "Animation Clip"
     ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The specific animation clip to render."
     ANIMATION_TYPE_LABEL: Final[str] = "Animation Type"
-    ANIMATION_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of animation."
+    ANIMATION_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of animation (Clip or Timeline)."
     ANIMATION_TYPE_OPTIONS: Final[List[str]] = ["Clip", "Timeline"]
     CLIP_LABEL: Final[str] = "Clip"
-    COLUMN_SMALL_SPACING_OFFSET_PIXELS: Final[int] = 40
+
+    @ClassProperty
+    def COLUMN_SMALL_SPACING_OFFSET_PIXELS(cls) -> int:
+        return int(15 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def COMBO_BOX_MIN_WIDTH(cls) -> int:
+        return int(55 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def COMBO_BOX_PADDING(cls) -> int:
+        return int(24 * _global_dpi_scale.factor)
+
     CUSTOM_SPEED_FIELD_NAME: Final[str] = "_customSpeed"
     DEFAULT_IMAGE_SIZE_PRESET: Final[str] = "SVGA (800 x 600)"
     DEFAULT_SCENE_FILE_FPS_COUNT: Final[float] = 24.0
     DEFAULT_DPI_RESOLUTION: Final[int] = 72
     DLSS_QUALITY_LABEL: Final[str] = "DLSS Quality"
     DLSS_QUALITY_LABEL_DESCRIPTION: Final[str] = (
-        "Sets the deep learning supersampling (DLSS) quality."
+        "The Deep Learning Super Sampling (DLSS) quality level to apply."
     )
     DLSS_QUALITY_OPTIONS: Final[List[str]] = [
         "Off",
@@ -44,28 +75,39 @@ class Constants(metaclass=ConstantsMeta):
         "Quality",
         "Ultra Performance",
     ]
+    DPI_LABEL: Final[str] = "Resolution (px/inch)"
+    DPI_LABEL_DESCRIPTION: Final[str] = (
+        "The dots-per-inch (DPI) physical scaling factor in (pixels per inch)."
+    )
     ELLIPSIS_LABEL: Final[str] = "..."
     EMPTY_FRAME_RANGE: Final[str] = "0-0"
     ENABLE_REGION_RENDERING_LABEL: Final[str] = "Enable Region Rendering"
     ENABLE_REGION_RENDERING_LABEL_DESCRIPTION: Final[str] = (
-        "If this option is enabled, then the image will be divided into multiple tasks and assembled afterwards."
+        "When enabled, the output rendered image will be divided into multiple tiles (sub-regions) that are first "
+        "rendered as separate tasks for a given frame. These tiles will then be assembled (combined) into one output "
+        "image for a given frame (in a separate task)."
     )
-    FILE_PATH_REGEX_FILTER: Final[str] = r"^[a-zA-Z0-9_\-\. /\\:]+$"
+    FILE_PATH_REGEX_UNICODE_FILTER: Final[str] = r"^[\p{L}\p{N}_\-\. /\\:]+$"
     FRAME_RANGE_BASIC_FORMAT: Final[str] = "%d-%d"
     FRAME_RANGE_LABEL: Final[str] = "Frame Range"
-    FRAME_RANGE_LABEL_DESCRIPTION: Final[str] = "The list of frames to render."
+    FRAME_RANGE_LABEL_DESCRIPTION: Final[str] = (
+        "The list of frames to render (format: 'a', 'a-b', or 'a-bxn', "
+        "where 'a' is the start frame, 'b' is the end frame, and 'n' is "
+        "the frame step)."
+    )
+    FRAME_RANGE_MAX_LENGTH: Final[int] = 31
     FRAME_RANGE_REGEX_FILTER: Final[str] = r"^[0-9x\-]+$"
     FRAMES_PER_TASK_LABEL: Final[str] = "Frames Per Task"
     FRAMES_PER_TASK_LABEL_DESCRIPTION: Final[str] = (
-        "The number of frames that will be rendered at a time for each job's task."
+        "The number of frames that will be rendered at a time for each task within a render job."
     )
     IMAGE_SIZE_LABEL: Final[str] = "Image Size (px w,h)"
-    IMAGE_SIZE_LABEL_DESCRIPTION: Final[str] = "The image size in pixels (width and height)"
+    IMAGE_SIZE_LABEL_DESCRIPTION: Final[str] = "The image size in pixels (width and height)."
     IMAGE_SIZE_PRESET_CUSTOM: Final[str] = "Custom"
     IMAGE_SIZE_PRESET_FROM_RENDER_WINDOW: Final[str] = "From Render Window"
     IMAGE_SIZE_PRESETS_LABEL: Final[str] = "Image Size Presets"
     IMAGE_SIZE_PRESETS_LABEL_DESCRIPTION: Final[str] = (
-        "The available presets for image size and resolution"
+        "The available presets for image size and resolution."
     )
     IMAGE_SIZE_PRESETS_MAP: MappingProxyType[str, list[int]] = MappingProxyType(
         {
@@ -119,27 +161,80 @@ class Constants(metaclass=ConstantsMeta):
         JOB_TYPE_RENDER,
         JOB_TYPE_SEQUENCER,
     ]
-    LONG_TEXT_ENTRY_WIDTH: Final[int] = 500
+
+    @ClassProperty
+    def LONG_TEXT_ENTRY_WIDTH(cls) -> int:
+        return int(200 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def MESSAGE_BOX_MIN_WIDTH(cls) -> int:
+        return int(100 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def MESSAGE_BOX_SPACER_PREFERRED_WIDTH(cls) -> int:
+        return int(150 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def MESSAGE_BOX_MAX_WIDTH(cls) -> int:
+        return int(200 * _global_dpi_scale.factor)
+
     MIN_FRAMES_PER_TASK: Final[int] = 1
     MIN_DPI: Final[int] = 1
     MIN_IMAGE_DIMENSION: Final[int] = 1
+    MIN_PRINT_DIMENSION: Final[float] = 0.04
+    MAX_PRINT_DIMENSION: Final[float] = 25400.0
     MIN_TILES_PER_DIMENSION: Final[int] = 1
     MAX_DPI: Final[int] = 1000
     MAX_FRAMES_PER_TASK: Final[int] = 10000
     MAX_IMAGE_DIMENSION: Final[int] = 10000
     MAX_TILES_PER_DIMENSION: Final[int] = 10000
-    MODERATE_TEXT_ENTRY_WIDTH: Final[int] = 300
+
+    @ClassProperty
+    def MODERATE_TEXT_ENTRY_WIDTH(cls) -> int:
+        return int(145 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def PUSH_BUTTON_MAXIMUM_WIDTH(cls) -> int:
+        return int(40 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def PUSH_BUTTON_MAXIMUM_HEIGHT(cls) -> int:
+        return int(40 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def PUSH_BUTTON_PADDING_PIXELS(cls) -> int:
+        return int(10 * _global_dpi_scale.factor)
+
+    PUSH_BUTTON_WIDTH_FACTOR: Final[int] = 4
     PRINTING_PRECISION_DIGITS_COUNT: Final[int] = 2
     PRINTING_SIZE_LABEL: Final[str] = "Printing Size (cm w,h)"
     PRINTING_SIZE_LABEL_DESCRIPTION: Final[str] = (
-        "The printing size in centimeters (width and height)"
+        "The printing size in centimeters (width and height)."
     )
+    QT_GROUP_BOX_STYLESHEET: Final[
+        str
+    ] = """
+            QGroupBox {
+                border: 4px solid #999999;
+                border-radius: 10px;
+                margin-top: 5ex;
+                font-weight: bold;
+                color: #ffffff;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 10px;
+                background-color: #444444;
+            }
+    """
     RENDER_ANIMATION_LABEL: Final[str] = "Render Animation"
     RENDER_ANIMATION_LABEL_DESCRIPTION: Final[str] = (
-        "The animation to use, if left blank it will use all enabled clips."
+        "If checked, allows specifying an animation type (which can also include a specific animation clip), "
+        "corresponding frame range and frames per task."
     )
     RENDER_QUALITY_LABEL: Final[str] = "Render Quality"
-    RENDER_QUALITY_LABEL_DESCRIPTION: Final[str] = "The render quality to apply."
+    RENDER_QUALITY_LABEL_DESCRIPTION: Final[str] = "The render quality level to apply."
     RENDER_QUALITY_OPTIONS: Final[List[str]] = [
         "Analytic Low",
         "Analytic High",
@@ -150,36 +245,43 @@ class Constants(metaclass=ConstantsMeta):
     ]
     RENDER_QUALITY_DEFAULT: Final[str] = "Realistic High"
     RENDER_OUTPUT_LABEL: Final[str] = "Render Output"
-    RENDER_OUTPUT_LABEL_DESCRIPTION: Final[str] = "The filename of the image(s) to be rendered."
+    RENDER_OUTPUT_LABEL_DESCRIPTION: Final[str] = (
+        "The path and filename prefixing of the image(s) to be rendered."
+    )
     RENDER_VIEW_LABEL: Final[str] = "Render Viewpoint/Camera"
-    RENDER_VIEW_LABEL_DESCRIPTION: Final[str] = "The viewpoint or camera to render"
-    RESOLUTION_LABEL: Final[str] = "Resolution (px/inch)"
-    RESOLUTION_LABEL_DESCRIPTION: Final[str] = "The resolution (pixels per inch)"
+    RENDER_VIEW_LABEL_DESCRIPTION: Final[str] = "The viewpoint or camera to render."
     SECTION_RENDER_OPTIONS: Final[str] = "Render Options"
     SECTION_SEQUENCER_OPTIONS: Final[str] = "Sequencer Options"
     SECTION_TILING_SETTINGS: Final[str] = "Tiling Settings"
+    SELECT_DIRECTORY_PROMPT: Final[str] = "Select Directory"
+    SELECT_FILE_PROMPT: Final[str] = "Select File"
     SELECTED_IMAGE_LABEL: Final[str] = "Selected Image"
     SEQUENCE_NAME_LABEL: Final[str] = "Sequence Name"
     SEQUENCE_NAME_LABEL_DESCRIPTION: Final[str] = (
-        "The name of the sequence to run, if empty all sequences will be run."
+        "The name of the sequence to run; if empty all sequences will be run."
     )
-    SHORT_TEXT_ENTRY_WIDTH: Final[int] = 200
+
+    @ClassProperty
+    def SHORT_TEXT_ENTRY_WIDTH(cls) -> int:
+        return int(70 * _global_dpi_scale.factor)
+
     SS_QUALITY_LABEL: Final[str] = "SS Quality"
     SS_QUALITY_LABEL_DESCRIPTION: Final[str] = (
-        "Sets the regular (non-DLSS) supersampling quality. DLSS quality takes precedence."
+        "The Super Sampling quality level to apply; note: DLSS quality level takes precedence."
     )
     SS_QUALITY_OPTIONS: Final[List[str]] = ["Off", "Low", "Medium", "High", "Ultra High"]
-    SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL: Final[str] = "Submit Dependent Assembly Job"
-    SUBMIT_DEPENDENT_ASSEMBLY_JOB_LABEL_DESCRIPTION: Final[str] = (
-        "If this option is enabled then an assembly job will be submitted."
-    )
+
+    @ClassProperty
+    def SUBMITTER_DIALOG_WINDOW_DIMENSIONS(cls) -> List[int]:
+        return [int(600 * _global_dpi_scale.factor), int(500 * _global_dpi_scale.factor)]
+
     TILES_IN_X_LABEL: Final[str] = "Tiles In X"
     TILES_IN_X_LABEL_DESCRIPTION: Final[str] = (
-        "The number of tiles to horizontally divide the region into."
+        "The number of tiles to horizontally divide the specified image size."
     )
     TILES_IN_Y_LABEL: Final[str] = "Tiles In Y"
     TILES_IN_Y_LABEL_DESCRIPTION: Final[str] = (
-        "The number of tiles to vertically divide the region into."
+        "The number of tiles to vertically divide the specified  image size."
     )
     TIMELINE_ACTION_NAME: Final[str] = "Timeline"
     TIMELINE_ANIMATION_PREFS_BUTTON_NAME: Final[str] = "_prefs"
@@ -190,10 +292,17 @@ class Constants(metaclass=ConstantsMeta):
         "selected animation clip."
     )
     USE_GPU_RAY_TRACING_LABEL: Final[str] = "Use GPU Ray Tracing"
-    USE_GPU_RAY_TRACING_LABEL_DESCRIPTION: Final[str] = "Use GPU Ray Tracing."
+    USE_GPU_RAY_TRACING_LABEL_DESCRIPTION: Final[str] = "Apply GPU-based Ray Tracing."
     UTF8_FLAG = "utf-8"
-    VERY_LONG_TEXT_ENTRY_WIDTH: Final[int] = 700
-    VERY_SHORT_TEXT_ENTRY_WIDTH: Final[int] = 150
+
+    @ClassProperty
+    def VERY_LONG_TEXT_ENTRY_WIDTH(cls) -> int:
+        return int(280 * _global_dpi_scale.factor)
+
+    @ClassProperty
+    def VERY_SHORT_TEXT_ENTRY_WIDTH(cls) -> int:
+        return int(50 * _global_dpi_scale.factor)
+
     VRED_ALL_FILES_FILTER: Final[str] = "All Files (*.*)"
     VRED_IMAGE_EXPORT_FILTER: Final[str] = (
         "*.png (*.png);;*.bmp (*.bmp);;*.dds (*.dds);;*.dib (*.dib);;"

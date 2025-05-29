@@ -18,19 +18,20 @@ class RenderSubmitterUISettings:
     VRED-specific render settings that the submitter UI will reference.
     Note: these case-sensitive settings need to be synchronized with exact field names in template.yaml, UI.
     Note: these settings can't be dynamically loaded in-place using the existing dataclass/field mechanism.
+    Note: values set to False might not be exposed in the submitter UI, but are exposed in the stock UI and backend
     """
 
-    submitter_name: str = field(default="VRED")
-    name: str = field(default="")
-    description: str = field(default="")
-
-    # File references
+    # Internal settings
     #
+    description: str = field(default="")
     input_filenames: list[str] = field(default_factory=list)
     input_directories: list[str] = field(default_factory=list)
+    JobScriptDir: str = field(default=os.path.normpath(os.path.join(Path(__file__).parent)))
+    name: str = field(default="")
     output_directories: list[str] = field(default_factory=list)
+    submitter_name: str = field(default="VRED")
 
-    # Render settings - note settings that are listed as False aren't currently implemented
+    # Render settings - some settings that have a False value aren't currently exposed in the UI
     #
     AnimationClip: str = field(default="")
     AnimationType: str = field(default="Clip")
@@ -60,4 +61,3 @@ class RenderSubmitterUISettings:
     StartFrame: int = field(default=0)
     TonemapHDR: bool = field(default=False)
     View: str = field(default="")
-    JobScriptDir: str = field(default=os.path.normpath(os.path.join(Path(__file__).parent)))
