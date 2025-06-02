@@ -153,6 +153,14 @@ class SceneSettingsCallbacks:
 
         self.parent.sequence_name_widget.setEnabled(is_sequencer_job)
 
+        # Keep state consistent, especially when reinitializing persistent UI
+        self.parent.use_clip_range_widget.stateChanged.emit(
+            self.parent.use_clip_range_widget.checkState()
+        )
+        self.parent.animation_type_widget.currentIndexChanged.emit(
+            self.parent.animation_type_widget.currentIndex()
+        )
+
         # Update persisted settings if initialization is complete
         if self.parent.init_complete:
             self.parent.populator.persisted_ui_settings_states.job_type = render_job_type
@@ -310,6 +318,15 @@ class SceneSettingsCallbacks:
         # Avoid recursive updates and validate inputs
         if self._updating_values:
             return
+
+        text = self.parent.image_size_x_widget.text() or str(Constants.MIN_IMAGE_DIMENSION)
+        if not self.parent.image_size_x_widget.text():
+            self.parent.image_size_x_widget.setText(text)
+
+        text = self.parent.image_size_y_widget.text() or str(Constants.MIN_IMAGE_DIMENSION)
+        if not self.parent.image_size_y_widget.text():
+            self.parent.image_size_y_widget.setText(text)
+
         if not is_all_numbers(
             [
                 self.parent.image_size_x_widget.text(),
@@ -425,6 +442,15 @@ class SceneSettingsCallbacks:
         # Avoid recursive updates and validate inputs
         if self._updating_values:
             return
+
+        text = self.parent.printing_size_x_widget.text() or str(Constants.MIN_PRINT_DIMENSION)
+        if not self.parent.printing_size_x_widget.text():
+            self.parent.printing_size_x_widget.setText(text)
+
+        text = self.parent.printing_size_y_widget.text() or str(Constants.MIN_PRINT_DIMENSION)
+        if not self.parent.printing_size_y_widget.text():
+            self.parent.printing_size_y_widget.setText(text)
+
         if not is_all_numbers(
             [
                 self.parent.printing_size_x_widget.text(),
@@ -583,9 +609,10 @@ class SceneSettingsCallbacks:
     def resolution_changed_callback(self) -> None:
         """Adjusts image resolution based on constant printing size and DPI"""
         if self.parent.init_complete:
-            self.parent.populator.persisted_ui_settings_states.resolution = int(
-                self.parent.resolution_widget.text()
-            )
+            text = self.parent.resolution_widget.text() or str(Constants.MIN_DPI)
+            if not self.parent.resolution_widget.text():
+                self.parent.resolution_widget.setText(text)
+            self.parent.populator.persisted_ui_settings_states.resolution = int(text)
         self.printing_size_text_changed_callback()
 
     def animation_clip_selection_changed_callback(self) -> None:
@@ -614,11 +641,14 @@ class SceneSettingsCallbacks:
         """
         if not self.parent.init_complete:
             return
-        clip_type_enabled = self.parent.animation_type_widget.currentText() == Constants.CLIP_LABEL
+        if not self.parent.render_animation_widget.isChecked():
+            self.parent.use_clip_range_widget.setEnabled(False)
+            return
         self.parent.populator.persisted_ui_settings_states.animation_type = (
             self.parent.animation_type_widget.currentText()
         )
         # Update UI controls based on the animation type
+        clip_type_enabled = self.parent.animation_type_widget.currentText() == Constants.CLIP_LABEL
         self.parent.animation_clip_widget.setEnabled(clip_type_enabled)
         self.parent.use_clip_range_widget.setEnabled(clip_type_enabled)
         if clip_type_enabled:
@@ -629,6 +659,8 @@ class SceneSettingsCallbacks:
         else:
             # For timelines: frame range is always editable
             self.parent.frame_range_widget.setEnabled(True)
+            self.parent.animation_clip_widget.setEnabled(False)
+            self.parent.use_clip_range_widget.setEnabled(False)
 
     def use_clip_range_changed_callback(self) -> None:
         """
@@ -638,7 +670,8 @@ class SceneSettingsCallbacks:
             return
         enabled = self.parent.use_clip_range_widget.isChecked()
         self.parent.populator.persisted_ui_settings_states.use_clip_range = enabled
-        self.parent.frame_range_widget.setEnabled(not enabled)
+        if self.parent.use_clip_range_widget.isEnabled():
+            self.parent.frame_range_widget.setEnabled(not enabled)
         if enabled:
             # Check if there are animation clips available (beyond the empty one)
             if len(self.parent.populator.animation_clip_ranges_map) > 1:

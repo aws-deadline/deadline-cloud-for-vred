@@ -147,7 +147,6 @@ class SceneSettingsWidget(QWidget):
         self._add_image_size_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_printing_size_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_resolution_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
-        self._add_render_animation_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self.render_quality_widget = self._add_label_and_widget(
             grid_layout,
             row_counter,
@@ -172,6 +171,7 @@ class SceneSettingsWidget(QWidget):
             Constants.SS_QUALITY_LABEL_DESCRIPTION,
             AutoSizedComboBox,
         )
+        self._add_render_animation_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_animation_type_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self._add_animation_clip_controls(grid_layout, row_counter, self.DEFAULT_WIDGET_ALIGNMENT)
         self.use_clip_range_widget = QCheckBox(Constants.USE_CLIP_RANGE_LABEL)
@@ -255,7 +255,7 @@ class SceneSettingsWidget(QWidget):
         render_output_layout.addWidget(self.render_output_widget)
         render_output_layout.addWidget(self.render_output_button)
         grid_layout.addLayout(render_output_layout, next(row_counter), 1, alignment)
-        regex = QRegularExpression(Constants.FILE_PATH_REGEX_FILTER)
+        regex = QRegularExpression(Constants.FILE_PATH_REGEX_UNICODE_FILTER)
         validator = QRegularExpressionValidator(regex)
         self.render_output_widget.setValidator(validator)
 
@@ -332,10 +332,11 @@ class SceneSettingsWidget(QWidget):
         printing_size_layout.addWidget(self.printing_size_y_widget)
         grid_layout.addLayout(printing_size_layout, next(row_counter), 1, alignment)
         printing_size_validator = QDoubleValidator(
-            Constants.MIN_IMAGE_DIMENSION,
-            Constants.MAX_IMAGE_DIMENSION,
+            Constants.MIN_PRINT_DIMENSION,
+            Constants.MAX_PRINT_DIMENSION,
             Constants.PRINTING_PRECISION_DIGITS_COUNT,
         )
+        printing_size_validator.setNotation(QDoubleValidator.Notation.StandardNotation)
         self.printing_size_x_widget.setValidator(printing_size_validator)
         self.printing_size_y_widget.setValidator(printing_size_validator)
 
@@ -351,8 +352,8 @@ class SceneSettingsWidget(QWidget):
         param: row_counter: tracks row number that UI elements added
         param: alignment: alignment for the label and widget
         """
-        self.resolution_label = QLabel(Constants.RESOLUTION_LABEL)
-        self.resolution_label.setToolTip(Constants.RESOLUTION_LABEL_DESCRIPTION)
+        self.resolution_label = QLabel(Constants.DPI_LABEL)
+        self.resolution_label.setToolTip(Constants.DPI_LABEL_DESCRIPTION)
         grid_layout.addWidget(self.resolution_label, iterator_value(row_counter), 0, alignment)
         self.resolution_widget = QLineEdit("")
         self.resolution_widget.setFixedWidth(Constants.SHORT_TEXT_ENTRY_WIDTH)
@@ -434,6 +435,7 @@ class SceneSettingsWidget(QWidget):
         regex = QRegularExpression(Constants.FRAME_RANGE_REGEX_FILTER)
         validator = QRegularExpressionValidator(regex)
         self.frame_range_widget.setValidator(validator)
+        self.frame_range_widget.setMaxLength(Constants.FRAME_RANGE_MAX_LENGTH)
 
     def _add_frames_per_task_controls(
         self,

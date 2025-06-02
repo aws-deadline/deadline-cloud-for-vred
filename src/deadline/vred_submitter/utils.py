@@ -12,7 +12,7 @@ from .constants import Constants
 
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, TypeVar, Union
+from typing import Any, Callable, Dict, Iterator, List, Tuple, TypeVar, Union
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
@@ -227,4 +227,18 @@ def is_valid_filename(filename: str) -> bool:
     """
     return: True if filename consists of characters comprising a valid filename; False otherwise
     """
-    return bool(re.match(Constants.FILENAME_REGEX, filename))
+    return bool(re.match(Constants.FILENAME_UNICODE_REGEX, filename, re.UNICODE))
+
+
+def get_file_name_path_components(filename_with_path: str) -> Tuple[str, str, str]:
+    """
+    Extracts the directory, filename prefix, and extension from filename_with_path.
+    param: filename_with_path: path to examine
+    return: the directory, filename prefix, and extension
+    """
+    if not filename_with_path:
+        return "", "", ""
+    directory = get_normalized_path(os.path.dirname(filename_with_path))
+    filename_prefix = os.path.splitext(os.path.basename(filename_with_path))[0]
+    extension = os.path.splitext(filename_with_path)[1][1:]
+    return directory, filename_prefix, extension

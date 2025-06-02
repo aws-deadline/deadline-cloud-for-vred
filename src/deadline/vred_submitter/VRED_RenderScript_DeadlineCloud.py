@@ -42,6 +42,7 @@ from vrOSGWidget import (
     VR_DLSS_ULTRA_PERFORMANCE,
 )
 from vrRenderSettings import (
+    getRenderFilename,
     setRaytracingMode,
     setRaytracingRenderRegion,
     setRenderAlpha,
@@ -175,6 +176,7 @@ class DeadlineCloudRenderer:
     PATH_MAPPING_RULES_FIELD = "path_mapping_rules"
     READ_FLAG = "r"
     REMAPPING_FILE_REFERENCE = "Remapping file reference:"
+    RENDERING_TO_FILE = "Render output filename is:"
     RUNNING_ALL_SEQUENCES_STARTING = "Starting to run all sequences"
     RUNNING_SEQUENCE_STARTING = "Starting to run the following sequence:"
     STARTING_RENDER_PROCESS = "Starting render process."
@@ -191,19 +193,28 @@ class DeadlineCloudRenderer:
         logging.basicConfig(format=self.LOGGING_FORMAT, level=self.LOGGING_LEVEL)
         self.path_mapping_rules: List[PathMappingRule] = []
         self.render_parameters: Any = DynamicKeyValueObject(render_parameters_dict)
+        self.output_filename = self._get_conventional_output_filename()
+
+    def _get_conventional_output_filename(self) -> str:
+        """
+        Initializes the convention-based output filename depending on whether there are render regions enabled
+        return: output filename as a path that includes its filename as: prefix.suffix or prefix_YxX_BxA.suffix
+        (filename convention for tile-based rendering).
+        Note: tile assembly filename convention is specified in the job template and represents X, Y for tiling
+        on row (Y) and column (X), while total tiles are denoted as [# of X tiles]x[# of Y tiles] - not the reverse!
+        Tiles are initially processed left to right from top to bottom.
+        """
         output_directory = self.render_parameters.OutputDir.strip().replace("\\", "/")
         output_file_prefix = self.render_parameters.OutputFileNamePrefix.strip()
         output_file_suffix = self.render_parameters.OutputFormat.strip().lower()
         output_file_render_region_prefix = ""
         if self.render_parameters.RegionRendering:
-            # Follow a filename convention for tile-based rendering: prefix_region_XxY_AxB.suffix
-            # Convention should adhere to tile assembly filename scheme specified in the job template and reverses X,Y for the tile itself. Tiles are initially processed left to right from top to bottom
             output_file_render_region_prefix = (
                 f"{self.render_parameters.TileNumberY}x"
                 f"{self.render_parameters.TileNumberX}_{self.render_parameters.NumXTiles}"
                 f"x{self.render_parameters.NumYTiles}"
             )
-        self.output_filename = os.path.join(
+        return os.path.join(
             output_directory,
             f"{output_file_prefix}{output_file_render_region_prefix}.{output_file_suffix}",
         )
@@ -410,13 +421,13 @@ class DeadlineCloudRenderer:
             if node.hasSmartReference():
                 orig_path = node.getSmartPath()
                 self.logger.info(
-                    f"{self.REMAPPING_FILE_REFERENCE}: {orig_path}->{self.map_path(orig_path)}"
+                    f"{self.REMAPPING_FILE_REFERENCE}: {orig_path} -> {self.map_path(orig_path)}"
                 )
                 node.setSmartPath(self.map_path(orig_path))
             else:
                 orig_path = node.getSourcePath()
                 self.logger.info(
-                    f"{self.REMAPPING_FILE_REFERENCE}: {orig_path}->{self.map_path(orig_path)}"
+                    f"{self.REMAPPING_FILE_REFERENCE}: {orig_path} -> {self.map_path(orig_path)}"
                 )
                 node.setSourcePath(self.map_path(orig_path))
 
@@ -428,30 +439,26 @@ class DeadlineCloudRenderer:
         """
         setUseRenderRegion(self.render_parameters.RegionRendering)
         if self.render_parameters.RegionRendering:
-            # Tile number uses 1-based indexing. First tile (top left) is x=1, y=1.
+            # Tile number uses 1-based indexing. Treat first tile (top left) as x=0, y=0.
             tile_num_x = self.render_parameters.TileNumberX
             tile_num_y = self.render_parameters.TileNumberY
             total_x_tiles = self.render_parameters.NumXTiles
             total_y_tiles = self.render_parameters.NumYTiles
-            delta_x, width_remainder = divmod(self.render_parameters.ImageWidth, total_x_tiles)
-            delta_y, height_remainder = divmod(self.render_parameters.ImageHeight, total_y_tiles)
-            # Calculate the bounds for the tile.
-            left = delta_x * (tile_num_x - 1)
-            right = (delta_x * tile_num_x) - 1
-            bottom = delta_y * (tile_num_y - 1)
-            top = (delta_y * tile_num_y) - 1
-            # Add any remainder to the last row and column
-            if tile_num_x == total_x_tiles:
-                right += width_remainder
-            if tile_num_y == total_y_tiles:
-                top += height_remainder
+            width = self.render_parameters.ImageWidth
+            height = self.render_parameters.ImageHeight
+            # Calculate the bounds for the tile with rounding applied.
+            # Include a small overlap between tiles for addressing tile gap concerns
+            left = int((float(width) / total_x_tiles * (tile_num_x - 1)) + 0.5)
+            right = int((float(width) / total_x_tiles * tile_num_x) + 0.5)
+            bottom = int((float(height) / total_y_tiles * (tile_num_y - 1)) + 0.5)
+            top = int((float(height) / total_y_tiles * tile_num_y) + 0.5)
             # Set the border ranges for the tile
             setRenderRegionStartX(left)
             setRenderRegionEndX(right)
             setRenderRegionStartY(bottom)
             setRenderRegionEndY(top)
-            # Set active render region per convention: setRaytracingRenderRegion(xBegin, yBegin, xEnd, yEnd)
-            # Each parameter is a relative normalized coordinate in [0.0,1.0].
+            # Set the active render region per convention: setRaytracingRenderRegion(xBegin, yBegin, xEnd, yEnd)
+            # Each parameter becomes a relative normalized coordinate (in [0.0,1.0]).
             left = float(left) / self.render_parameters.ImageWidth
             right = float(right) / self.render_parameters.ImageWidth
             bottom = float(bottom) / self.render_parameters.ImageHeight
@@ -483,13 +490,10 @@ class DeadlineCloudRenderer:
 
     def process_warning(self, message) -> None:
         """
-        Logs a warning message and raises a ValueError if JobFailureOnWarnings is True
-        :param: message: warning message to log and raise
-        :raises: ValueError: if JobFailureOnWarnings is True
+        Logs a warning
+        :param: message: warning message to log
         """
         self.logger.warning(message)
-        if self.render_parameters.JobFailureOnWarnings:
-            raise ValueError(message)
 
     def render(self) -> None:
         """
@@ -500,6 +504,7 @@ class DeadlineCloudRenderer:
             self.init_file_references()
             self.init_render_settings()
             self.logger.info(self.STARTING_RENDER_PROCESS)
+            self.logger.info(f"{self.RENDERING_TO_FILE} {getRenderFilename()}")
             startRenderToFile(True)
             # Important to close VRED for further frame rendering to proceed and to release license
             if self.WANT_VRED_TERMINATION:

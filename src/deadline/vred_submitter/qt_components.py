@@ -4,7 +4,7 @@
 
 from typing import Optional
 
-from .constants import Constants
+from .ui.components.constants import Constants as UIConstants
 
 from PySide6.QtCore import QEvent, Qt, QSize
 from PySide6.QtGui import QFontMetrics
@@ -33,7 +33,7 @@ class CustomGroupBox(QGroupBox):
         param: parent: the parent widget
         """
         super().__init__(text, parent)
-        self.setStyleSheet(Constants.QT_GROUP_BOX_STYLESHEET)
+        self.setStyleSheet(UIConstants.QT_GROUP_BOX_STYLESHEET)
 
 
 class AutoSizedButton(QPushButton):
@@ -58,7 +58,8 @@ class AutoSizedButton(QPushButton):
             return 0
         text_width = int(QFontMetrics(self.font()).horizontalAdvance(self.text()))
         return int(
-            (text_width + Constants.PUSH_BUTTON_PADDING_PIXELS) / Constants.PUSH_BUTTON_WIDTH_FACTOR
+            (text_width + UIConstants.PUSH_BUTTON_PADDING_PIXELS)
+            / UIConstants.PUSH_BUTTON_WIDTH_FACTOR
         )
 
     def sizeHint(self) -> QSize:
@@ -81,6 +82,8 @@ class AutoSizedComboBox(QComboBox):
         """
 
         super().__init__(parent)
+        self.forced_override_minimum_width = 0
+        self.max_width = 0
         # Perform automatic resizing when entries are changed
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.model().rowsInserted.connect(self.adjust_size_callback)
@@ -95,8 +98,10 @@ class AutoSizedComboBox(QComboBox):
 
     def adjust_size_callback(self) -> None:
         """
-        Adjust the size of the combo box based on the maximum length of its entries.
+        Adjust the size of the combo box based on the maximum length of its entries (if that size wasn't overridden)
         """
+        if self.forced_override_minimum_width > 0:
+            return
         # Avoid shrinking and find the widest entry
         self.setMinimumWidth(self.sizeHint().width())
         metrics = QFontMetrics(self.font())
@@ -105,11 +110,32 @@ class AutoSizedComboBox(QComboBox):
             width = metrics.horizontalAdvance(self.itemText(i))
             max_width = max(max_width, width)
         # Add padding for dropdown arrow and frame
-        max_width = max(max_width + Constants.COMBO_BOX_PADDING, Constants.COMBO_BOX_MIN_WIDTH)
-        self.setFixedWidth(max_width)
+        self.max_width = max(
+            max_width + UIConstants.COMBO_BOX_PADDING, UIConstants.COMBO_BOX_MIN_WIDTH
+        )
+        self.setFixedWidth(self.max_width)
         # Popup view should also be sufficiently wide
         if self.view():
-            self.view().setMinimumWidth(max_width)
+            self.view().setMinimumWidth(self.max_width)
+
+    def set_width(self, width: int) -> None:
+        """
+        Sets the minimum width of the combo box - this overrides any prior automatically determined settings
+        param: width: the minimum width to be set
+        """
+        self.forced_override_minimum_width = width
+        self.setMinimumWidth(width)
+        self.setFixedWidth(width)
+        if self.view():
+            self.view().setMinimumWidth(width)
+        self.max_width = width
+
+    def get_width(self) -> int:
+        """
+        Gets the width of the combo box
+        return: the width of the combo box
+        """
+        return self.max_width
 
 
 class AutoSizingMessageBox(QMessageBox):
@@ -124,8 +150,8 @@ class AutoSizingMessageBox(QMessageBox):
         super().__init__(parent)
         # Rich text improves formatting
         self.setTextFormat(Qt.TextFormat.RichText)
-        self.setMinimumWidth(Constants.MESSAGE_BOX_MIN_WIDTH)
-        self.setMaximumWidth(Constants.MESSAGE_BOX_MAX_WIDTH)
+        self.setMinimumWidth(UIConstants.MESSAGE_BOX_MIN_WIDTH)
+        self.setMaximumWidth(UIConstants.MESSAGE_BOX_MAX_WIDTH)
         self.setSizePolicy(self.sizePolicy().horizontalPolicy(), self.sizePolicy().verticalPolicy())
 
     def resizeEvent(self, event: QEvent) -> None:
@@ -137,7 +163,7 @@ class AutoSizingMessageBox(QMessageBox):
         # Horizontal spacer helps to adjust layout width
         layout = self.layout()
         if layout is not None and isinstance(layout, QGridLayout):
-            spacer = QSpacerItem(Constants.MESSAGE_BOX_SPACER_PREFERRED_WIDTH, 0)
+            spacer = QSpacerItem(UIConstants.MESSAGE_BOX_SPACER_PREFERRED_WIDTH, 0)
             layout.addItem(spacer, layout.rowCount(), 0, 1, layout.columnCount())
         return result
 
@@ -162,18 +188,18 @@ class FileSearchLineEdit(QWidget):
         self.file_format = file_format
         self.directory_only = directory_only
         self.path_text_box = QLineEdit(self)
-        self.button = QPushButton(Constants.ELLIPSIS_LABEL, parent=self)
+        self.button = QPushButton(UIConstants.ELLIPSIS_LABEL, parent=self)
         self.setup()
 
     def setup(self) -> None:
         """
         Sets up the layout of the QLineEdit and push button controls.
         """
-        self.path_text_box.setFixedWidth(Constants.VERY_LONG_TEXT_ENTRY_WIDTH)
+        self.path_text_box.setFixedWidth(UIConstants.VERY_LONG_TEXT_ENTRY_WIDTH)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.button.setMaximumSize(
-            QSize(Constants.PUSH_BUTTON_MAXIMUM_WIDTH, Constants.PUSH_BUTTON_MAXIMUM_HEIGHT)
+            QSize(UIConstants.PUSH_BUTTON_MAXIMUM_WIDTH, UIConstants.PUSH_BUTTON_MAXIMUM_HEIGHT)
         )
         self.button.clicked.connect(self.common_file_dialog_callback)
         layout.addWidget(self.path_text_box)
@@ -187,13 +213,13 @@ class FileSearchLineEdit(QWidget):
         if self.directory_only:
             new_path_str = QFileDialog.getExistingDirectory(
                 self,
-                Constants.SELECT_DIRECTORY_PROMPT,
+                UIConstants.SELECT_DIRECTORY_PROMPT,
                 self.path_text_box.text(),
                 QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks,
             )
         else:
             new_path_str = QFileDialog.getOpenFileName(
-                self, Constants.SELECT_FILE_PROMPT, self.path_text_box.text()
+                self, UIConstants.SELECT_FILE_PROMPT, self.path_text_box.text()
             )
 
         if new_path_str:

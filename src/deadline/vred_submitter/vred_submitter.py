@@ -16,10 +16,15 @@ from typing import Any, Optional
 from .assets import AssetIntrospector
 from .constants import Constants
 from .data_classes import RenderSubmitterUISettings
-from .qt_utils import get_qt_yes_no_dialog_prompt_result
+from .qt_utils import center_widget, get_dpi_scale_factor, get_qt_yes_no_dialog_prompt_result
 from .scene import Scene
+from .ui.components.constants import _global_dpi_scale, Constants as UIConstants
 from .ui.components.scene_settings_widget import SceneSettingsWidget
-from .utils import get_normalized_path, get_yaml_contents, is_valid_filename
+from .utils import (
+    get_normalized_path,
+    get_yaml_contents,
+    is_valid_filename,
+)
 from .vred_logger import get_logger
 from .vred_utils import is_scene_file_modified, get_major_version, save_scene_file
 from ._version import version
@@ -70,7 +75,8 @@ class VREDSubmitter:
         return: modified job template with current settings applied.
         """
         job_template = deepcopy(default_job_template)
-        job_template[Constants.NAME_FIELD] = settings.name
+        if settings.name:
+            job_template[Constants.NAME_FIELD] = settings.name
         if settings.description:
             job_template[Constants.DESCRIPTION_FIELD] = settings.description
         if not settings.RegionRendering:
@@ -142,11 +148,8 @@ class VREDSubmitter:
             }
         )
         submitter_dialog = self._create_submitter_dialog(render_settings, attachments)
-        submitter_dialog.setMinimumSize(
-            Constants.SUBMITTER_DIALOG_WINDOW_DIMENSIONS[0],
-            Constants.SUBMITTER_DIALOG_WINDOW_DIMENSIONS[1],
-        )
         submitter_dialog.show()
+        center_widget(submitter_dialog)
         return submitter_dialog
 
     def _initialize_render_settings(self) -> RenderSubmitterUISettings:
@@ -204,8 +207,9 @@ class VREDSubmitter:
         shared_parameter_values = {Constants.CONDA_PACKAGES_FIELD: conda_packages}
         if conda_channels:
             shared_parameter_values[Constants.CONDA_CHANNELS_FIELD] = conda_channels
-
-        return SubmitJobToDeadlineDialog(
+        # Need to apply these settings prior in order to ensure that Qt Controls are sized as expected!
+        _global_dpi_scale.factor = get_dpi_scale_factor()
+        submitter_dialog = SubmitJobToDeadlineDialog(
             job_setup_widget_type=SceneSettingsWidget,
             initial_job_settings=render_settings,
             initial_shared_parameter_values=shared_parameter_values,
@@ -216,6 +220,11 @@ class VREDSubmitter:
             f=self.window_flags,
             show_host_requirements_tab=True,
         )
+        submitter_dialog.setMinimumSize(
+            UIConstants.SUBMITTER_DIALOG_WINDOW_DIMENSIONS[0],
+            UIConstants.SUBMITTER_DIALOG_WINDOW_DIMENSIONS[1],
+        )
+        return submitter_dialog
 
     def _create_job_bundle_callback(
         self,

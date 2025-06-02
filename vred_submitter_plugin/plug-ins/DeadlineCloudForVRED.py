@@ -38,7 +38,7 @@ ERROR_MSG_CLIENT_MISSING = (
     "Deadline Cloud Client is fully installed and that its directory is present in the system PATH "
     "environment variable. Typical installation directories are:\n"
     "   C:\\DeadlineCloudSubmitter\\DeadlineClient\n"
-    "   %USERPROFILE\\DeadlineCloudSubmitter\\DeadlineClient\n"
+    "   %USERPROFILE%\\DeadlineCloudSubmitter\\DeadlineClient\n"
 )
 
 ERROR_MSG_LOAD_CLIENT = "Encountered an error while loading the Deadline Cloud Client"
@@ -48,8 +48,8 @@ ERROR_MSG_SCRIPT_NOT_FOUND = (
     "The vred_submitter.py script could not be found in the Deadline Cloud Client directory for "
     "VRED. Please ensure that Deadline Cloud for VRED has been fully installed on this machine. "
     "Typical directory locations for vred_submitter.py are:\n"
-    "   C:\\DeadlineCloudSubmitter\\DeadlineClient\\Submitters\\VRED\\scripts\n"
-    "   %USERPROFILE\\DeadlineCloudSubmitter\\DeadlineClient\\Submitters\\VRED\\scripts\n"
+    "   C:\\DeadlineCloudSubmitter\\Submitters\\VRED\\scripts\n"
+    "   %USERPROFILE%\\DeadlineCloudSubmitter\\Submitters\\VRED\\scripts\n"
 )
 PATH_FIELD = "PATH"
 SUBMITTER_BASE_FOLDER_NAME = "DeadlineCloudSubmitter"

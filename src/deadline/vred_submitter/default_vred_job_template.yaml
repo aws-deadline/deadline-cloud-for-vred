@@ -398,7 +398,7 @@ parameterDefinitions:
       Output directories.
 
 steps:
-  - name: VREDLaunch
+  - name: VRED Render
     parameterSpace:
       taskParameterDefinitions:
         - name: StartFrameFromCurrentChunk
@@ -482,10 +482,13 @@ steps:
             #   (Windows): C:/Program Files/Autodesk/VREDPro-{version}/bin/WIN64/VREDCore.exe"
             # Note: if both of these environment variables are assigned, then "VREDCORE" will be take precedence.
             #
-
+            import io
             import os
             import platform
             import subprocess
+            import sys
+
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
             CODE_PASSING_ENV_VAR = "BOOTSTRAP_CODE"
             DISABLE_PYTHON_SANDBOX_PARAM = "-insecure_python"
@@ -609,10 +612,10 @@ steps:
           anyOf:
             - linux
             - windows
-  - name: TileAssembly
+  - name: Tile Assembly
     description: Combines tiles into individual frames. (step can be excluded as needed.)
     dependencies:
-    - dependsOn: VREDLaunch
+    - dependsOn: VRED Render
     script:
       actions:
         onRun:
@@ -628,50 +631,33 @@ steps:
           import platform
           import subprocess
 
-          CONCATENATE_MODE_PARAM = "-mode concatenate"
           END_FRAME = int("{{Param.EndFrame}}")
+          EVALUATE_SEQUENCE_PARAM = "-evaluate-sequence max"
           IS_WINDOWS = platform.system().lower() == "windows"
           MAGICK_BIN = os.path.normpath(os.environ.get("MAGICK") or "").replace("\\", "/")
-          GEOMETRY_PARAM = "-geometry"
           MIN_WORKERS_IF_UNKNOWN = 4
-          MONTAGE_PARAM = "montage"
           NUM_X_TILES = int("{{Param.NumXTiles}}")
           NUM_Y_TILES = int("{{Param.NumYTiles}}")
           OUTPUT_DIR = os.path.normpath(r"{{Param.OutputDir}}").replace("\\", "/")
           OUTPUT_FILE_PREFIX = "{{Param.OutputFileNamePrefix}}"
           OUTPUT_FORMAT = "{{Param.OutputFormat}}".lower()
-          REGION_RENDERING = "{{Param.RegionRendering}}".lower()=="true"
           START_FRAME = int("{{Param.StartFrame}}")
-          SOURCE_IMAGE_HEIGHT = int("{{Param.ImageHeight}}")
-          SOURCE_IMAGE_WIDTH = int("{{Param.ImageWidth}}")
-          TILE_HEIGHT = SOURCE_IMAGE_HEIGHT // NUM_Y_TILES
-          TILE_PARAM = "-tile"
-          TILE_WIDTH = SOURCE_IMAGE_WIDTH // NUM_X_TILES
-          TRIM_PARAM = "-trim"
 
           def assemble_frame(frame_num: int) -> None:
               """
-              Assembles a given frame from the tiles that comprise it. Filename format: prefix_XxY_AxB.suffix.
+              Assembles a given frame from the tiles that comprise it. Filename format: prefix_YxX_AxB.suffix.
               Assumes that output folder contains tiles in sequential order: left to right from top to bottom.
               :param: frame_num: frame number
               """
               frame_str = f"{frame_num:05d}"
-              # Compute desired tile size (with no spacing). Trim option will remove black borders; the geometry
-              # constraint is used to reach final image resolution, but may still have gaps. Trim option (by itself)
-              # would remove a 1-pixel border from each tile and removes surrounding pixels that match the 
-              # corner pixel color.
-              geometry_value = f"{TILE_WIDTH}x{TILE_HEIGHT}+0+0"
-              input_file_mask = rf"{OUTPUT_DIR}/*{frame_str}.*"
+              # Note: tile value is not [rows]x[columns]; it is [columns]x[rows]
               tile_value = f"{NUM_X_TILES}x{NUM_Y_TILES}"
+              input_file_mask = rf"{OUTPUT_DIR}/*_{tile_value}-{frame_str}.*"
               output_file = rf"{OUTPUT_DIR}/{OUTPUT_FILE_PREFIX}-{frame_str}.{OUTPUT_FORMAT}"
               command_and_arg_list: list[str] = [
                   MAGICK_BIN,
-                  MONTAGE_PARAM,
-                  TRIM_PARAM,
-                  CONCATENATE_MODE_PARAM,
-                  TILE_PARAM,
-                  tile_value,
                   input_file_mask,
+                  EVALUATE_SEQUENCE_PARAM,
                   output_file,
               ]
               try:

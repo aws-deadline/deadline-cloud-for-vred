@@ -4,7 +4,10 @@
 
 from .qt_components import AutoSizingMessageBox
 
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtWidgets import QMessageBox, QWidget
+
+_WINDOWS_STANDARD_DPI = 96.0
 
 
 def show_qt_ok_message_dialog(title: str, message: str) -> None:
@@ -39,3 +42,21 @@ def get_qt_yes_no_dialog_prompt_result(title: str, message: str, default_to_yes:
     )
     message_box.setDefaultButton(default_button)
     return message_box.exec() == QMessageBox.StandardButton.Yes
+
+
+def center_widget(widget: QWidget) -> None:
+    """
+    Centers the given dialog on the screen.
+    param: widget: the dialog to be centered
+    """
+    screen_geometry = QGuiApplication.primaryScreen().size()
+    x = (screen_geometry.width() - widget.width()) // 2
+    y = (screen_geometry.height() - widget.height()) // 2
+    widget.move(x, y)
+
+
+def get_dpi_scale_factor() -> float:
+    """
+    return: reference DPI scale factor for the primary screen
+    """
+    return QGuiApplication.primaryScreen().logicalDotsPerInch() / _WINDOWS_STANDARD_DPI
