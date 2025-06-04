@@ -49,215 +49,6 @@ parameterDefinitions:
       Choose the VRED scene file that you want to render.
       Use the 'Job Attachments' tab of the submitter GUI to add
       other dependent files that the job needs.
-  - name: JobType
-    type: STRING
-    userInterface:
-      control: DROPDOWN_LIST
-      label: Job Type
-      groupLabel: VRED Settings
-    default: 'Render'
-    allowedValues:
-      - 'Render'
-      - 'Sequencer'
-    description: Type of job to submit.
-  - name: SequenceName
-    type: STRING
-    userInterface:
-      control: LINE_EDIT
-      label: Sequence Name
-      groupLabel: VRED Settings
-    default: ""
-    description: The name of the sequence to render; if empty, then all sequences will be rendered.
-  - name: View
-    type: STRING
-    userInterface:
-      control: LINE_EDIT
-      label: Viewpoint/Camera
-      groupLabel: VRED Settings
-    default: ""
-    description: The name of the viewpoint or camera from which to render.
-  - name: ImageWidth
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: Image Width
-      groupLabel: VRED Settings
-    minValue: 1
-    default: 800
-    description: The rendered image size width in pixels.
-  - name: ImageHeight
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: Image Height
-      groupLabel: VRED Settings
-    minValue: 1
-    default: 600
-    description: The rendered image size height in pixels.
-  - name: DPI
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: DPI
-      groupLabel: VRED Settings
-    minValue: 1
-    default: 72
-    description: Dots per inch when rendering a still frame.
-  - name: RenderQuality
-    type: STRING
-    userInterface:
-      control: DROPDOWN_LIST
-      label: Render Quality
-      groupLabel: VRED Settings
-    default: 'Realistic High'
-    allowedValues:
-      - 'Analytic Low'
-      - 'Analytic High'
-      - 'Realistic Low'
-      - 'Realistic High'
-      - 'Raytracing'
-      - 'NPR'
-    description: Sets the render quality.
-  - name: DLSSQuality
-    type: STRING
-    userInterface:
-      control: DROPDOWN_LIST
-      label: DLSS Quality
-      groupLabel: VRED Settings
-    default: 'Off'
-    allowedValues:
-      - 'Off'
-      - 'Performance'
-      - 'Balanced'
-      - 'Quality'
-      - 'Ultra Performance'
-    description: Sets the deep learning supersampling (DLSS) quality.
-  - name: SSQuality
-    type: STRING
-    userInterface:
-      control: DROPDOWN_LIST
-      label: Supersampling Quality
-      groupLabel: VRED Settings
-    default: 'Off'
-    allowedValues:
-      - 'Off'
-      - 'Low'
-      - 'Medium'
-      - 'High'
-      - 'Ultra High'
-    description: Sets the regular (non-DLSS) supersampling quality. DLSS quality takes precedence.
-  - name: GPURaytracing
-    type: STRING
-    userInterface:
-      control: CHECK_BOX
-      label: Enable GPU Raytracing
-      groupLabel: VRED Settings
-    default: 'false'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: Attempts to apply GPU raytracing to the rendering process (if sufficient hardware is available).
-  - name: RenderAnimation
-    type: STRING
-    userInterface:
-      control: CHECK_BOX
-      label: Render Animation Sequence
-      groupLabel: VRED Settings
-    default: 'true'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: Enables rendering of an animation sequence.
-  - name: IncludeAlphaChannel
-    type: STRING
-    userInterface:
-      control: CHECK_BOX
-      label: Include Alpha Channel
-      groupLabel: VRED Settings
-    default: 'false'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: Enables export of images with an alpha channel.
-  - name: RegionRendering
-    type: STRING
-    userInterface:
-      control: HIDDEN
-    default: 'false'
-    allowedValues:
-      - 'true'
-      - 'false'
-    description: >
-      Ensures that frames are split into multiple tiles that are rendered individually and can then be assembled 
-      (combined) afterwards.
-  - name: NumXTiles
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: Tiles across width
-    minValue: 1
-    default: 1
-    description: The number of tiles across the x axis.
-  - name: NumYTiles
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: Tiles across height
-    minValue: 1
-    default: 1
-    description: The number of tiles across the y axis.
-  - name: AnimationType
-    type: STRING
-    userInterface:
-      control: DROPDOWN_LIST
-      label: Animation Type
-      groupLabel: VRED Settings
-    default: 'Clip'
-    allowedValues:
-      - 'Clip'
-      - 'Timeline'
-    description: The type of the animation to render.
-  - name: AnimationClip
-    type: STRING
-    userInterface:
-      control: LINE_EDIT
-      label: Animation Clip Name
-      groupLabel: VRED Settings
-    default: ""
-    description: The name of the animation clip to render.
-  - name: StartFrame
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: Start Frame
-      groupLabel: Frame Range
-    default: 0
-    description: The first frame of a range to render.
-  - name: EndFrame
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: End Frame
-      groupLabel: Frame Range
-    default: 20
-    description: The last frame of a range to render.
-  - name: FrameStep
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: Frame Step
-      groupLabel: Frame Range
-    default: 1
-    description: The frame step for the frame range (i.e. 2 for rendering every second frame). Leave blank to ignore.
-  - name: FramesPerTask
-    type: INT
-    userInterface:
-      control: SPIN_BOX
-      label: Frames Per Task
-      groupLabel: VRED Settings
-    minValue: 1
-    default: 1
-    description: The amount of frames that a worker node should render in one complete task.
   - name: OutputDir
     type: PATH
     objectType: DIRECTORY
@@ -265,19 +56,22 @@ parameterDefinitions:
     userInterface:
       control: CHOOSE_DIRECTORY
       label: Output Directory
+      groupLabel: Render Options
     description: The render output directory.
   - name: OutputFileNamePrefix
     type: STRING
     userInterface:
       control: LINE_EDIT
-      label: Output File Name Prefix
+      label: Output Filename Prefix
+      groupLabel: Render Options
     default: output
-    description: The output filename prefix (without extension).
+    description: The render output filename prefix (without extension).
   - name: OutputFormat
     type: STRING
     userInterface:
       control: DROPDOWN_LIST
       label: Output File Format
+      groupLabel: Render Options
     description: The file format for rendered images.
     default: PNG
     allowedValues:
@@ -303,12 +97,210 @@ parameterDefinitions:
       - TIFF
       - VIF
       - ZIP
-  - name: OverrideRenderPass
+  - name: View
+    type: STRING
+    userInterface:
+      control: LINE_EDIT
+      label: Render Viewpoint/Camera
+      groupLabel: Render Options
+    default: ""
+    description: The name of the viewpoint or camera from which to render.
+  - name: ImageWidth
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Image Width (px)
+      groupLabel: Render Options
+    minValue: 1
+    default: 800
+    description: The rendered image width in pixels.
+  - name: ImageHeight
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Image Height (px)
+      groupLabel: Render Options
+    minValue: 1
+    default: 600
+    description: The rendered image height in pixels.
+  - name: DPI
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Resolution (px/inch)
+      groupLabel: Render Options
+    minValue: 1
+    default: 72
+    description: The dots-per-inch (DPI) physical scaling factor (pixels per inch).
+  - name: RenderQuality
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: Render Quality
+      groupLabel: Render Options
+    default: 'Realistic High'
+    allowedValues:
+      - 'Analytic Low'
+      - 'Analytic High'
+      - 'Realistic Low'
+      - 'Realistic High'
+      - 'Raytracing'
+      - 'NPR'
+    description: The render quality level to apply.
+  - name: DLSSQuality
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: DLSS Quality
+      groupLabel: Render Options
+    default: 'Off'
+    allowedValues:
+      - 'Off'
+      - 'Performance'
+      - 'Balanced'
+      - 'Quality'
+      - 'Ultra Performance'
+    description: The Deep Learning Super Sampling (DLSS) quality level to apply.
+  - name: SSQuality
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: SS Quality
+      groupLabel: Render Options
+    default: 'Off'
+    allowedValues:
+      - 'Off'
+      - 'Low'
+      - 'Medium'
+      - 'High'
+      - 'Ultra High'
+    description: >
+      The Super Sampling quality level to apply; note: DLSS quality level takes precedence.
+  - name: RenderAnimation
     type: STRING
     userInterface:
       control: CHECK_BOX
+      label: Render Animation
+      groupLabel: Render Options
+    default: 'true'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: >
+      If checked, allows specifying an animation type (which can also include a specific animation clip),
+      corresponding frame range and frames per task.
+  - name: GPURaytracing
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Use GPU Ray Tracing
+      groupLabel: Render Options
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Attempts to apply GPU raytracing to the rendering process (if sufficient hardware is available).
+  - name: AnimationType
+    type: STRING
+    userInterface:
+      control: DROPDOWN_LIST
+      label: Animation Type
+      groupLabel: Render Options
+    default: 'Clip'
+    allowedValues:
+      - 'Clip'
+      - 'Timeline'
+    description: The type of animation (Clip or Timeline).
+  - name: AnimationClip
+    type: STRING
+    userInterface:
+      control: LINE_EDIT
+      label: Animation Clip
+      groupLabel: Render Options
+    default: ""
+    description: The name of the animation clip to render.
+  - name: StartFrame
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Start Frame
+      groupLabel: Render Options
+    default: 0
+    description: The first frame of a range to render.
+  - name: EndFrame
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: End Frame
+      groupLabel: Render Options
+    default: 20
+    description: The last frame of a range to render.
+  - name: FrameStep
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Frame Step
+      groupLabel: Render Options
+    default: 1
+    description: The frame step for the frame range (i.e. 2 for rendering every second frame).
+  - name: FramesPerTask
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Frames Per Task
+      groupLabel: Render Options
+    minValue: 1
+    default: 1
+    description: The number of frames that will be rendered at a time for each task within a render job.
+  - name: IncludeAlphaChannel
+    type: STRING
+    userInterface:
+      control: HIDDEN
+      label: Include Alpha Channel
+      groupLabel: Render Options
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: Enables export of images with an alpha channel.
+  - name: RegionRendering
+    type: STRING
+    userInterface:
+      control: CHECK_BOX
+      label: Enable Region Rendering
+      groupLabel: Tiling Settings
+    default: 'false'
+    allowedValues:
+      - 'true'
+      - 'false'
+    description: >
+      When enabled, the output rendered image will be divided into multiple tiles (sub-regions)
+      that are first rendered as separate tasks for a given frame. These tiles will then be
+      assembled (combined) into one output image for a given frame (in a separate task).
+  - name: NumXTiles
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Tiles in X
+      groupLabel: Tiling Settings
+    minValue: 1
+    default: 1
+    description: The number of tiles to horizontally divide the specified image size.
+  - name: NumYTiles
+    type: INT
+    userInterface:
+      control: SPIN_BOX
+      label: Tiles in Y
+      groupLabel: Tiling Settings
+    minValue: 1
+    default: 1
+    description: The number of tiles to vertically divide the specified image size.
+  - name: OverrideRenderPass
+    type: STRING
+    userInterface:
+      control: HIDDEN
       label: Override Render Pass
-      groupLabel: VRED Settings
+      groupLabel: Render Options
     default: 'false'
     allowedValues:
       - 'true'
@@ -319,9 +311,9 @@ parameterDefinitions:
   - name: PremultiplyAlpha
     type: STRING
     userInterface:
-      control: CHECK_BOX
+      control: HIDDEN
       label: Premultiply Alpha
-      groupLabel: VRED Settings
+      groupLabel: Render Options
     default: 'false'
     allowedValues:
       - 'true'
@@ -330,14 +322,33 @@ parameterDefinitions:
   - name: TonemapHDR
     type: STRING
     userInterface:
-      control: CHECK_BOX
+      control: HIDDEN
       label: Tone map HDR
-      groupLabel: VRED Settings
+      groupLabel: Render Options
     default: 'false'
     allowedValues:
       - 'true'
       - 'false'
     description: Enables tone mapping when rendering to a HDR image format.
+  - name: JobType
+    type: STRING
+    userInterface:
+      control: HIDDEN
+      label: Job Type
+      groupLabel: Render Options
+    default: 'Render'
+    allowedValues:
+      - 'Render'
+      - 'Sequencer'
+    description: Type of job to submit.
+  - name: SequenceName
+    type: STRING
+    userInterface:
+      control: HIDDEN
+      label: Sequence Name
+      groupLabel: Render Options
+    default: ""
+    description: The name of the sequence to render; if empty, then all sequences will be rendered.
   - name: JobScriptDir
     userInterface:
       control: HIDDEN

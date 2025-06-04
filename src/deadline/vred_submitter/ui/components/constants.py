@@ -42,7 +42,7 @@ class Constants(metaclass=ConstantsMeta):
 
     ANIMATION_SETTINGS_DIALOG_NAME: Final[str] = "Animation Settings"
     ANIMATION_CLIP_LABEL: Final[str] = "Animation Clip"
-    ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The specific animation clip to render."
+    ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The name of the animation clip to render."
     ANIMATION_TYPE_LABEL: Final[str] = "Animation Type"
     ANIMATION_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of animation (Clip or Timeline)."
     ANIMATION_TYPE_OPTIONS: Final[List[str]] = ["Clip", "Timeline"]
@@ -77,7 +77,7 @@ class Constants(metaclass=ConstantsMeta):
     ]
     DPI_LABEL: Final[str] = "Resolution (px/inch)"
     DPI_LABEL_DESCRIPTION: Final[str] = (
-        "The dots-per-inch (DPI) physical scaling factor in (pixels per inch)."
+        "The dots-per-inch (DPI) physical scaling factor (pixels per inch)."
     )
     ELLIPSIS_LABEL: Final[str] = "..."
     EMPTY_FRAME_RANGE: Final[str] = "0-0"
@@ -249,7 +249,9 @@ class Constants(metaclass=ConstantsMeta):
         "The path and filename prefixing of the image(s) to be rendered."
     )
     RENDER_VIEW_LABEL: Final[str] = "Render Viewpoint/Camera"
-    RENDER_VIEW_LABEL_DESCRIPTION: Final[str] = "The viewpoint or camera to render."
+    RENDER_VIEW_LABEL_DESCRIPTION: Final[str] = (
+        "The name of the viewpoint or camera from which to render."
+    )
     SECTION_RENDER_OPTIONS: Final[str] = "Render Options"
     SECTION_SEQUENCER_OPTIONS: Final[str] = "Sequencer Options"
     SECTION_TILING_SETTINGS: Final[str] = "Tiling Settings"
@@ -292,7 +294,9 @@ class Constants(metaclass=ConstantsMeta):
         "selected animation clip."
     )
     USE_GPU_RAY_TRACING_LABEL: Final[str] = "Use GPU Ray Tracing"
-    USE_GPU_RAY_TRACING_LABEL_DESCRIPTION: Final[str] = "Apply GPU-based Ray Tracing."
+    USE_GPU_RAY_TRACING_LABEL_DESCRIPTION: Final[str] = (
+        "Attempts to apply GPU raytracing to the rendering process (if sufficient hardware is available)."
+    )
     UTF8_FLAG = "utf-8"
 
     @ClassProperty
