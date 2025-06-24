@@ -1,0 +1,1 @@
+python vred_render_test.py "LightweightWith Spaces.vpb" "1.json"
