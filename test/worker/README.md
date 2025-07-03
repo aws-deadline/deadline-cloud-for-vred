@@ -94,9 +94,9 @@ rendering by tile per frame. Note: tile assembly creates combined frames from in
 
 ## Output Examples
 
+```
 ./run-tile-assembler-tests.sh
 
-```
 Deadline Cloud for VRED (Tile Assembler Test)
 =============================================
 Test configuration (job bundle): 7x5_tiles
