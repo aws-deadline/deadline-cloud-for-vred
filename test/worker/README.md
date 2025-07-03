@@ -36,7 +36,7 @@ VRED version below:
 - **VREDCORE** or **VREDPRO** (Path to VRED executable)
     - Linux: `/opt/Autodesk/VREDCluster-[version]/bin/VREDCore`
     - Windows: `C:/Program Files/Autodesk/VREDPro-[version]/bin/WIN64/VREDCore.exe`
-- **MAGICK—** (Path to ImageMagick static-linked binary (for tile assembly))
+- **MAGICK** (Path to ImageMagick static-linked binary (for tile assembly))
     - Windows: `C:\Program Files\ImageMagick-[version]-Q16\magick.exe`
     - Linux: `/usr/local/bin/magick`
 
