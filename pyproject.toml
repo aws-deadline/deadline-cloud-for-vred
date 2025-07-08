@@ -94,6 +94,7 @@ addopts = [
     "--numprocesses=auto"
 ]
 testpaths = [ "test" ]
+norecursedirs = [ "test/worker" ]
 looponfailroots = [
     "src",
     "test",
