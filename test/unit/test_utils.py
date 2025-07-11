@@ -310,6 +310,7 @@ class TestGetFileNamePathComponents:
         assert filename == "file"
         assert extension == "txt"
 
+    @pytest.mark.skipif(os.name != "nt", reason="Windows-specific path test")
     def test_windows_path(self):
         directory, filename, extension = get_file_name_path_components("C:\\path\\to\\file.txt")
         assert directory == os.path.normpath("C:\\path\\to")
