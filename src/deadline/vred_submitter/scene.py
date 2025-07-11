@@ -38,7 +38,7 @@ class FrameRange:
         stop: int = self.stop if self.stop is not None else self.start
         step: int = self.step if self.step is not None else 1
 
-        return iter(range(self.start, stop + 1, step))
+        return iter(range(self.start, stop + step, step))
 
 
 """

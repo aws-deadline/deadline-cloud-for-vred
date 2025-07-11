@@ -4,7 +4,7 @@
 
 import os
 
-from enum import auto
+from enum import auto, StrEnum
 from typing import Any
 
 from .constants import Constants
@@ -12,7 +12,6 @@ from ...data_classes import RenderSubmitterUISettings
 from ...utils import (
     DynamicKeyValueObject,
     DynamicKeyNamedValueObject,
-    StrEnum,
     get_normalized_path,
     get_file_name_path_components,
 )
@@ -52,7 +51,7 @@ class PersistedUISettingsNames(StrEnum):
     """
 
     @staticmethod
-    def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list[str]) -> str:
         return name.lower()
 
     ANIMATION_TYPE = auto()
