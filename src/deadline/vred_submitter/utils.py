@@ -8,15 +8,36 @@ import re
 import time
 import yaml
 
-from .constants import Constants
-
+from enum import Enum
 from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Tuple, TypeVar, Union
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
+from .constants import Constants
+
 TypeName = TypeVar("TypeName")
+
+
+class StrEnum(str, Enum):
+    """
+    This is a backport of Python 3.11's StrEnum for compatibility with Python 3.10.
+    """
+
+    def __new__(cls, value):
+        if not isinstance(value, str):
+            raise TypeError(f"{cls.__name__} members must be strings")
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+        return obj
+
+    def __str__(self):
+        return str(self.value)
+
+    @staticmethod
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
+        return name.lower()
 
 
 class NamedValue:
@@ -133,8 +154,12 @@ def get_yaml_contents(file_path: str) -> Dict[str, Any]:
         raise yaml.YAMLError(
             f"{Constants.ERROR_YAML_INVALID_FORMAT} {file_path}: {str(yaml_err)}"
         ) from yaml_err
-    except PermissionError as perm_err:
-        raise PermissionError(f"{Constants.ERROR_FILE_PERMISSIONS_ISSUE} {file_path}") from perm_err
+    except FileNotFoundError as error:
+        raise FileNotFoundError(f"{Constants.ERROR_FILE_NOT_FOUND_ISSUE} {file_path}") from error
+    except TypeError:
+        raise
+    except PermissionError as error:
+        raise PermissionError(f"{Constants.ERROR_FILE_PERMISSIONS_ISSUE} {file_path}") from error
     except Exception as exc:
         raise RuntimeError(f"{Constants.ERROR_YAML_GENERAL_ERROR} {file_path}: {str(exc)}") from exc
 
@@ -174,12 +199,11 @@ def is_numerically_defined(num: str) -> bool:
     param: num: the numeric string to evaluate
     return: True if the string represents a numerically defined value; False otherwise
     """
-    return (
-        is_number(num)
-        and float(num) != float(Constants.POSITIVE_INFINITY)
-        and float(num) != float(Constants.NEGATIVE_INFINITY)
-        and float(num) != float(Constants.NAN)
-    )
+    if not is_number(num):
+        return False
+
+    value = float(num)
+    return not (math.isinf(value) or math.isnan(value))
 
 
 def iterator_value(counter: Iterator[int]) -> int:

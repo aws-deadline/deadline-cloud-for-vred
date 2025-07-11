@@ -27,13 +27,20 @@ class CustomGroupBox(QGroupBox):
     A QGroupBox that has a custom stylesheet applied
     """
 
-    def __init__(self, text: str = "", parent: QGroupBox = None):
+    def __init__(self, text: str = "", parent: QWidget = None):
         """
         param: text: the text to be displayed in the group box's title.
         param: parent: the parent widget
         """
         super().__init__(text, parent)
         self.setStyleSheet(UIConstants.QT_GROUP_BOX_STYLESHEET)
+
+    def setLayout(self, layout):
+        """
+        Set the layout for this group box.
+        param: layout: the layout to set for this group box
+        """
+        QGroupBox.setLayout(self, layout)
 
 
 class AutoSizedButton(QPushButton):
