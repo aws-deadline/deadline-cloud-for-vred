@@ -275,7 +275,7 @@ class Constants(metaclass=ConstantsMeta):
 
     @ClassProperty
     def SUBMITTER_DIALOG_WINDOW_DIMENSIONS(cls) -> List[int]:
-        return [int(600 * _global_dpi_scale.factor), int(500 * _global_dpi_scale.factor)]
+        return [int(600 * _global_dpi_scale.factor), int(600 * _global_dpi_scale.factor)]
 
     TILES_IN_X_LABEL: Final[str] = "Tiles In X"
     TILES_IN_X_LABEL_DESCRIPTION: Final[str] = (

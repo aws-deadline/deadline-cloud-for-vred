@@ -41,6 +41,7 @@ class Constants(metaclass=ConstantsMeta):
     DESCRIPTION_FIELD: Final[str] = "description"
     ENVIRONMENT_FIELD: Final[str] = "environment"
     ERROR_ANIMATION_SETTINGS_DIALOG_NOT_FOUND: Final[str] = "Animation settings dialog not found"
+    ERROR_FILE_NOT_FOUND_ISSUE: Final[str] = "File not found"
     ERROR_FILE_PERMISSIONS_ISSUE: Final[str] = "Permission denied accessing file"
     ERROR_FILE_WRITE_ISSUE: Final[str] = "Permission denied writing file"
     ERROR_FRAME_RANGE_FORMAT_INVALID: Final[str] = (
