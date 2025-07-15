@@ -401,3 +401,68 @@ class TestVREDSubmitter:
         render_param = next((p for p in result if p["name"] == "RenderAnimation"), None)
         assert render_param is not None
         assert render_param["value"] == "true"
+
+    def test_text_elements_enforce_length_checks(self, submitter):
+        import sys
+        from unittest.mock import Mock
+
+        try:
+            # Create new mocks for Qt widgets
+            class MockQWidget:
+                setEnabled = Mock()
+                installEventFilter = Mock()
+
+                def __init__(self, parent=None):
+                    pass
+
+            mock_q_widgets = Mock()
+            mock_line_edit = Mock()
+
+            sys.modules["PySide6.QtWidgets"] = mock_q_widgets
+            mock_q_widgets.QWidget = MockQWidget
+            mock_q_widgets.QLineEdit = mock_line_edit
+
+            # Reload SceneSettingsWidget with new mocks
+            if "vred_submitter.ui.components.scene_settings_widget" in sys.modules:
+                del sys.modules["vred_submitter.ui.components.scene_settings_widget"]
+            from vred_submitter.ui.components.scene_settings_widget import SceneSettingsWidget
+
+            # Mock required dependencies
+            with patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsCallbacks"):
+                with patch(
+                    "vred_submitter.ui.components.scene_settings_widget.SceneSettingsPopulator"
+                ):
+                    with patch("vred_submitter.ui.components.scene_settings_widget.CustomGroupBox"):
+                        # Create the scene widget
+                        mock_parent = MockQWidget()
+                        SceneSettingsWidget(Mock(), mock_parent)
+
+                        # Verify that line edits are created and some have max length constraints
+                        assert mock_line_edit.call_count > 0
+                        assert mock_line_edit.return_value.setMaxLength.call_count > 0
+        finally:
+            # Reset Qt widgets mock
+            sys.modules["PySide6.QtWidgets"] = Mock()
+
+    def test_render_submitter_ui_settings_validation(self, submitter):
+        settings = RenderSubmitterUISettings()
+
+        # Test string length validation
+        settings.name = "a" * 500
+        settings.description = "b" * 1000
+        settings.OutputFileNamePrefix = "c" * 100
+
+        template = {"name": "default", "description": "default", "steps": []}
+        result = submitter._get_job_template(template, settings)
+
+        # Should handle long strings without truncation
+        assert len(result["name"]) == 500
+        assert len(result["description"]) == 1000
+
+        # Test parameter conversion
+        queue_parameters: list[dict] = []
+        params = submitter._get_parameter_values(settings, queue_parameters)
+
+        prefix_param = next((p for p in params if p["name"] == "OutputFileNamePrefix"), None)
+        assert prefix_param is not None
+        assert len(prefix_param["value"]) == 100
