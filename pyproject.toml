@@ -87,37 +87,29 @@ xfail_strict = true
 addopts = [
     "--durations=5",
     "--color=yes",
-    "--cov=src/deadline/vred_submitter",
+    "--cov=vred_submitter",
     "--cov-report=html:build/coverage",
     "--cov-report=xml:build/coverage/coverage.xml",
-    "--cov-report=term-missing",
-    "--numprocesses=auto"
+    "--cov-report=term-missing"
 ]
 testpaths = [ "test" ]
 norecursedirs = [ "test/worker" ]
-looponfailroots = [
-    "src",
-    "test",
-]
-# looponfailroots is deprecated, this removes the deprecation from the test output
-filterwarnings = [
-    "ignore::DeprecationWarning"
-]
+
 pythonpath = [
   # The VRED submitter plugin isn't structured like a Python package
   "vred_submitter_plugin/plug-ins"
 ]
 
 [tool.coverage.run]
-source_pkgs = [ "deadline/vred_submitter", "vred_submitter_plugin/plug-ins" ]
+source_pkgs = [ "vred_submitter" ]
 branch = true
 parallel = true
 omit = [ "**/__main__.py", "**/_version.py" ]
+disable_warnings = [ "module-not-measured" ]
 
 [tool.coverage.paths]
 source =  [
-    "src/",
-    "vred_submitter_plugin/plug-ins"
+    "src/"
 ]
 
 [tool.coverage.report]
