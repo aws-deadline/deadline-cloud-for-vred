@@ -1,6 +1,6 @@
 # VRED Submitter Unit Tests
 
-Comprehensive unit test suite for the VRED Deadline Cloud Submitter modules (via pytest with mocking).
+Comprehensive unit test suite for the VRED Deadline Cloud Submitter modules using pytest with mocking.
 
 ## Directory Structure
 
