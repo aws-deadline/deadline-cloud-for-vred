@@ -7,7 +7,3 @@ pytest-xdist == 3.*
 ruff == 0.12.*
 twine == 6.*
 types-pyyaml == 6.*
-# for integ tests
-numpy == 2.*
-pillow == 11.*
-openjd-cli == 0.7.*
