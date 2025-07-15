@@ -144,10 +144,45 @@ class MockQtWidget:
         return mock_layout
 
     def maximum(self):
-        return 100
+        return 10000
 
     def minimum(self):
         return 1
+
+    def maxLength(self):
+        return 31
+
+    def hasAcceptableInput(self):
+        # Simple validation logic for testing
+        text = self._text
+        if not text:
+            return True
+
+        # Check for non-numeric input in numeric fields
+        if text in ["abc", "invalid"]:
+            return False
+
+        # Check boundary values for integer fields
+        if text.isdigit():
+            value = int(text)
+            if value == 0 or value > 10000:
+                return False
+
+        # Check boundary values for float fields
+        try:
+            float_value = float(text)
+            if float_value < 0.04 or float_value > 25400.0:
+                return False
+        except ValueError:
+            pass
+
+        return True
+
+    def setValue(self, value):
+        self._value = max(self.minimum(), min(self.maximum(), value))
+
+    def value(self):
+        return getattr(self, "_value", 1)
 
     def model(self):
         return type(
@@ -245,7 +280,7 @@ class MockQtWidget:
         return "Mock tooltip"
 
     def validator(self):
-        return type("MockValidator", (), {})()
+        return type("MockValidator", (), {"validate": lambda self, text, pos: (2, text, pos)})()
 
     def view(self):
         return None
@@ -363,6 +398,9 @@ class MockValidator:
 
     def setNotation(self, notation):
         pass
+
+    def validate(self, text, pos):
+        return (2, text, pos)  # QValidator.Acceptable
 
     class Notation:
         StandardNotation = 0

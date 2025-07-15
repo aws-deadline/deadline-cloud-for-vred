@@ -238,3 +238,166 @@ class TestVREDSubmitter:
 
         with pytest.raises(Exception):  # UserInitiatedCancel
             submitter._create_job_bundle_callback(Mock(), "/job/bundle", Mock(), [], Mock(), None)
+
+    def test_parameter_values_input_validation_type_checking(self, submitter):
+        settings = RenderSubmitterUISettings()
+        settings.ImageWidth = "invalid_integer"  # Should be int
+        settings.ImageHeight = 1080
+        settings.GPURaytracing = "not_a_bool"  # Should be bool
+        queue_parameters: list[dict] = []
+
+        # Test that non-boolean values are handled correctly
+        result = submitter._get_parameter_values(settings, queue_parameters)
+
+        # Find the GPURaytracing parameter
+        gpu_param = next((p for p in result if p["name"] == "GPURaytracing"), None)
+        assert gpu_param is not None
+        # Non-boolean should be converted to string representation
+        assert gpu_param["value"] == "not_a_bool"
+
+    def test_parameter_values_string_length_validation(self, submitter):
+        settings = RenderSubmitterUISettings()
+        # Test with excessively long string values
+        settings.name = "a" * 1000  # Very long name
+        settings.description = "b" * 2000  # Very long description
+        queue_parameters: list[dict] = []
+
+        result = submitter._get_parameter_values(settings, queue_parameters)
+
+        # Should handle long strings without error
+        name_param = next((p for p in result if p["name"] == "name"), None)
+        assert name_param is not None
+        assert len(name_param["value"]) == 1000
+
+    def test_parameter_values_queue_conflict_validation(self, submitter):
+        settings = RenderSubmitterUISettings()
+        settings.ImageWidth = 1920
+        # Create conflicting queue parameter
+        queue_parameters = [{"name": "ImageWidth", "value": "different_value"}]
+
+        with pytest.raises(Exception):  # DeadlineOperationError
+            submitter._get_parameter_values(settings, queue_parameters)
+
+    def test_job_bundle_callback_output_path_validation(self, submitter):
+        widget = Mock()
+        widget.job_attachments.attachments.input_filenames = ["test.vpb"]
+        widget.job_attachments.attachments.input_directories = ["/test/dir"]
+
+        settings = Mock()
+        settings.OutputDir = "/nonexistent/path"  # Invalid path
+        settings.OutputFileNamePrefix = "render"
+        settings.OutputFormat = "PNG"
+        settings.FrameStep = 1
+
+        with patch("vred_submitter.vred_submitter.Scene") as mock_scene:
+            mock_scene.name.return_value = "test_scene"
+            with patch("vred_submitter.vred_submitter.os.path.exists") as mock_exists:
+                mock_exists.return_value = False  # Path doesn't exist
+
+                with pytest.raises(Exception):  # UserInitiatedCancel
+                    submitter._create_job_bundle_callback(
+                        widget, "/job/bundle", settings, [], Mock(), None
+                    )
+
+    def test_job_bundle_callback_filename_validation(self, submitter):
+        widget = Mock()
+        widget.job_attachments.attachments.input_filenames = ["test.vpb"]
+        widget.job_attachments.attachments.input_directories = ["/test/dir"]
+
+        settings = Mock()
+        settings.OutputDir = "/valid/path"
+        settings.OutputFileNamePrefix = "invalid<>filename"  # Invalid characters
+        settings.OutputFormat = "PNG"
+        settings.FrameStep = 1
+
+        with patch("vred_submitter.vred_submitter.Scene") as mock_scene:
+            mock_scene.name.return_value = "test_scene"
+            with patch("vred_submitter.vred_submitter.os.path.exists") as mock_exists:
+                mock_exists.return_value = True
+                with patch("vred_submitter.vred_submitter.is_valid_filename") as mock_valid:
+                    mock_valid.return_value = False  # Invalid filename
+
+                    with pytest.raises(Exception):  # UserInitiatedCancel
+                        submitter._create_job_bundle_callback(
+                            widget, "/job/bundle", settings, [], Mock(), None
+                        )
+
+    def test_job_bundle_callback_frame_step_validation(self, submitter):
+        widget = Mock()
+        widget.job_attachments.attachments.input_filenames = ["test.vpb"]
+        widget.job_attachments.attachments.input_directories = ["/test/dir"]
+
+        settings = Mock()
+        settings.OutputDir = "/valid/path"
+        settings.OutputFileNamePrefix = "render"
+        settings.OutputFormat = "PNG"
+        settings.FrameStep = 0  # Invalid frame step
+
+        with patch("vred_submitter.vred_submitter.Scene") as mock_scene:
+            mock_scene.name.return_value = "test_scene"
+            with patch("vred_submitter.vred_submitter.os.path.exists") as mock_exists:
+                mock_exists.return_value = True
+                with patch("vred_submitter.vred_submitter.is_valid_filename") as mock_valid:
+                    mock_valid.return_value = True
+
+                    with pytest.raises(Exception):  # UserInitiatedCancel
+                        submitter._create_job_bundle_callback(
+                            widget, "/job/bundle", settings, [], Mock(), None
+                        )
+
+    def test_job_template_name_description_validation(self, submitter):
+        settings = RenderSubmitterUISettings()
+        # Test with empty/None values
+        settings.name = None
+        settings.description = None
+        template = {"name": "Default Name", "description": "Default Description", "steps": []}
+
+        result = submitter._get_job_template(template, settings)
+
+        # Should keep default values when settings are None/empty
+        assert result["name"] == "Default Name"
+        assert result["description"] == "Default Description"
+
+        # Test with valid values
+        settings.name = "Valid Job Name"
+        settings.description = "Valid Description"
+
+        result = submitter._get_job_template(template, settings)
+
+        assert result["name"] == "Valid Job Name"
+        assert result["description"] == "Valid Description"
+
+    def test_job_template_string_length_limits(self, submitter):
+        settings = RenderSubmitterUISettings()
+        # Test with very long strings
+        settings.name = "a" * 500  # Very long name
+        settings.description = "b" * 1000  # Very long description
+        template = {"name": "Default", "description": "Default", "steps": []}
+
+        result = submitter._get_job_template(template, settings)
+
+        # Should handle long strings without truncation or error
+        assert result["name"] == "a" * 500
+        assert result["description"] == "b" * 1000
+
+    def test_boolean_parameter_conversion_validation(self, submitter):
+        settings = RenderSubmitterUISettings()
+        settings.GPURaytracing = True
+        settings.RegionRendering = False
+        settings.RenderAnimation = True
+        queue_parameters: list[dict] = []
+
+        result = submitter._get_parameter_values(settings, queue_parameters)
+
+        # Test that boolean values are converted to lowercase strings
+        gpu_param = next((p for p in result if p["name"] == "GPURaytracing"), None)
+        assert gpu_param is not None
+        assert gpu_param["value"] == "true"
+
+        region_param = next((p for p in result if p["name"] == "RegionRendering"), None)
+        assert region_param is not None
+        assert region_param["value"] == "false"
+
+        render_param = next((p for p in result if p["name"] == "RenderAnimation"), None)
+        assert render_param is not None
+        assert render_param["value"] == "true"

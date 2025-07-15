@@ -438,3 +438,215 @@ class TestSceneSettingsWidget:
         assert widget.gpu_ray_tracing_widget.toolTip() != ""
         assert widget.use_clip_range_widget.toolTip() != ""
         assert widget.enable_region_rendering_widget.toolTip() != ""
+
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsCallbacks")
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsPopulator")
+    @patch("vred_submitter.ui.components.scene_settings_widget.CustomGroupBox")
+    def test_input_validation_string_length_limits(
+        self,
+        mock_custom_group_box,
+        mock_populator_class,
+        mock_callbacks_class,
+        initial_settings,
+        qapp,
+    ):
+        mock_callbacks = Mock()
+        mock_callbacks_class.return_value = mock_callbacks
+        mock_populator = Mock()
+        mock_populator_class.return_value = mock_populator
+
+        mock_group_box_instance = Mock()
+        mock_layout = Mock()
+        mock_layout.addLayout = Mock()
+        mock_group_box_instance.layout.return_value = mock_layout
+        mock_custom_group_box.return_value = mock_group_box_instance
+
+        mock_parent = Mock()
+        mock_parent.installEventFilter = Mock()
+        widget = SceneSettingsWidget(initial_settings, mock_parent)
+
+        # Test frame range max length constraint
+        assert widget.frame_range_widget.maxLength() == 31
+
+        # Test that excessively long strings are rejected
+        long_string = "a" * 1000
+        widget.render_output_widget.setText(long_string)
+        # Validator should reject invalid characters/length
+        assert widget.render_output_widget.hasAcceptableInput()
+
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsCallbacks")
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsPopulator")
+    @patch("vred_submitter.ui.components.scene_settings_widget.CustomGroupBox")
+    def test_input_validation_integer_constraints(
+        self,
+        mock_custom_group_box,
+        mock_populator_class,
+        mock_callbacks_class,
+        initial_settings,
+        qapp,
+    ):
+        mock_callbacks = Mock()
+        mock_callbacks_class.return_value = mock_callbacks
+        mock_populator = Mock()
+        mock_populator_class.return_value = mock_populator
+
+        mock_group_box_instance = Mock()
+        mock_layout = Mock()
+        mock_layout.addLayout = Mock()
+        mock_group_box_instance.layout.return_value = mock_layout
+        mock_custom_group_box.return_value = mock_group_box_instance
+
+        mock_parent = Mock()
+        mock_parent.installEventFilter = Mock()
+        widget = SceneSettingsWidget(initial_settings, mock_parent)
+
+        # Test image size integer validation
+        widget.image_size_x_widget.setText("abc")
+        assert not widget.image_size_x_widget.hasAcceptableInput()
+
+        widget.image_size_x_widget.setText("1920")
+        assert widget.image_size_x_widget.hasAcceptableInput()
+
+        # Test boundary values
+        widget.image_size_x_widget.setText("0")
+        assert not widget.image_size_x_widget.hasAcceptableInput()
+
+        widget.image_size_x_widget.setText("10001")
+        assert not widget.image_size_x_widget.hasAcceptableInput()
+
+        # Test resolution validation
+        widget.resolution_widget.setText("abc")
+        assert not widget.resolution_widget.hasAcceptableInput()
+
+        widget.resolution_widget.setText("300")
+        assert widget.resolution_widget.hasAcceptableInput()
+
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsCallbacks")
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsPopulator")
+    @patch("vred_submitter.ui.components.scene_settings_widget.CustomGroupBox")
+    def test_input_validation_double_constraints(
+        self,
+        mock_custom_group_box,
+        mock_populator_class,
+        mock_callbacks_class,
+        initial_settings,
+        qapp,
+    ):
+        mock_callbacks = Mock()
+        mock_callbacks_class.return_value = mock_callbacks
+        mock_populator = Mock()
+        mock_populator_class.return_value = mock_populator
+
+        mock_group_box_instance = Mock()
+        mock_layout = Mock()
+        mock_layout.addLayout = Mock()
+        mock_group_box_instance.layout.return_value = mock_layout
+        mock_custom_group_box.return_value = mock_group_box_instance
+
+        mock_parent = Mock()
+        mock_parent.installEventFilter = Mock()
+        widget = SceneSettingsWidget(initial_settings, mock_parent)
+
+        # Test printing size double validation
+        widget.printing_size_x_widget.setText("abc")
+        assert not widget.printing_size_x_widget.hasAcceptableInput()
+
+        widget.printing_size_x_widget.setText("10.5")
+        assert widget.printing_size_x_widget.hasAcceptableInput()
+
+        # Test boundary values
+        widget.printing_size_x_widget.setText("0.03")
+        assert not widget.printing_size_x_widget.hasAcceptableInput()
+
+        widget.printing_size_x_widget.setText("25401.0")
+        assert not widget.printing_size_x_widget.hasAcceptableInput()
+
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsCallbacks")
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsPopulator")
+    @patch("vred_submitter.ui.components.scene_settings_widget.CustomGroupBox")
+    def test_input_validation_regex_patterns(
+        self,
+        mock_custom_group_box,
+        mock_populator_class,
+        mock_callbacks_class,
+        initial_settings,
+        qapp,
+    ):
+        mock_callbacks = Mock()
+        mock_callbacks_class.return_value = mock_callbacks
+        mock_populator = Mock()
+        mock_populator_class.return_value = mock_populator
+
+        mock_group_box_instance = Mock()
+        mock_layout = Mock()
+        mock_layout.addLayout = Mock()
+        mock_group_box_instance.layout.return_value = mock_layout
+        mock_custom_group_box.return_value = mock_group_box_instance
+
+        mock_parent = Mock()
+        mock_parent.installEventFilter = Mock()
+        widget = SceneSettingsWidget(initial_settings, mock_parent)
+
+        # Test frame range regex validation
+        widget.frame_range_widget.setText("1-100")
+        assert widget.frame_range_widget.hasAcceptableInput()
+
+        widget.frame_range_widget.setText("1-100x2")
+        assert widget.frame_range_widget.hasAcceptableInput()
+
+        widget.frame_range_widget.setText("invalid")
+        assert not widget.frame_range_widget.hasAcceptableInput()
+
+        # Test render output path validation
+        widget.render_output_widget.setText("/valid/path/file.png")
+        assert widget.render_output_widget.hasAcceptableInput()
+
+        widget.render_output_widget.setText("C:\\valid\\path\\file.png")
+        assert widget.render_output_widget.hasAcceptableInput()
+
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsCallbacks")
+    @patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsPopulator")
+    @patch("vred_submitter.ui.components.scene_settings_widget.CustomGroupBox")
+    def test_spinbox_range_validation(
+        self,
+        mock_custom_group_box,
+        mock_populator_class,
+        mock_callbacks_class,
+        initial_settings,
+        qapp,
+    ):
+        mock_callbacks = Mock()
+        mock_callbacks_class.return_value = mock_callbacks
+        mock_populator = Mock()
+        mock_populator_class.return_value = mock_populator
+
+        mock_group_box_instance = Mock()
+        mock_layout = Mock()
+        mock_layout.addLayout = Mock()
+        mock_group_box_instance.layout.return_value = mock_layout
+        mock_custom_group_box.return_value = mock_group_box_instance
+
+        mock_parent = Mock()
+        mock_parent.installEventFilter = Mock()
+        widget = SceneSettingsWidget(initial_settings, mock_parent)
+
+        # Test frames per task spinbox constraints
+        assert widget.frames_per_task_widget.minimum() == 1
+        assert widget.frames_per_task_widget.maximum() == 10000
+
+        # Test tiles spinbox constraints
+        assert widget.tiles_in_x_widget.minimum() == 1
+        assert widget.tiles_in_x_widget.maximum() == 10000
+        assert widget.tiles_in_y_widget.minimum() == 1
+        assert widget.tiles_in_y_widget.maximum() == 10000
+
+        # Test setting values within range
+        widget.frames_per_task_widget.setValue(5)
+        assert widget.frames_per_task_widget.value() == 5
+
+        # Test boundary enforcement
+        widget.frames_per_task_widget.setValue(0)
+        assert widget.frames_per_task_widget.value() == 1  # Should clamp to minimum
+
+        widget.frames_per_task_widget.setValue(10001)
+        assert widget.frames_per_task_widget.value() == 10000  # Should clamp to maximum
