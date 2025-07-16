@@ -12,7 +12,7 @@ import os
 import traceback
 
 from dataclasses import dataclass
-from enum import auto, IntEnum, StrEnum
+from enum import auto, Enum, IntEnum
 from typing import Any, Dict, List
 
 from builtins import vrCameraService, vrReferenceService  # type: ignore[attr-defined]
@@ -69,6 +69,26 @@ from vrRenderSettings import (
     startRenderToFile,
 )
 from vrSequencer import runAllSequences, runSequence
+
+
+class StrEnum(str, Enum):
+    """
+    This is a backport of Python 3.11's StrEnum for compatibility with Python 3.10.
+    """
+
+    def __new__(cls, value):
+        if not isinstance(value, str):
+            raise TypeError(f"{cls.__name__} members must be strings")
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+        return obj
+
+    def __str__(self):
+        return str(self.value)
+
+    @staticmethod
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list) -> str:
+        return name.lower()
 
 
 class DynamicKeyValueObject:
@@ -136,7 +156,7 @@ class DeadlineCloudRenderer:
     WANT_VRED_TERMINATION = True
 
     LOGGING_FORMAT = "%(levelname)s - %(message)s"
-    LOGGING_LEVEL = logging.DEBUG
+    LOGGING_LEVEL = logging.INFO
 
     DLSS_QUALITY_DICT = {
         "Off": VR_DLSS_OFF,

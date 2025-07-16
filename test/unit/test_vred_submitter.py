@@ -25,6 +25,31 @@ class TestVREDSubmitter:
         mock_get_yaml_contents.return_value = {"test": "template"}
         return VREDSubmitter(mock_parent_window)
 
+    @patch("vred_submitter.vred_logger.VREDLogger")
+    def test_logger_does_not_include_debug_logging(self, mock_vred_logger):
+        """Test that the logger used in vred_submitter doesn't include debug logging."""
+        import logging
+
+        mock_logger_instance = Mock()
+        mock_vred_logger.return_value = mock_logger_instance
+
+        # Set up the mock logger to have a level higher than DEBUG
+        mock_logger_instance.level = logging.INFO
+        mock_logger_instance.isEnabledFor.return_value = False
+
+        # Import the module to trigger the logger initialization
+        with patch("vred_submitter.vred_submitter.get_logger", return_value=mock_logger_instance):
+            from vred_submitter.vred_submitter import _global_logger
+
+            # Verify debug messages aren't logged
+            _global_logger.debug("This is a debug message")
+
+            # Verify the logger's level is not set to DEBUG
+            assert _global_logger.level != logging.DEBUG
+
+            # Verify debug messages aren't enabled
+            assert not _global_logger.isEnabledFor(logging.DEBUG)
+
     @patch("vred_submitter.vred_submitter.get_yaml_contents")
     def test_init(self, mock_get_yaml_contents, mock_parent_window):
         # Test submitter initialization with template loading
