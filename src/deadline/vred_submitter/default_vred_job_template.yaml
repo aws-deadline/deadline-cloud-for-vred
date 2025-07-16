@@ -1,27 +1,27 @@
 specificationVersion: jobtemplate-2023-09
 name: VRED Renderer
 description: |
-  This render job template depends on Autodesk VRED Core (or optionally VRED Pro) to perform rendering and supports 
+  This render job template depends on Autodesk VRED Core (or optionally VRED Pro) to perform rendering and supports
   versions 2025.X (17.X) and 2026.X (18.X) on Windows and Linux platforms. Please review official system requirements
   and software dependencies on Autodesk's official website.
 
-  Render jobs take a VPB project file (including its file references) as input, and produce render output per 
+  Render jobs take a VPB project file (including its file references) as input, and produce render output per
   the chosen output format and additional render settings.
-   
+
   To run the render job without a conda virtual environment created by a Deadline Cloud queue environment,
-  you must ensure that the environment variable "VREDCORE" (for VRED Core) or "VREDPRO" (for VRED Pro) is defined by a 
+  you must ensure that the environment variable "VREDCORE" (for VRED Core) or "VREDPRO" (for VRED Pro) is defined by a
   valid path to its product's executable file. You can find these executable files in paths similar to:
     (Linux): /opt/Autodesk/VREDCluster-{version}/bin/VREDCore
     (Windows): C:/Program Files/Autodesk/VREDPro-{version}/bin/WIN64/VREDCore.exe"
-  Note: if both of these environment variables are assigned, then "VREDCORE" will be take precedence. 
-  
-  If you're using a conda queue environment, then please ensure that the channels listed in your CondaChannels list 
-  include all of the packages for these software dependencies. On Deadline Cloud service-managed fleets, there are 
+  Note: if both of these environment variables are assigned, then "VREDCORE" will take precedence.
+
+  If you're using a conda queue environment, then please ensure that the channels listed in your CondaChannels list
+  include all of the packages for these software dependencies. On Deadline Cloud service-managed fleets, there are
   two channels (deadline-cloud, conda-forge) that provide those packages.
 
   This job bundle also depends on the latest code that is located here (which also includes the latest job bundle):
       https://github.com/aws-deadline/deadline-cloud-for-vred
-    
+
   You can also create a custom conda channel on S3 using the approach documented below:
       https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs-s3-channel.html
   (At that point, you can build conda package recipes and deadline.)
@@ -306,7 +306,7 @@ parameterDefinitions:
       - 'true'
       - 'false'
     description: >
-      Enables the exporting of render passes when rendering to a file. If enabled, then the render pass  
+      Enables the exporting of render passes when rendering to a file. If enabled, then the render pass
       settings via the job properties will be used; otherwise the settings defined in the scene will be used.
   - name: PremultiplyAlpha
     type: STRING
@@ -429,7 +429,7 @@ steps:
           type: TEXT
           data: |-
             from typing import Any, Dict
-            
+
             def str_to_bool(s:str)->bool: return s.lower() == 'true'
 
             def get_vred_render_parameters() -> Dict[str, Any]:
@@ -438,11 +438,11 @@ steps:
                 the conversion schemes below (for int, str, bool) as a guide. Value types are VRED API
                 sensitive -- they need to be synchronized with future VRED API changes (if any). Please
                 also keep value typing pairwise with parameterDefinitions-supported types (above).
-            
+
                 :return: a dictionary containing appropriately-typed values (non-inferred) for use in VRED API calls.
                 """
-            
-                # Depending on implementation, a frame chunk ID or an actual starting frame number that 
+
+                # Depending on implementation, a frame chunk ID or an actual starting frame number that
                 # corresponds to that ID could be provided.
                 #
                 start_frame = int({{Task.Param.StartFrameFromCurrentChunk}})
@@ -503,13 +503,15 @@ steps:
 
             CODE_PASSING_ENV_VAR = "BOOTSTRAP_CODE"
             DISABLE_PYTHON_SANDBOX_PARAM = "-insecure_python"
-            DISABLE_PYTHON_SANDBOX_ENV_VAR = "DISABLE_VRED_PYTHON_SANDBOX"
             DISABLE_WEBINTERFACE_ENV_VAR = "VRED_DISABLE_WEBINTERFACE"
+            DISABLE_WEBINTERFACE_VALUE = "1"
             ERROR_UNKNOWN_VRED_PATH = (
                 "Cannot determine valid VRED binary to invoke from VREDCORE and VREDPRO environment "
                 "variables."
             )
             FAST_START_PARAM = "-fast_start"
+            FLEXLM_DIAGNOSTICS_ENV_VAR = "FLEXLM_DIAGNOSTICS"
+            FLEXLM_DIAGNOSTICS_HIGH_VALUE = "3"
             HIDE_GUI_PARAM = "-hide_gui"
             IS_WINDOWS = platform.system().lower() == "windows"
             LICENSE_RELEASE_TIME_ENV_VAR = "VRED_IDLE_LICENSE_TIME"
@@ -580,9 +582,10 @@ steps:
                 """
                 Disable VRED's web interface, release license on idle, pass bootstrapping code via environment variable
                 """
-                os.environ[DISABLE_WEBINTERFACE_ENV_VAR]="1"
-                os.environ[LICENSE_RELEASE_TIME_ENV_VAR]=LICENSE_RELEASE_TIME_SECONDS_LIMIT
-                os.environ[CODE_PASSING_ENV_VAR]=VRED_PYTHON_BOOTSTRAP_CODE
+                os.environ[DISABLE_WEBINTERFACE_ENV_VAR] = DISABLE_WEBINTERFACE_VALUE
+                os.environ[LICENSE_RELEASE_TIME_ENV_VAR] = LICENSE_RELEASE_TIME_SECONDS_LIMIT
+                os.environ[CODE_PASSING_ENV_VAR] = VRED_PYTHON_BOOTSTRAP_CODE
+                os.environ[FLEXLM_DIAGNOSTICS_ENV_VAR] = FLEXLM_DIAGNOSTICS_HIGH_VALUE
 
             def invoke_vred(vred_executable: str) -> None:
                 """
@@ -595,7 +598,7 @@ steps:
                 command_and_arg_list: list[str] = [
                     executable,
                     scene_file_path,
-                    DISABLE_PYTHON_SANDBOX_PARAM if os.environ.get(DISABLE_PYTHON_SANDBOX_ENV_VAR) else "",
+                    DISABLE_PYTHON_SANDBOX_PARAM,
                     FAST_START_PARAM,
                     HIDE_GUI_PARAM,
                     POST_PYTHON_PARAM,

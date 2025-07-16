@@ -87,6 +87,22 @@ class TestVREDLogger:
         mock_console_handler.assert_called_once()
         mock_file_handler.assert_called_once()
 
+    @patch("vred_submitter.vred_logger.logging.handlers.RotatingFileHandler")
+    @patch("vred_submitter.vred_logger.VREDConsoleHandler")
+    def test_default_logging_level_not_debug(self, mock_console_handler, mock_file_handler):
+        """Test that the default logging level is not DEBUG."""
+        logger = VREDLogger("test_logger")
+        # Verify the logger's level is not set to DEBUG
+        assert logger.level != logging.DEBUG
+
+        # Set the logger level explicitly to ensure debug messages aren't processed
+        logger.setLevel(logging.INFO)
+
+        # Verify that DEBUG messages won't be logged
+        with patch.object(logger, "callHandlers") as mock_call_handlers:
+            logger.debug("This is a debug message")
+            mock_call_handlers.assert_not_called()
+
     @patch("vred_submitter.vred_logger.os.path.expanduser")
     @patch("vred_submitter.vred_logger.os.path.exists")
     @patch("vred_submitter.vred_logger.os.access")
