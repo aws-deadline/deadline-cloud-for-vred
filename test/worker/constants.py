@@ -46,7 +46,7 @@ class Constants(metaclass=ConstantsMeta):
     FLEXLM_DIAGNOSTICS_ENV_VAR: Final[str] = "FLEXLM_DIAGNOSTICS"
     FLEXLM_DIAGNOSTICS_HIGH_VALUE: Final[str] = "3"
     HIDE_GUI_PARAM: Final[str] = "-hide_gui"
-    IMAGE_SIMILARITY_FACTOR: Final[float] = 0.9
+    IMAGE_SIMILARITY_FACTOR: Final[float] = 10.0
     IS_WINDOWS: Final[bool] = platform.system().lower() == "windows"
     JOB_BUNDLES_DIRECTORY_NAME: Final[str] = "job_bundles"
     LICENSE_RELEASE_TIME_ENV_VAR: Final[str] = "VRED_IDLE_LICENSE_TIME"

@@ -2,5 +2,5 @@
 #!/bin/bash
 rm -rf output
 mkdir output
-python tile_assembler_test.py "7x5_tiles"
-python tile_assembler_test.py "5x2_tiles"
+python test_tile_assembler.py "7x5_tiles"
+python test_tile_assembler.py "5x2_tiles"

@@ -82,7 +82,7 @@ def get_vred_render_parameters(
 
     # Set unique output directory
     scene_basename = Path(render_parameters[Constants.SCENE_FILE_FIELD]).stem
-    output_subdir = f"{scene_basename}_{test_configuration_name}"
+    output_subdir = f"{scene_basename}-{test_configuration_name}"
     render_parameters[Constants.OUTPUT_DIRECTORY_FIELD] = str(
         base_dir / Constants.OUTPUT_DIRECTORY_NAME / output_subdir
     )

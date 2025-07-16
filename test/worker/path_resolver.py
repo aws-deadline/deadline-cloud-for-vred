@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
-from constants import Constants
+try:
+    from .constants import Constants
+except ImportError:
+    from constants import Constants  # type: ignore[no-redef]
 
 
 class PathResolver:

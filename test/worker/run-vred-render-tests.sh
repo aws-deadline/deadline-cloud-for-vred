@@ -2,5 +2,5 @@
 #!/bin/bash
 rm -rf output
 mkdir output
-python vred_render_test.py "one_frame" "AutomotiveGenesis.vpb"
-python vred_render_test.py "one_frame" "LightweightWith Spaces.vpb"
+python test_vred_render.py "one_frame" "AutomotiveGenesis.vpb"
+python test_vred_render.py "one_frame" "LightweightWith Spaces.vpb"
