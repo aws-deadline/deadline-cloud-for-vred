@@ -14,19 +14,15 @@ import os
 import shutil
 import subprocess
 import sys
-
 from pathlib import Path
 
-try:
-    from .constants import Constants
-    from .load_render_parameter_values import get_vred_render_parameters
-    from .output_comparison import are_images_similar_by_folder
-    from .path_resolver import PathResolver
-except ImportError:
-    from constants import Constants  # type: ignore[no-redef]
-    from load_render_parameter_values import get_vred_render_parameters  # type: ignore[no-redef]
-    from output_comparison import are_images_similar_by_folder  # type: ignore[no-redef]
-    from path_resolver import PathResolver  # type: ignore[no-redef]
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from test.worker.constants import Constants
+from test.worker.load_render_parameter_values import get_vred_render_parameters
+from test.worker.output_comparison import are_images_similar_by_folder
+from test.worker.path_resolver import PathResolver
 
 COMMAND_LINE_USAGE = f"Usage: python {sys.argv[0]} <job_bundle_config_name>"
 

@@ -1,11 +1,12 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
+import sys
 from pathlib import Path
 
-try:
-    from .constants import Constants
-except ImportError:
-    from constants import Constants  # type: ignore[no-redef]
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from test.worker.constants import Constants
 
 
 class PathResolver:

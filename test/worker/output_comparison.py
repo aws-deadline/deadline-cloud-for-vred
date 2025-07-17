@@ -1,17 +1,17 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 import logging
+import sys
 import numpy as np
 import PIL.Image
 import yaml
-
 from pathlib import Path
 from typing import Any
 
-try:
-    from .constants import Constants
-except ImportError:
-    from constants import Constants  # type: ignore[no-redef]
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from test.worker.constants import Constants
 
 
 def are_images_similar_by_folder(expected_dir: Path, actual_dir: Path, tolerance: float) -> bool:
