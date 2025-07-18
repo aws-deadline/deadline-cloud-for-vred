@@ -1,14 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
+import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from deadline.client.job_bundle.parameters import read_job_bundle_parameters
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-try:
-    from .constants import Constants
-except ImportError:
-    from constants import Constants  # type: ignore[no-redef]
+from deadline.client.job_bundle.parameters import read_job_bundle_parameters
+from test.worker.constants import Constants
 
 
 class DynamicKeyValueObject:
@@ -82,7 +82,7 @@ def get_vred_render_parameters(
 
     # Set unique output directory
     scene_basename = Path(render_parameters[Constants.SCENE_FILE_FIELD]).stem
-    output_subdir = f"{scene_basename}_{test_configuration_name}"
+    output_subdir = f"{scene_basename}-{test_configuration_name}"
     render_parameters[Constants.OUTPUT_DIRECTORY_FIELD] = str(
         base_dir / Constants.OUTPUT_DIRECTORY_NAME / output_subdir
     )

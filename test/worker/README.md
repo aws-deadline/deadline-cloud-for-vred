@@ -4,14 +4,14 @@ This is a test suite that exercises the Deadline Cloud VRED worker pipeline. It 
 configurations to define settings for the rendering and tiling processes (locally) for test data using the identical 
 worker pipeline code (found in: src/deadline/vred_submitter/VRED_RenderScript_DeadlineCloud.py). Rendered output is 
 visually compared against expected data. This is useful for confirming whether changes in a Job Bundle, render pipeline, 
-environment (etc.) are impacting expected rendering results.
+environment (etc.) are impacting expected rendering results. There tests are intended to be ran on a local system that has VRED installed.
 
 ## Directory Structure
 
 ### Core Test Launching Files
 
-- **tile_assembler_test.py** - contains logic for image tile assembly using ImageMagick with parallel processing
-- **vred_render_test.py** - launches VRED, loads VRED project (scene file), renders, performs render output validation
+- **test_tile_assembler.py** - contains logic for image tile assembly using ImageMagick with parallel processing
+- **test_vred_render.py** - launches VRED, loads VRED project (scene file), renders, performs render output validation
 
 ### Test Data Folders
 
@@ -52,6 +52,9 @@ Please install these dependencies:
 ### Batch Test Invocation
 
 ```
+# Invocation via pytest
+hatch run worker:test
+
 # Tile Assembly Tests
 run-tile-assembler-tests.bat
 ./run-tile-assembler-tests.sh
@@ -63,10 +66,10 @@ run-vred-render-tests.bat
 
 ```
 # Tile Assembly Test
-python tile_assembler_test.py [test configuration]
+python test_tile_assembler.py [test configuration]
 
 # VRED Rendering Test
-python vred_render_test.py [test configuration] [scene_file]
+python test_vred_render.py [test configuration] [scene_file]
 ```
 
 ## Test Configurations
@@ -109,4 +112,24 @@ Deadline Cloud for VRED (Worker Render Test)
 Test configuration (job bundle): one_frame
 Scene file: Automotive_Genesis.vpb
 Image comparison match across both folders: FAIL
+
+hatch run worker:test
+
+======================================================== test session starts =========================================================
+test/worker/test_tile_assembler.py::test_tile_assembler_7x5
+[gw0] [ 25%] PASSED test/worker/test_tile_assembler.py::test_tile_assembler_7x5
+test/worker/test_tile_assembler.py::test_tile_assembler_5x2
+[gw0] [ 50%] PASSED test/worker/test_tile_assembler.py::test_tile_assembler_5x2
+test/worker/test_vred_render.py::test_vred_render_one_frame_japanese
+[gw0] [ 75%] PASSED test/worker/test_vred_render.py::test_vred_render_one_frame_japanese
+test/worker/test_vred_render.py::test_vred_render_one_frame_spaces
+[gw0] [100%] PASSED test/worker/test_vred_render.py::test_vred_render_one_frame_spaces
+
+======================================================== slowest 5 durations =========================================================
+22.98s call     test/worker/test_vred_render.py::test_vred_render_one_frame_spaces
+22.50s call     test/worker/test_vred_render.py::test_vred_render_one_frame_japanese
+1.61s call     test/worker/test_tile_assembler.py::test_tile_assembler_7x5
+0.41s call     test/worker/test_tile_assembler.py::test_tile_assembler_5x2
+0.00s setup    test/worker/test_tile_assembler.py::test_tile_assembler_7x5
+========================================================= 4 passed in 48.51s =========================================================
 ```
