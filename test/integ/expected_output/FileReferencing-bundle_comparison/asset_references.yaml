@@ -1,0 +1,10 @@
+assetReferences:
+  inputs:
+    directories: []
+    filenames:
+    - FileReferencing.vpb
+	- C:\\WorkArea\\test.wire
+    - C:\\WorkArea\\Only\\LightweightWithoutSpaces.vpb
+  outputs:
+    directories: []
+  referencedPaths: []

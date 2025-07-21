@@ -94,6 +94,10 @@ addopts = [
 ]
 testpaths = [ "test" ]
 norecursedirs = [ "test/worker" ]
+markers = [
+    "submitter: marks tests as submitter tests",
+    "scene_files: marks tests that require scene files"
+]
 
 pythonpath = [
   # The VRED submitter plugin isn't structured like a Python package
