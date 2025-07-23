@@ -93,30 +93,37 @@ class SceneSettingsCallbacks:
 
     def deregister_all_callbacks(self) -> None:
         """Deregister most callbacks to avoid unintentional triggering and prepare for new scene file state reset"""
-        self.parent.animation_clip_widget.currentIndexChanged.disconnect()
-        self.parent.animation_type_widget.currentIndexChanged.disconnect()
-        self.parent.dlss_quality_widget.currentIndexChanged.disconnect()
-        self.parent.enable_region_rendering_widget.stateChanged.disconnect()
-        self.parent.frame_range_widget.textChanged.disconnect()
-        self.parent.frames_per_task_widget.valueChanged.disconnect()
-        self.parent.gpu_ray_tracing_widget.stateChanged.disconnect()
-        self.parent.image_size_presets_widget.currentIndexChanged.disconnect()
-        self.parent.image_size_x_widget.textChanged.disconnect()
-        self.parent.image_size_y_widget.textChanged.disconnect()
-        self.parent.printing_size_x_widget.textChanged.disconnect()
-        self.parent.printing_size_y_widget.textChanged.disconnect()
-        self.parent.render_animation_widget.stateChanged.disconnect()
-        self.parent.render_job_type_widget.currentIndexChanged.disconnect()
-        self.parent.render_output_button.pressed.disconnect()
-        self.parent.render_output_widget.textChanged.disconnect()
-        self.parent.render_quality_widget.currentIndexChanged.disconnect()
-        self.parent.render_view_widget.currentIndexChanged.disconnect()
-        self.parent.resolution_widget.textChanged.disconnect()
-        self.parent.sequence_name_widget.currentIndexChanged.disconnect()
-        self.parent.ss_quality_widget.currentIndexChanged.disconnect()
-        self.parent.tiles_in_x_widget.valueChanged.disconnect()
-        self.parent.tiles_in_y_widget.valueChanged.disconnect()
-        self.parent.use_clip_range_widget.stateChanged.disconnect()
+        disconnect_functions = [
+            lambda: self.parent.animation_clip_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.animation_type_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.dlss_quality_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.enable_region_rendering_widget.stateChanged.disconnect(),
+            lambda: self.parent.frame_range_widget.textChanged.disconnect(),
+            lambda: self.parent.frames_per_task_widget.valueChanged.disconnect(),
+            lambda: self.parent.gpu_ray_tracing_widget.stateChanged.disconnect(),
+            lambda: self.parent.image_size_presets_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.image_size_x_widget.textChanged.disconnect(),
+            lambda: self.parent.image_size_y_widget.textChanged.disconnect(),
+            lambda: self.parent.printing_size_x_widget.textChanged.disconnect(),
+            lambda: self.parent.printing_size_y_widget.textChanged.disconnect(),
+            lambda: self.parent.render_animation_widget.stateChanged.disconnect(),
+            lambda: self.parent.render_job_type_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.render_output_button.pressed.disconnect(),
+            lambda: self.parent.render_output_widget.textChanged.disconnect(),
+            lambda: self.parent.render_quality_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.render_view_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.resolution_widget.textChanged.disconnect(),
+            lambda: self.parent.sequence_name_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.ss_quality_widget.currentIndexChanged.disconnect(),
+            lambda: self.parent.tiles_in_x_widget.valueChanged.disconnect(),
+            lambda: self.parent.tiles_in_y_widget.valueChanged.disconnect(),
+            lambda: self.parent.use_clip_range_widget.stateChanged.disconnect(),
+        ]
+        for disconnect_function in disconnect_functions:
+            try:
+                disconnect_function()
+            except Exception:
+                pass
 
     def job_type_changed_callback(self) -> None:
         """
