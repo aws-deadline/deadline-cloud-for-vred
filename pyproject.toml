@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 description = "AWS Deadline Cloud for VRED"
 
 dependencies = [
-    "deadline == 0.50.*",
+    "deadline == 0.51.*",
     "openjd-adaptor-runtime >= 0.7,< 0.10",
 ]
 
