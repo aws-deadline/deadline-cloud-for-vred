@@ -15,10 +15,7 @@ The following steps are required for successful installation of this script in V
 4) Add this code to bottom of the code in the Script section:
     from DeadlineCloudForVRED import DeadlineCloudForVRED
     DeadlineCloudForVRED()
-5) In the Python Sandbox right-hand section:
-    4a) Ensure that Python Sandbox is disabled (if permissible - this may violate security requirements)
-    or
-    4b) else, add module DeadlineCloudForVRED and its dependent modules.
+5) In the Python Sandbox right-hand section, ensure that Python Sandbox is disabled (if permissible - this may violate security requirements)
 6) Save preferences (bottom right button) in Preferences window.
 """
 
@@ -53,7 +50,7 @@ ERROR_MSG_SCRIPT_NOT_FOUND = (
 )
 PATH_FIELD = "PATH"
 SUBMITTER_BASE_FOLDER_NAME = "DeadlineCloudSubmitter"
-SUBMITTER_PYTHON_MODULES_SUB_PATH = "Submitters/VRED/python/modules"
+SUBMITTER_PYTHON_MODULES_SUB_PATH = "Submitters/VRED/Python/modules"
 SUBMITTER_PYTHON_SCRIPTS_SUB_PATH = "Submitters/VRED/scripts"
 
 
