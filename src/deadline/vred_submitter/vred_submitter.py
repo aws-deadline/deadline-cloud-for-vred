@@ -34,6 +34,7 @@ from deadline.client.api import (
 )
 from deadline.client.exceptions import DeadlineOperationError, UserInitiatedCancel
 from deadline.client.job_bundle._yaml import deadline_yaml_dump
+from deadline.client.job_bundle.parameters import JobParameter
 from deadline.client.job_bundle.submission import AssetReferences
 from deadline.client.ui.dialogs.submit_job_to_deadline_dialog import (
     SubmitJobToDeadlineDialog,
@@ -92,7 +93,7 @@ class VREDSubmitter:
     def _get_parameter_values(
         self,
         settings: RenderSubmitterUISettings,
-        queue_parameters: list[dict[str, Any]],
+        queue_parameters: list[JobParameter],
     ) -> list[dict[str, Any]]:
         """
         Produce a list of parameter values for the job template.
@@ -104,8 +105,8 @@ class VREDSubmitter:
         # Note: represent the bool-typed settings values as string-equivalents of "true" or "false" value for OpenJD
         parameter_values = [
             {
-                Constants.NAME_FIELD: field.name,
-                Constants.VALUE_FIELD: (
+                Constants.NAME_FIELD: field.name,  # type: ignore
+                Constants.VALUE_FIELD: (  # type: ignore
                     str(getattr(settings, field.name)).lower()
                     if isinstance(getattr(settings, field.name), bool)
                     else getattr(settings, field.name)
@@ -117,8 +118,8 @@ class VREDSubmitter:
         # Check for any overlap between the job parameters we've defined and the queue parameters. This is an error,
         # as we weren't synchronizing the values between the two different tabs where they came from.
         #
-        parameter_names = {param[Constants.NAME_FIELD] for param in parameter_values}
-        queue_parameter_names = {param[Constants.NAME_FIELD] for param in queue_parameters}
+        parameter_names = {param[Constants.NAME_FIELD] for param in parameter_values}  # type: ignore
+        queue_parameter_names = {param[Constants.NAME_FIELD] for param in queue_parameters}  # type: ignore
         parameter_overlap = parameter_names.intersection(queue_parameter_names)
         if parameter_overlap:
             raise DeadlineOperationError(
@@ -126,8 +127,8 @@ class VREDSubmitter:
             )
         parameter_values.extend(
             {
-                Constants.NAME_FIELD: param[Constants.NAME_FIELD],
-                Constants.VALUE_FIELD: param[Constants.VALUE_FIELD],
+                Constants.NAME_FIELD: param[Constants.NAME_FIELD],  # type: ignore
+                Constants.VALUE_FIELD: param[Constants.VALUE_FIELD],  # type: ignore
             }
             for param in queue_parameters
         )
@@ -231,11 +232,11 @@ class VREDSubmitter:
         widget: SubmitJobToDeadlineDialog,
         job_bundle_dir: str,
         settings: RenderSubmitterUISettings,
-        queue_parameters: list[dict[str, Any]],
+        queue_parameters: list[JobParameter],
         asset_references: AssetReferences,
         host_requirements: Optional[dict[str, Any]] = None,
         purpose: JobBundlePurpose = JobBundlePurpose.SUBMISSION,
-    ) -> None:
+    ) -> dict[str, Any]:
         """
         Triggered (via on_create_job_bundle_callback) when there is a dialog-based request to create a job bundle
         Note: if the current scene file isn't saved, then a job_bundle won't be created
@@ -279,11 +280,14 @@ class VREDSubmitter:
             # This scene was never saved to a scene file (i.e. none to upload/submit). Bail with a message.
             raise UserInitiatedCancel(Constants.ERROR_SCENE_FILE_UNDEFINED_BODY)
 
+        combined_paths = settings.input_filenames + settings.input_directories
+        return {"known_asset_paths": [os.path.abspath(path) for path in combined_paths]}
+
     def _create_job_bundle(
         self,
         job_bundle_path: Path,
         settings: RenderSubmitterUISettings,
-        queue_parameters: list[dict[str, Any]],
+        queue_parameters: list[JobParameter],
         asset_references: AssetReferences,
         host_requirements: Optional[dict[str, Any]],
     ) -> None:
