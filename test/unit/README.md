@@ -3,27 +3,29 @@
 Comprehensive unit test suite for the VRED Deadline Cloud Submitter modules using pytest with mocking.
 
 ## Directory Structure
+The unit tests are organized in the following structure. Please note that it may be updated as the test suited is updated as the project evolves.
 
 ```
 vred_submitter/test/unit/
 ├── __init__.py                                    # Package initialization
-├── conftest.py                                    # Pytest configuration and global mocks
+├── conftest.py                                    # Pytest global test/mocking configuration
 ├── README.md                                      # This documentation
 ├── requirements.txt                               # Test dependencies
-├── run-unit-tests.bat                           # Windows test runner
-├── run-unit-tests.sh                            # Unix/Linux test runner
-├── test_assets.py                                # Asset introspection tests
-├── test_data_classes.py                          # Data structure tests
-├── test_qt_components.py                         # Qt UI component tests
-├── test_qt_utils.py                              # Qt utility function tests
-├── test_scene.py                                 # Scene management tests
+├── run-unit-tests.bat                             # Windows test runner
+├── run-unit-tests.sh                              # Unix/Linux test runner
+├── test_assets.py                                 # Asset introspection tests
+├── test_data_classes.py                           # Data structure tests
+├── test_qt_components.py                          # Qt UI component tests
+├── test_qt_utils.py                               # Qt utility function tests
+├── test_scene.py                                  # Scene management tests
 ├── test_ui_components_scene_settings_callbacks.py # UI callback tests
 ├── test_ui_components_scene_settings_populator.py # UI populator tests
-├── test_ui_components_scene_settings_widget.py   # UI widget tests
-├── test_utils.py                                 # General utility tests
-├── test_vred_logger.py                           # Logging system tests
-├── test_vred_submitter.py                        # Main submitter tests
-└── test_vred_utils.py                            # VRED-specific utility tests
+├── test_ui_components_scene_settings_widget.py    # UI widget tests
+├── test_utils.py                                  # General utility tests
+├── test_vred_logger.py                            # Logging system tests
+├── test_vred_render_script.py                     # VRED render script tests
+├── test_vred_submitter.py                         # Main submitter tests
+└── test_vred_utils.py                             # VRED-specific utility tests
 ```
 
 ## Prerequisites
@@ -33,7 +35,19 @@ vred_submitter/test/unit/
 - PyYAML (real YAML processing, not mocked)
 - boto3 (for AWS integration tests)
 
-## Dependencies
+
+## Usage
+
+### Run All Tests
+There are two options to set up the dependencies and run the unit tests:
+
+#### 1. Using `hatch` 
+Below command will install the necessary dependencies and then start running the tests.
+```bash
+hatch run unit:test
+```
+
+#### 2. Manual dependencies installation
 
 Install from requirements.txt:
 ```bash
@@ -45,10 +59,7 @@ Or install individually:
 pip install pyyaml pytest boto3
 ```
 
-## Usage
-
-
-### Run All Tests
+After installing the dependencies, you can run the unit tests using the scripts provided:
 ```bash
 # Windows
 run-unit-tests.bat
@@ -61,12 +72,6 @@ run-unit-tests.bat
 ```
 python -m pytest test_utils.py
 ```
-
-
-
-### Testing Configuration and Mocking
-
-**conftest.py** - contains the global test/mocking configuration
 
 ## Test Validation Strategies
 
@@ -131,6 +136,7 @@ $ pytest test_assets.py -v
 
 
 ### Coverage Summary
+This coverage information is provided as a general overview, and the actual coverage may vary as the project evolves and new tests are added.
 - **Core Utilities**: 40/40 tests passing (100%)
 - **VRED Integration**: 50/50 tests passing (100%)
 - **Asset Management**: 2/2 tests passing (100%)
