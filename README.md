@@ -133,6 +133,7 @@ Core 2026, the 18.X numbering convention was applied to the VREDCore-18.0 portio
 
 5. Configure the VRED Submitter plug-in to load on startup.
     - Start VRED Pro and click on these items: `Edit menu → Preferences → General Settings → Script`
+    - Please ensure that the `Enable Python Sandbox` option is unchecked.
     - In the `Script` section, scroll to the bottom and append:
       ```python
       from DeadlineCloudForVRED import DeadlineCloudForVRED
@@ -140,7 +141,7 @@ Core 2026, the 18.X numbering convention was applied to the VREDCore-18.0 portio
       ```
     - Click the `Save` button
 
-7. Logout and login to refresh environment variables.
+6. Logout and login to refresh environment variables.
 
 #### Optional: Submitter Post-Installation Steps
 
@@ -286,7 +287,7 @@ can use the Standalone [AWS Deadline Cloud Client][deadline-cloud-client] to sub
 specified render farm in a platform-agnostic manner.
 
 Standalone [AWS Deadline Cloud Client][deadline-cloud-client] render jobs should use the appropriate Job Bundle
-Template obtained through this [link][job-bundle-templates]. There, you will fine one Job Bundle Template for
+Template obtained through this [link][job-bundle-templates]. There, you will find one Job Bundle Template for
 supporting tile-based rendering (tile_render_vred/template.yaml) and another Job Bundle Template for non-tile rendering
 (vred_render/template.yaml). When submitting a render job that doesn't rely on tiling, you can use the standard job
 Please also ensure that your Job Bundle directory has a `scripts` subdirectory containing
