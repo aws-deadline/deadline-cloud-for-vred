@@ -147,24 +147,13 @@ Core 2026, the 18.X numbering convention was applied to the VREDCore-18.0 portio
 
 The following steps are NOT required or recommended in regular practice:
 
-- **Enable VRED's Python Sandbox (this is NOT recommended, since AWS Deadline Cloud requires network and file access by
-  default):**
+- Enable VRED's Python Sandbox (this is NOT recommended, since AWS Deadline Cloud requires network and file access by
+  default):
     - Start VRED Pro and click on these items: `Edit menu → Preferences → General Settings → Script`
     - In the `Python Sandbox` section, ensure that `Enable Python Sandbox` is enabled
     - Copy the contents of `python-sandbox-module-allowlist.txt` from this repository into the `Allowed Modules` text
       box
     - Click the `Save` button
-
-- **If the AWS Deadline Cloud for VRED Python installation is missing, then copy another Submitter's Python
-  installation:**
-
-  ```cmd
-  Copy the contents of C:\DeadlineCloudSubmitter\Submitters\Blender\Python to:
-  C:\DeadlineCloudSubmitter\Submitters\VRED\Python
-  
-  Alternatively, copy the contents of %USERPROFILE%\DeadlineCloudSubmitter\Submitters\Blender\Python to:
-  %USERPROFILE%\DeadlineCloudSubmitter\Submitters\VRED\Python
-  ```
 
 #### Launching the Submitter
 
