@@ -157,6 +157,8 @@ The VRED submitter plugin follows a modular architecture:
 We have configured [hatch](https://github.com/pypa/hatch) commands to support standard development. You can run the
 following from any directory of this repository:
 
+* `hatch shell` - Enter a shell environment that will have Python set up to import your development version of this
+  package.
 * `hatch build` - To build the installable Python wheel and sdist packages into the `dist/` directory.
 * `hatch run unit:test` - To run the PyTest unit tests found in the `test/unit` directory.
 * `hatch run worker:test` - (Windows only) To run the PyTest worker tests found in the `test/worker` directory.
@@ -164,8 +166,6 @@ following from any directory of this repository:
 * `hatch run all:test` - To run the PyTest unit tests against all available supported versions of Python.
 * `hatch run lint` - To check that the package's formatting adheres to formatting standards.
 * `hatch run fmt` - To automatically reformat all code to adhere to formatting standards.
-* `hatch shell` - Enter a shell environment that will have Python set up to import your development version of this
-  package.
 * `hatch env prune` - Delete all of your isolated workspace [environments](https://hatch.pypa.io/1.12/environment/) for
   this package.
 
