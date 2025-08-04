@@ -66,6 +66,7 @@ def _build_base_environment(working_directory: Path, dependencies: list[str]) ->
         "install",
         "--target",
         str(base_env_path),
+        "--platform", "win_amd64",  # only build installers for Windows
         "--only-binary=:all:",
         *dependencies,
     ]
@@ -84,15 +85,14 @@ def _download_native_dependencies(working_directory: Path, base_env: Path) -> li
         native_dependency_paths.append(native_dependency_path)
         native_dependency_path.mkdir(parents=True)
         native_dependency_pip_args = [
-            "pip",
-            "install",
-            "--target",
-            str(native_dependency_path),
-            "--python-version",
-            version,
+            "pip", "install", "--target", str(native_dependency_path),
+            "--python-version", version,
+            "--platform", "win_amd64",  # only build installers for Windows
+            "--abi", "cp" + version.replace(".", ""),
             "--only-binary=:all:",
             *versioned_native_dependencies,
         ]
+
         subprocess.run(native_dependency_pip_args, check=True)
     return native_dependency_paths
 

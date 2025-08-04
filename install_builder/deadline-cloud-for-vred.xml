@@ -132,7 +132,7 @@
                 <setInstallerVariable name="vred_installdir" value="${installdir}/Submitters/VRED/scripts/deadline/"/>
             </elseActionList>
         </if>
-        <setInstallerVariable name="vred_moduledir" value="${vred_installdir}/Python/modules/" />
+        <setInstallerVariable name="vred_moduledir" value="${vred_installdir}/python/modules/" />
 	</readyToInstallActionList>
 	<parameterList>
 		<stringParameter name="deadline_cloud_for_vred_summary" ask="0" cliOptionShow="0">

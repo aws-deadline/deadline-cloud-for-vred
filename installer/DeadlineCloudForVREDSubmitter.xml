@@ -175,7 +175,7 @@
         <addFilesToUninstaller>
           <files>${vred_installdir}/</files>
         </addFilesToUninstaller>
-        <fnAddPathEnvironmentVariable name="PATH" value="${installdir}/DeadlineCloudSubmitter/DeadlineClient" scope="${installscope}" insertAt="beginning"/>
+        <fnAddPathEnvironmentVariable name="DC_VRED_MODULES" value="${installdir}" scope="${installscope}" insertAt="beginning"/>
     </postInstallationActionList>
 
     <preUninstallationActionList>
@@ -193,7 +193,7 @@
         <deleteFile path="${installdir}/installer_version.txt"/>
     </preUninstallationActionList>
     <postUninstallationActionList>
-        <fnRemovePathFromEnvironmentVariable name="PATH" value="${installdir}/DeadlineCloudSubmitter/DeadlineClient" scope="${installscope}"/>
+        <fnRemovePathFromEnvironmentVariable name="DC_VRED_MODULES" value="${installdir}" scope="${installscope}"/>
     </postUninstallationActionList>
     <width>550</width>
 </project>
