@@ -44,18 +44,22 @@ jobs:
       with:
           tag: ${{ needs.TagRelease.outputs.tag }}
 
-  Release:
-      needs: [TagRelease, PreRelease]
-      uses: aws-deadline/.github/.github/workflows/reusable_release.yml@mainline
-      secrets: inherit
-      permissions:
-        id-token: write
-        contents: write
-      with:
-          tag: ${{ needs.TagRelease.outputs.tag }}
-  
+  BuildInstaller:
+    needs: [TagRelease, PreRelease]
+    uses: aws-deadline/.github/.github/workflows/reusable_build_installers.yml@mainline
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      ref_type: tags
+      ref: ${{ needs.TagRelease.outputs.tag }}
+      oses: "['Windows']"
+      environment: release
+      project_name: ${{ github.event.repository.name }}
+
   Publish:
-      needs: [TagRelease, Release]
+      needs: [TagRelease, BuildInstaller]
       uses: aws-deadline/.github/.github/workflows/reusable_publish_python.yml@mainline
       permissions:
         id-token: write
@@ -63,12 +67,41 @@ jobs:
       with:
           tag: ${{ needs.TagRelease.outputs.tag }}
 
+  IsCondaReady:
+    needs: Publish
+    runs-on: ubuntu-latest
+    environment: release
+    name: “Is the Conda Package available in all ProdWaves and have you ran any required manual tests?”
+    steps:
+      - run: |
+         :
+  
+  ReleaseInstaller:
+    needs: [TagRelease, IsCondaReady]
+    uses: aws-deadline/.github/.github/workflows/reusable_release_installers.yml@mainline
+    secrets: inherit
+    permissions:
+      id-token: write
+      contents: read
+    with:
+      tag: ${{ needs.TagRelease.outputs.tag }}
+      oses: "['Windows']"
+      project_name: ${{ github.event.repository.name }}
+
+  Release:
+      needs: [TagRelease, ReleaseInstaller]
+      uses: aws-deadline/.github/.github/workflows/reusable_release.yml@mainline
+      secrets: inherit
+      permissions:
+        id-token: write
+        contents: write
+      with:
+          tag: ${{ needs.TagRelease.outputs.tag }}
+
   # PyPI does not support reusable workflows yet
   # # See https://github.com/pypi/warehouse/issues/11096
   PublishToPyPI:
-    # Skip until the repository is public
-    if: ${{ false }}
-    needs: [TagRelease, Publish]
+    needs: [TagRelease, Release]
     runs-on: ubuntu-latest
     environment: release
     permissions:
