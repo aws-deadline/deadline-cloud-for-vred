@@ -353,3 +353,24 @@ python -m deadline_worker_agent --run-jobs-as-agent-user
 ```
 
 This allows you to test job execution locally without requiring a full Deadline Cloud farm setup.
+
+### Submitter Installer Development Workflow
+#### Build the package
+
+```bash
+hatch build
+```
+
+#### Build the installer
+
+```bash
+hatch run installer:build-installer --local-dev-build --platform <PLATFORM> [--install-builder-location <LOCATION> --output-dir <DIR>]
+```
+
+Run `hatch run installer:build-installer -h` to see the full list of arguments.
+
+
+#### Test a local installer
+```bash
+hatch run test-installer
+```
