@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 description = "AWS Deadline Cloud for VRED"
 
 dependencies = [
-    "deadline == 0.51.*",
+    "deadline == 0.50.*",
 ]
 
 [project.urls]
