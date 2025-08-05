@@ -15,19 +15,14 @@ Table of Contents:
 
 To develop the Python code in this repository you will need:
 
-1. Python 3.11 or higher. We recommend [mise](https://github.com/jdx/mise) if you would like to run more than one
-   version of Python on the same system. When running unit tests against all supported Python versions, for instance.
-2. The [hatch](https://github.com/pypa/hatch) package installed (`pip install hatch`) into your Python
-   environment.
+1. Python 3.11 or higher. We recommend [mise](https://github.com/jdx/mise) if you would like to run more than one version of Python on the same system. When running unit tests against all supported Python versions, for instance.
+2. The [hatch](https://github.com/pypa/hatch) package installed (`pip install hatch`) into your Python environment.
 3. A supported version of VRED Pro or VRED Core with valid bring your own licensing (BYOL).
-4. ImageMagick installed for tile assembly testing (download
-   from [imagemagick.org](https://imagemagick.org/script/download.php)).
+4. ImageMagick installed for tile assembly testing (download from [imagemagick.org](https://imagemagick.org/script/download.php)).
 5. A valid AWS Account.
-6. An AWS Deadline Cloud Farm to run jobs on. We recommend following the quickstart in the Deadline Cloud console to
-   create a Queue with the default Queue Environment, and a Service Managed Fleet.
+6. An AWS Deadline Cloud Farm to run jobs on. We recommend following the quickstart in the Deadline Cloud console to create a Queue with the default Queue Environment, and a Service Managed Fleet.
 
-**Important**: VRED requires **bring your own licensing (BYOL)**. Ensure you have valid VRED licenses available for both
-development and production render farm usage.
+**Important**: VRED requires **bring your own licensing (BYOL)**. Ensure you have valid VRED licenses available for both development and production render farm usage.
 
 ## Software Architecture
 
@@ -154,11 +149,9 @@ The VRED submitter plugin follows a modular architecture:
 
 ## Development Processes/Tools
 
-We have configured [hatch](https://github.com/pypa/hatch) commands to support standard development. You can run the
-following from any directory of this repository:
+We have configured [hatch](https://github.com/pypa/hatch) commands to support standard development. You can run the following from any directory of this repository:
 
-* `hatch shell` - Enter a shell environment that will have Python set up to import your development version of this
-  package.
+* `hatch shell` - Enter a shell environment that will have Python set up to import your development version of this package.
 * `hatch build` - To build the installable Python wheel and sdist packages into the `dist/` directory.
 * `hatch run unit:test` - To run the PyTest unit tests found in the `test/unit` directory.
 * `hatch run worker:test` - (Windows only) To run the PyTest worker tests found in the `test/worker` directory.
@@ -166,19 +159,13 @@ following from any directory of this repository:
 * `hatch run all:test` - To run the PyTest unit tests against all available supported versions of Python.
 * `hatch run lint` - To check that the package's formatting adheres to formatting standards.
 * `hatch run fmt` - To automatically reformat all code to adhere to formatting standards.
-* `hatch env prune` - Delete all of your isolated workspace [environments](https://hatch.pypa.io/1.12/environment/) for
-  this package.
+* `hatch env prune` - Delete all of your isolated workspace [environments](https://hatch.pypa.io/1.12/environment/) for this package.
 
-Note: Hatch uses [environments](https://hatch.pypa.io/1.12/environment/) to isolate the Python development workspace for
-this package from your system or virtual environment Python. If your build/test run is not making sense, then sometimes
-pruning (`hatch env prune`) all of these environments for the package can fix the issue.
+Note: Hatch uses [environments](https://hatch.pypa.io/1.12/environment/) to isolate the Python development workspace for this package from your system or virtual environment Python. If your build/test run is not making sense, then sometimes pruning (`hatch env prune`) all of these environments for the package can fix the issue.
 
 ### Submitter Development Workflow
 
-The submitter plug-in generates job bundles to submit to AWS Deadline Cloud. Developing a change to the submitter
-involves iteratively changing the plug-in code, then running the plug-in within VRED to generate or submit a job bundle,
-inspecting the generated job bundle to ensure that it is as you expect, and ultimately running that job to ensure that
-it works as desired.
+The submitter plug-in generates job bundles to submit to AWS Deadline Cloud. Developing a change to the submitter involves iteratively changing the plug-in code, then running the plug-in within VRED to generate or submit a job bundle, inspecting the generated job bundle to ensure that it is as you expect, and ultimately running that job to ensure that it works as desired.
 
 #### Running the Plug-In
 
@@ -195,9 +182,7 @@ To run the plug-in for development:
 
 4. Access the submitter through the "Deadline Cloud" menu in VRED.
 
-You can use the "Export Bundle" option in the submitter to save the job bundle for a submission to your local disk to
-inspect it, or the "Submit" button (after selecting your Deadline Cloud Farm and Queue in the submitter UI) to submit
-the job to your farm to run.
+You can use the "Export Bundle" option in the submitter to save the job bundle for a submission to your local disk to inspect it, or the "Submit" button (after selecting your Deadline Cloud Farm and Queue in the submitter UI) to submit the job to your farm to run.
 
 #### Making Submitter Code Changes
 
@@ -210,15 +195,12 @@ Whenever you modify code for the plug-in, or one of its supporting Python librar
 
 The tests for the plug-in have two forms:
 
-1. Unit tests focused on ensuring that function-level behavior of the implementation behaves as expected.
-   These can always be run locally on your workstation without requiring an AWS account.
+1. Unit tests focused on ensuring that function-level behavior of the implementation behaves as expected. These can always be run locally on your workstation without requiring an AWS account.
 2. Integration tests - In-application tests that verify that job submissions generate expected job bundles.
 
 ##### Unit Tests
 
-Unit tests are all located under the `test/unit` directory of this repository. If you are adding or modifying
-functionality, then you will almost always want to be writing one or more unit tests to demonstrate that your logic
-behaves as expected and that future changes do not accidentally break your change.
+Unit tests are all located under the `test/unit` directory of this repository. If you are adding or modifying functionality, then you will almost always want to be writing one or more unit tests to demonstrate that your logic behaves as expected and that future changes do not accidentally break your change.
 
 To run the unit tests, use hatch:
 
@@ -228,8 +210,7 @@ hatch run unit:test
 
 ##### Worker Tests
 
-Worker tests are located under the `test/worker` directory and test the VRED render script and tile assembly
-functionality.
+Worker tests are located under the `test/worker` directory and test the VRED render script and tile assembly functionality.
 
 To run the worker tests:
 
@@ -239,8 +220,7 @@ hatch run worker:test
 
 ##### Integration Tests
 
-Integration tests are located under the `test/integ` directory. These tests verify that the submitter generates correct
-job bundles and that the VRED render script functions properly.
+Integration tests are located under the `test/integ` directory. These tests verify that the submitter generates correct job bundles and that the VRED render script functions properly.
 
 To run the integration tests:
 
@@ -267,9 +247,50 @@ The integration tests include:
 
 ##### Test Configuration
 
-Integration tests use scene files located in `test/integ/scene_files/` and compare output against expected baselines in
-`test/integ/expected_output/`. Test parameters can be customized through parameter and asset overrides in the test
-configuration.
+Integration tests use scene files located in `test/integ/scene_files/` and compare output against expected baselines in `test/integ/expected_output/`. Test parameters can be customized through parameter and asset overrides in the test configuration.
+
+### Manual Installation
+#### Prerequisites
+
+1. Install the required applications:
+    - VRED Pro 2025/2026 [Autodesk](https://manage.autodesk.com)
+    - [Deadline Cloud Client][deadline-cloud-client]
+    - [Deadline Cloud Monitor](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/open-deadline-cloud-monitor.html)
+1. Open Deadline Cloud Monitor and perform sign-in on an appropriate profile.
+1. [Clone this repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository#cloning-a-repository).
+1. Ensure you have `pip` available in your terminal.
+
+#### Installation Steps
+
+For the instructions that follow, change the directory names as appropriate to correspond to the VRED installation where you would like to install the Submitter. For example, for VRED Core 2026, the 18.X numbering convention was applied to the VREDCore-18.0 portion of the path.
+
+1. Set-up development environment:
+    - `pip install --upgrade -r requirements-development.txt`
+1. Create submitter directory
+    - run `hatch build` in your local git repository
+    - Windows: `xcopy -r src\deadline\vred_submitter\ ~%USERPROFILE%\DeadlineCloudSubmitter\Submitters\VRED\scripts\deadline\vred_submitter /s /e /h`
+1. Install submitter dependencies:
+    - Windows: `pip install --python-version 3.11 --only-binary=:all: "deadline[gui]" -t %USERPROFILE%\DeadlineCloudSubmitter\Submitters\VRED\python\modules`
+1. Set the `DEADLINE_VRED_MODULES` environment variable to point to your VRED module install:
+    - Windows: `setx DEADLINE_VRED_MODULES %USERPROFILE%\DeadlineCloudSubmitter\Submitters\VRED`
+1. Install the Submitter plug-in into VRED's environment:
+    - Copy `vred_submitter_plugin/plug-ins/DeadlineCloudForVRED.py` from this repository to VRED's Python libraries directory:
+        - For VRED Core: `C:\Program Files\Autodesk\VREDCore-18.0\lib\python\Lib\site-packages`
+        - For VRED Pro: `C:\Program Files\Autodesk\VREDPro-18.0\lib\python\Lib\site-packages`
+1. Configure the VRED Submitter plug-in to load on startup.
+    - Start VRED Pro and click on these items: `Edit menu → Preferences → General Settings → Script`
+    - Please ensure that the `Enable Python Sandbox` option is unchecked since AWS Deadline Cloud requires network and file access by default.
+    - In the `Script` section, scroll to the bottom and append:
+      ```python
+      from DeadlineCloudForVRED import DeadlineCloudForVRED
+      DeadlineCloudForVRED()
+      ```
+    - Click the `Save` button
+1. Supply AWS account credentials for the submitter to use when submitting a render job through either of these steps:
+    - [Install and set up the Deadline Cloud Monitor][deadline-cloud-monitor-setup], and then log in to the monitor. (Logging in to the monitor will make AWS credentials available to the submitter, automatically.)
+    - Set up an AWS credentials profile [as you would for the AWS CLI][aws-cli-credentials], and select that profile for the submitter to use.
+    - Or default to your AWS EC2 instance profile credentials if you are running a workstation in the cloud.
+1. Restart VRED to refresh environment variables.
 
 ## Environment Variables
 
@@ -300,8 +321,7 @@ configuration.
 
 ## Submitter UI Configuration
 
-The submitter UI is configured through parameters defined in `default_vred_job_template.yaml` and UI constants in
-`ui/components/constants.py`:
+The submitter UI is configured through parameters defined in `default_vred_job_template.yaml` and UI constants in `ui/components/constants.py`:
 
 ### Render Parameters
 
@@ -321,8 +341,7 @@ The submitter UI is configured through parameters defined in `default_vred_job_t
 
 ### Debug Mode
 
-Enable detailed logging by setting the log level in your test environment or by modifying the logger configuration in
-the VRED submitter code.
+Enable detailed logging by setting the log level in your test environment or by modifying the logger configuration in the VRED submitter code.
 
 ### Parameter Validation
 
