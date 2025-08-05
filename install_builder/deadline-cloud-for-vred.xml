@@ -1,0 +1,153 @@
+<!-- Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. -->
+<componentGroup>
+    <name>deadline_cloud_for_vred</name>
+    <description>Deadline Cloud for VRED 2025-2026</description>
+	<detailedDescription>VRED plugin for submitting jobs to AWS Deadline Cloud</detailedDescription>
+    <canBeEdited>1</canBeEdited>
+    <selected>0</selected>
+    <show>1</show>
+    <folderList>
+        <folder>
+            <description>VRED Pro Plug-in Module</description>
+            <destination>${vred_installdir}</destination>
+            <name>vredplugin</name>
+            <platforms>all</platforms>
+            <distributionFileList>
+                <distributionDirectory allowWildcards="1">
+                    <origin>../vred_submitter_plugin/*</origin>
+                </distributionDirectory>
+            </distributionFileList>
+        </folder>
+        <folder>
+            <description>VRED Pro Submitter Files</description>
+            <destination>${vred_installdir}/scripts/deadline/vred_submitter</destination>
+            <name>vred</name>
+            <platforms>all</platforms>
+            <distributionFileList>
+                <distributionDirectory allowWildcards="1">
+                    <origin>../src/deadline/vred_submitter/*</origin>
+                </distributionDirectory>
+            </distributionFileList>
+        </folder>
+        <folder>
+             <description>Dependency Files</description>
+             <destination>${installdir}/tmp/vred_deps</destination>
+             <name>vreddeps</name>
+             <platforms>all</platforms>
+             <distributionFileList>
+                 <distributionDirectory allowWildcards="1">
+                     <origin>../dependency_bundle</origin>
+                 </distributionDirectory>
+             </distributionFileList>
+         </folder>
+    </folderList>
+    <componentList>
+        <component>
+            <name>vredpro_2025</name>
+            <description>VRED Pro 2025</description>
+            <selected>0</selected>
+            <preInitializationActionList>
+                <setInstallerVariable name="vredpro_2025_default" value="C:\Program Files\Autodesk\VREDPro-17.3" />
+            </preInitializationActionList>
+            <parameterList>
+                <directoryParameter>
+                    <name>vredpro_2025_path</name>
+                    <description>Path to VRED Pro 2025</description>
+                    <explanation>Enter the path to VRED Pro 2025. For easiest installation, VRED Pro should be installed before installing AWS Deadline Cloud for VRED.</explanation>
+                    <default>${vredpro_2025_default}</default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <mustExist>1</mustExist>
+                    <ask>yes</ask>
+                    <cliOptionName>vredpro-2025-path</cliOptionName>
+                    <cliOptionText>Path to the VRED Pro 2025 directory.</cliOptionText>
+                </directoryParameter>
+            </parameterList>
+            <readyToInstallActionList>
+                <setInstallerVariable name="vredpro_2025_python_path" value="${vredpro_2025_path}/lib/python/Lib/site-packages/" persist="1"/>
+            </readyToInstallActionList>
+            <postInstallationActionList>
+                <copyFile>
+                    <origin>${vred_installdir}/plug-ins/DeadlineCloudForVRED.py</origin>
+                    <destination>${vredpro_2025_python_path}/DeadlineCloudForVRED.py</destination>
+                </copyFile>
+                <addFilesToUninstaller>
+                    <files>${vredpro_2025_python_path}/DeadlineCloudForVRED.py</files>
+                </addFilesToUninstaller>
+            </postInstallationActionList>
+        </component>
+        <component>
+            <name>vredpro_2026</name>
+            <description>VRED Pro 2026</description>
+            <selected>0</selected>
+            <preInitializationActionList>
+                <setInstallerVariable name="vredpro_2026_default" value="C:\Program Files\Autodesk\VREDPro-18.0" />
+            </preInitializationActionList>
+            <parameterList>
+                <directoryParameter>
+                    <name>vredpro_2026_path</name>
+                    <description>Path to VRED Pro 2026</description>
+                    <explanation>Enter the path to VRED Pro 2026. For easiest installation, VRED Pro should be installed before installing AWS Deadline Cloud for VRED.</explanation>
+                    <default>${vredpro_2026_default}</default>
+                    <allowEmptyValue>0</allowEmptyValue>
+                    <mustExist>1</mustExist>
+                    <ask>yes</ask>
+                    <cliOptionName>vredpro-2026-path</cliOptionName>
+                    <cliOptionText>Path to the VRED Pro 2026 directory.</cliOptionText>
+                </directoryParameter>
+            </parameterList>
+            <readyToInstallActionList>
+                <setInstallerVariable name="vredpro_2026_python_path" value="${vredpro_2026_path}/lib/python/Lib/site-packages/" persist="1"/>
+            </readyToInstallActionList>
+            <postInstallationActionList>
+                <copyFile>
+                    <origin>${vred_installdir}/plug-ins/DeadlineCloudForVRED.py</origin>
+                    <destination>${vredpro_2026_python_path}/DeadlineCloudForVRED.py</destination>
+                </copyFile>
+                <addFilesToUninstaller>
+                    <files>${vredpro_2026_python_path}/DeadlineCloudForVRED.py</files>
+                </addFilesToUninstaller>
+            </postInstallationActionList>
+        </component>
+    </componentList>
+	<initializationActionList>
+		<setInstallerVariable name="all_components" value="${all_components} deadline_cloud_for_vred"/>
+	</initializationActionList>
+	<readyToInstallActionList>
+        <if>
+            <conditionRuleList>
+                <isTrue value="${individual_install}"/>
+            </conditionRuleList>
+            <actionList>
+                <setInstallerVariable name="vred_installdir" value="${installdir}/"/>
+            </actionList>
+            <elseActionList>
+                <setInstallerVariable name="vred_installdir" value="${installdir}/Submitters/VRED/scripts/deadline/"/>
+            </elseActionList>
+        </if>
+        <setInstallerVariable name="vred_moduledir" value="${vred_installdir}/python/modules/" />
+	</readyToInstallActionList>
+	<parameterList>
+		<stringParameter name="deadline_cloud_for_vred_summary" ask="0" cliOptionShow="0">
+			<value>Deadline Cloud for VRED 2025-2026
+- Compatible with VRED Pro 2025-2026.
+- Install the integrated VRED Pro submitter files to the installation directory.</value>
+		</stringParameter>
+	</parameterList>
+    <postInstallationActionList>
+        <if>
+            <conditionRuleList>
+                <fileExists path="${vred_moduledir}" negate="1" />
+            </conditionRuleList>
+            <actionList>
+                <createDirectory path="${vred_moduledir}" />
+            </actionList>
+        </if>
+        <unzip>
+            <destinationDirectory>${vred_moduledir}</destinationDirectory>
+            <zipFile>${installdir}/tmp/vred_deps/dependency_bundle/deadline_cloud_for_vred_submitter-deps.zip</zipFile>
+        </unzip>
+        <deleteFile>
+            <path>${installdir}/tmp/</path>
+        </deleteFile>
+    </postInstallationActionList>
+</componentGroup>
