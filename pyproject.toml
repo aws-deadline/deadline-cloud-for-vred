@@ -8,6 +8,20 @@ dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.11"
 description = "AWS Deadline Cloud for VRED"
+license = "Apache-2.0"
+# https://pypi.org/classifiers/
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: Microsoft :: Windows",
+  "License :: OSI Approved :: Apache Software License",
+  "Intended Audience :: Developers",
+  "Intended Audience :: End Users/Desktop"
+]
+
 
 dependencies = [
     "deadline == 0.50.*",
