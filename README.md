@@ -12,12 +12,6 @@ AWS Deadline Cloud for VRED is a Python-based package that supports creating and
 
 [deadline-cloud-client]: https://github.com/aws-deadline/deadline-cloud
 
-[deadline-cloud-monitor-setup]: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#install-deadline-cloud-monitor
-
-[deadline-cloud-for-vred]: https://github.com/aws-deadline/deadline-cloud-for-vred
-
-[default-queue-environment]: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/create-queue-environment.html#conda-queue-environment
-
 [job-bundle]: https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/build-job-bundle.html
 
 [job-bundle-templates]: https://github.com/aws-deadline/deadline-cloud-samples/tree/mainline/job_bundles

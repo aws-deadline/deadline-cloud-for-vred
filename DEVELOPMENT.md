@@ -11,6 +11,12 @@ Table of Contents:
         * [Making Code Changes](#making-submitter-code-changes)
         * [Testing the Submitter](#testing-the-submitter)
 
+[aws-cli-credentials]: https://docs.aws.amazon.com/cli/v1/userguide/cli-chap-authentication.html
+
+[deadline-cloud-client]: https://github.com/aws-deadline/deadline-cloud
+
+[deadline-cloud-monitor-setup]: https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#install-deadline-cloud-monitor
+
 ## Development Environment Setup
 
 To develop the Python code in this repository you will need:
