@@ -13,3 +13,5 @@ __pycache__/
 /dev_install/
 /wheels/
 **/otls/backup
+/test/integ/output/
+/test/integ/scene_files/IncrementalSave_FileReferencing.vpb/

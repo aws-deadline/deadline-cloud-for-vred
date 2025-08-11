@@ -274,7 +274,7 @@ For the instructions that follow, change the directory names as appropriate to c
     - `pip install --upgrade -r requirements-development.txt`
 1. Create submitter directory
     - run `hatch build` in your local git repository
-    - Windows: `xcopy -r src\deadline\vred_submitter\ ~%USERPROFILE%\DeadlineCloudSubmitter\Submitters\VRED\scripts\deadline\vred_submitter /s /e /h`
+    - Windows: `xcopy src\deadline\vred_submitter\ %USERPROFILE%\DeadlineCloudSubmitter\Submitters\VRED\scripts\deadline\vred_submitter\ /s /e /h`
 1. Install submitter dependencies:
     - Windows: `pip install --python-version 3.11 --only-binary=:all: "deadline[gui]" -t %USERPROFILE%\DeadlineCloudSubmitter\Submitters\VRED\python\modules`
 1. Set the `DEADLINE_VRED_MODULES` environment variable to point to your VRED module install:
