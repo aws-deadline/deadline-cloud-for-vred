@@ -15,3 +15,5 @@ __pycache__/
 **/otls/backup
 /test/integ/output/
 /test/integ/scene_files/IncrementalSave_FileReferencing.vpb/
+/test/integ/scene_files/*.deadline_render_settings.json
+test/worker/output/

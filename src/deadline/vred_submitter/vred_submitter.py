@@ -102,6 +102,16 @@ class VREDSubmitter:
         return: list of parameter value dictionaries
         """
 
+        # Exclude deadline-cloud shared parameters that are handled at a higher level
+        # These should remain sticky for UI persistence but not be included in job bundle parameters
+        shared_parameters = {
+            "priority",
+            "initial_status",
+            "max_failed_tasks_count",
+            "max_retries_per_task",
+            "max_worker_count",
+        }
+
         # Note: represent the bool-typed settings values as string-equivalents of "true" or "false" value for OpenJD
         parameter_values = [
             {
@@ -113,6 +123,7 @@ class VREDSubmitter:
                 ),
             }
             for field in fields(type(settings))
+            if field.name not in shared_parameters
         ]
 
         # Check for any overlap between the job parameters we've defined and the queue parameters. This is an error,
@@ -159,12 +170,22 @@ class VREDSubmitter:
         return: configured settings
         """
         render_settings = RenderSubmitterUISettings()
+
+        # Load sticky settings first if they exist for this scene
+        scene_full_path = Scene.project_full_path()
+        if scene_full_path:
+            render_settings.load_sticky_settings(scene_full_path)
+
         # Note: all UI-based render settings populate through the SceneSettingsWidget - update_settings() callback!
         # Note: render_settings.input_directories is kept empty to avoid including more content than intended
         # Note: render_settings.output_directories is kept dynamic/user-defined (via update_settings() callback)
         #
-        render_settings.name = Scene.name()
-        render_settings.input_filenames = Scene.get_input_filenames()
+        # Only set default values if they weren't loaded from sticky settings
+        if not render_settings.name:
+            render_settings.name = Scene.name()
+        if not render_settings.input_filenames:
+            render_settings.input_filenames = Scene.get_input_filenames()
+
         return render_settings
 
     def _setup_attachments(
@@ -257,7 +278,8 @@ class VREDSubmitter:
             )
             if dialog_result:
                 save_scene_file(Scene.project_full_path())
-        if Scene.name():
+        scene_full_path = Scene.project_full_path()
+        if scene_full_path:
             # Note: file permissions checks further handled by Deadline Cloud API
             #
             if not settings.OutputDir or not os.path.exists(settings.OutputDir):
@@ -276,6 +298,8 @@ class VREDSubmitter:
             attachments: AssetReferences = widget.job_attachments.attachments
             settings.input_filenames = sorted(attachments.input_filenames)
             settings.input_directories = sorted(attachments.input_directories)
+            # Save sticky settings for this scene
+            settings.save_sticky_settings(scene_full_path)
         else:
             # This scene was never saved to a scene file (i.e. none to upload/submit). Bail with a message.
             raise UserInitiatedCancel(Constants.ERROR_SCENE_FILE_UNDEFINED_BODY)

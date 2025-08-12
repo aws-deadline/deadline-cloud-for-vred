@@ -82,6 +82,7 @@ class Constants(metaclass=ConstantsMeta):
     PARAMETER_VALUES_FILENAME: Final[str] = "parameter_values.yaml"
     POSITIVE_INFINITY: Final[str] = "inf"
     READ_FLAG: Final[str] = "r"
+    RENDER_SUBMITTER_SETTINGS_FILE_EXT = ".deadline_render_settings.json"
     SCENE_FILE_NOT_SAVED_TITLE: Final[str] = "Warning: scene file not saved"
     SCENE_FILE_NOT_SAVED_BODY: Final[str] = (
         "The scene file has unsaved local changes that will not be included in the job "
