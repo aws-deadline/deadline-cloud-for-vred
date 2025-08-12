@@ -82,6 +82,8 @@ The VRED Submitter provides multiple interfaces for configuring render jobs. The
 
 Settings applied in this interface will persist for the entire duration that a given scene file is open (this includes closing and reopening the Submitter window). Initial settings in the Submitter UI are populated from VRED's general render options (which are saved in the scene file). Saving the scene file won't persist the Submitter UI options, but certain options (including frame range to render) will be repopulated if saved in VRED's general render settings.
 
+Once a job has been submitted, a local Deadline settings file will be saved next to the submitted scene file with the file name `<SceneName>.deadline_render_settings.json`. This file defines some submission options that will be reloaded for this scene the next time you open the submitter window.
+
 ![VRED Submitter Dialog](VRED-Submitter-Dialog.png)
 
 ### Standalone Submitter (external to VRED)

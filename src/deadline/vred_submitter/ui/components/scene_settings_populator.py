@@ -101,11 +101,14 @@ class SceneSettingsPopulator:
         # See: SceneSettingsCallbacks.scene_file_changed_callback()
         #
         if SceneSettingsPopulator.persisted_ui_settings_states is None:
-            self._store_runtime_derived_settings(initial_settings)
+            # Initialize persisted settings storage
             SceneSettingsPopulator.persisted_ui_settings_states = DynamicKeyValueObject(
                 {str(key).lower(): "" for key in PersistedUISettingsNames}
             )
+            # Capture sticky settings from initial_settings before they get overwritten
             SceneSettingsPopulator._configure_ui_persisted_settings(initial_settings)
+            # Now get VRED scene values (this will overwrite initial_settings but we've already captured the sticky values)
+            self._store_runtime_derived_settings(initial_settings)
         self._populate_runtime_ui_options_values(initial_settings)
         # Persisted settings will take precedence (in UI elements) over initial settings/defaults
         self._restore_persisted_ui_settings_states()
