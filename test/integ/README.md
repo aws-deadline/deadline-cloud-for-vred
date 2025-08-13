@@ -2,6 +2,8 @@
 
 Comprehensive integration test suite for the VRED Deadline Cloud Submitter using pytest with real VRED application instances.
 
+This test requires opening VRED Pro and directly interacting with the Deadline Cloud submitter UI, so it can only be executed on a Windows system that supports VRED Pro.
+
 ## Directory Structure
 
 ```
@@ -29,21 +31,18 @@ vred_submitter/test/integ/
 - Python 3.10+
 - pytest 8.1.1+
 - PyYAML (for job bundle validation)
-- VRED 2025+ (VRED Core or VRED Pro)
+- VRED 2025+ (VRED Pro)
+- Deadline CLI, and VRED in-app submitter
 
-## Environment Setup
+### Environment Setup
 
-### VRED Installation
-Set one of these environment variables:
-```bash
-# Windows
-set VREDCORE=C:\Program Files\Autodesk\VREDPro-2024\bin\WIN64\VREDCore.exe
-# or
-set VREDPRO=C:\Program Files\Autodesk\VREDPro-2024\bin\WIN64\VREDPro.exe
+- Set one of these environment variables:
+   ```bash
+   # Windows
+   set VREDPRO=C:\Program Files\Autodesk\VREDPro-2024\bin\WIN64\VREDPro.exe
+   ```
 
-# Linux
-export VREDCORE=/opt/Autodesk/VREDCluster-2024/bin/VREDCore
-```
+- The tests use a hardcoded output directory path for the rendered images, which is set to `"C:\\vred-snapshots"`. Ensure that this path actually exists on the local where the test is being executed. Alternatively, replace the hardcoded path with a directory that does exist on the local.
 
 ### Dependencies
 ```bash
@@ -138,7 +137,7 @@ asset_overrides = [
 ## Environment Variables
 
 ### VRED Configuration
-- `VREDCORE` / `VREDPRO`: Path to VRED executable
+- `VREDPRO`: Path to VRED executable
 - `VRED_DISABLE_WEB_INTERFACE`: Disables web interface (set automatically)
 - `VRED_LICENSE_RELEASE_TIME`: License release timeout (set automatically)
 - `FLEXLM_DIAGNOSTICS`: FlexLM diagnostic level (set automatically)
@@ -154,7 +153,7 @@ asset_overrides = [
    ```
    OSError: VRED executable not found
    ```
-   - Verify VREDCORE or VREDPRO environment variable
+   - Verify VREDPRO environment variable
    - Check VRED installation path and permissions
 
 2. **Dialog Creation Failed**
