@@ -261,11 +261,23 @@ class SceneSettingsCallbacks:
     def enable_region_rendering_changed_callback(self) -> None:
         """
         Updates UI elements when region rendering is enabled/disabled.
+        When region rendering is enabled, GPU Ray Tracing is automatically enabled and disabled.
         """
         if not self.parent.init_complete:
             return
         state = self.parent.enable_region_rendering_widget.isChecked()
         self.parent.populator.persisted_ui_settings_states.enable_render_regions = state
+
+        # When region rendering is enabled, auto-enable GPU Ray Tracing and disable the control.
+        # Region rendering requires GPU Ray Tracing to ensure proper tile rendering,
+        # so we disable the control to prevent users from accidentally turning it off.
+        # When region rendering is disabled, re-enable the GPU Ray Tracing control.
+        if state:
+            self.parent.gpu_ray_tracing_widget.setChecked(True)
+            self.parent.gpu_ray_tracing_widget.setEnabled(False)
+        else:
+            self.parent.gpu_ray_tracing_widget.setEnabled(True)
+
         # All UI elements that should be enabled/disabled together
         region_rendering_controls = [
             self.parent.tiles_in_x_label,

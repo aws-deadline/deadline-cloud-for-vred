@@ -24,7 +24,7 @@ To develop the Python code in this repository you will need:
 1. Python 3.11 or higher. We recommend [mise](https://github.com/jdx/mise) if you would like to run more than one version of Python on the same system. When running unit tests against all supported Python versions, for instance.
 2. The [hatch](https://github.com/pypa/hatch) package installed (`pip install hatch`) into your Python environment.
 3. A supported version of VRED Pro or VRED Core with valid bring your own licensing (BYOL).
-4. ImageMagick installed for tile assembly testing (download from [imagemagick.org](https://imagemagick.org/script/download.php)).
+4. (Optional) ImageMagick for tile assembly testing (download from [imagemagick.org](https://imagemagick.org/script/download.php)).
 5. A valid AWS Account.
 6. An AWS Deadline Cloud Farm to run jobs on. We recommend following the quickstart in the Deadline Cloud console to create a Queue with the default Queue Environment, and a Service Managed Fleet.
 
@@ -165,6 +165,7 @@ We have configured [hatch](https://github.com/pypa/hatch) commands to support st
 * `hatch run all:test` - To run the PyTest unit tests against all available supported versions of Python.
 * `hatch run lint` - To check that the package's formatting adheres to formatting standards.
 * `hatch run fmt` - To automatically reformat all code to adhere to formatting standards.
+* `hatch clean` - To remove build artifacts associated with a project
 * `hatch env prune` - Delete all of your isolated workspace [environments](https://hatch.pypa.io/1.12/environment/) for this package.
 
 Note: Hatch uses [environments](https://hatch.pypa.io/1.12/environment/) to isolate the Python development workspace for this package from your system or virtual environment Python. If your build/test run is not making sense, then sometimes pruning (`hatch env prune`) all of these environments for the package can fix the issue.
@@ -226,36 +227,12 @@ hatch run worker:test
 
 ##### Integration Tests
 
-Integration tests are located under the `test/integ` directory. These tests verify that the submitter generates correct job bundles and that the VRED render script functions properly.
+Integration tests are located under the `test/integ` directory. These tests verify that the submitter UI functions correctly and generates valid job bundles. These tests do not perform actual rendering - they focus on UI automation and job bundle validation.
 
-To run the integration tests:
+**To run the integration tests**: please see [README in integ folder](test/integ/README.md).
 
-1. Ensure VRED is installed and the `VREDCORE` or `VREDPRO` environment variable is set:
-   ```cmd
-   set VREDCORE=C:\Program Files\Autodesk\VREDCore-18.0\bin\WIN64\VREDCore.exe
-   ```
-   or
-   ```cmd
-   set VREDPRO=C:\Program Files\Autodesk\VREDPro-18.0\bin\WIN64\VREDPro.exe
-   ```
 
-2. Run the integration tests:
-   ```bash
-   hatch run integ:test
-   ```
-
-The integration tests include:
-
-- **Basic render tests** - Verify that single frame rendering with basic settings
-- **Tiling tests** - Test render region assembly via ImageMagick across multiple tiles
-- **Asset reference tests** - Validate scene asset dependency detection
-- **Bundle comparison tests** - Compare generated job bundles against expected output
-
-##### Test Configuration
-
-Integration tests use scene files located in `test/integ/scene_files/` and compare output against expected baselines in `test/integ/expected_output/`. Test parameters can be customized through parameter and asset overrides in the test configuration.
-
-### Manual Installation
+### How To Install Submitter Manually
 #### Prerequisites
 
 1. Install the required applications:
@@ -320,8 +297,8 @@ For the instructions that follow, change the directory names as appropriate to c
 
 ### Required for Tile Assembly
 
-- `MAGICK`: Path to ImageMagick executable (e.g., `C:\Program Files\ImageMagick-7.1.1-Q16\magick.exe`)
-    - **Required** for region rendering tests and tile assembly functionality
+- `MAGICK`: (Optional) Path to ImageMagick executable (e.g., `C:\Program Files\ImageMagick-7.1.1-Q16\magick.exe`)
+    - If not set, the system will use the default `magick` command from PATH
     - Download from [https://imagemagick.org/script/download.php](https://imagemagick.org/script/download.php)
     - Install 64-bit static release for best compatibility
 
