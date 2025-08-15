@@ -120,10 +120,32 @@ class TestSceneSettingsCallbacks:
         callbacks.enable_region_rendering_changed_callback()
 
         assert mock_parent.populator.persisted_ui_settings_states.enable_render_regions
+        # Verify GPU Ray Tracing is automatically enabled and disabled
+        mock_parent.gpu_ray_tracing_widget.setChecked.assert_called_with(True)
+        mock_parent.gpu_ray_tracing_widget.setEnabled.assert_called_with(False)
+        # Verify tiling controls are enabled
         mock_parent.tiles_in_x_label.setEnabled.assert_called_with(True)
         mock_parent.tiles_in_x_widget.setEnabled.assert_called_with(True)
         mock_parent.tiles_in_y_label.setEnabled.assert_called_with(True)
         mock_parent.tiles_in_y_widget.setEnabled.assert_called_with(True)
+
+    def test_enable_region_rendering_changed_callback_disabled(self, callbacks, mock_parent):
+        mock_parent.enable_region_rendering_widget.isChecked.return_value = False
+        mock_parent.tiles_in_x_label = Mock()
+        mock_parent.tiles_in_x_widget = Mock()
+        mock_parent.tiles_in_y_label = Mock()
+        mock_parent.tiles_in_y_widget = Mock()
+
+        callbacks.enable_region_rendering_changed_callback()
+
+        assert not mock_parent.populator.persisted_ui_settings_states.enable_render_regions
+        # Verify GPU Ray Tracing control is re-enabled
+        mock_parent.gpu_ray_tracing_widget.setEnabled.assert_called_with(True)
+        # Verify tiling controls are disabled
+        mock_parent.tiles_in_x_label.setEnabled.assert_called_with(False)
+        mock_parent.tiles_in_x_widget.setEnabled.assert_called_with(False)
+        mock_parent.tiles_in_y_label.setEnabled.assert_called_with(False)
+        mock_parent.tiles_in_y_widget.setEnabled.assert_called_with(False)
 
     @patch("vred_submitter.ui.components.scene_settings_callbacks.is_all_numbers")
     def test_image_size_text_changed_callback_valid_numbers(
