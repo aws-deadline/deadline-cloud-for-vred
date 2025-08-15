@@ -46,10 +46,13 @@ def assert_parameter_values_similar(
         expected = expected_parameter_values[Constants.PARAMETER_VALUES_FIELD]
         assert len(actual) == len(expected)
         for param in expected:
-            name, value = param[Constants.NAME_FIELD], param[Constants.VALUE_FIELD]
-            assert value == extract_parameter_value(
-                {Constants.PARAMETER_VALUES_FIELD: actual}, name
+            param_name, expected_value = param[Constants.NAME_FIELD], param[Constants.VALUE_FIELD]
+            actual_value = extract_parameter_value(
+                {Constants.PARAMETER_VALUES_FIELD: actual}, param_name
             )
+            assert (
+                expected_value == actual_value
+            ), f"\nParameter '{param_name}':\n  Expected: {expected_value}\n  Actual: {actual_value}"
 
 
 def assert_asset_references_similar(

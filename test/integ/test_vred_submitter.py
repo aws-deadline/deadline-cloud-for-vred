@@ -32,6 +32,7 @@ import pytest
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any
 
 from .constants import Constants
 from .output_comparison import assert_parameter_values_similar, assert_asset_references_similar
@@ -145,7 +146,7 @@ def run_vred_submitter_test(
     test_config_name_arg: str,
     scene_filename_arg: str | None = None,
     test_settings: list | None = None,
-):
+) -> bool:
     """
     Launch VRED with submitter dialog with a specific tests integration testing.
     param: test_config_name_arg: Test configuration name for expected output folder
@@ -209,7 +210,7 @@ def setup_output_directory(output_dir: str) -> bool:
         return False
 
 
-def cleanup_output_directory():
+def cleanup_output_directory() -> None:
     """Remove existing output directory and its contents."""
     output_dir = Path(__file__).parent / Constants.OUTPUT_DIRECTORY_NAME
     if output_dir.exists():
@@ -232,7 +233,7 @@ def is_valid_template(template_path: Path) -> bool:
         return False
 
 
-def get_reference_parameter_values():
+def get_reference_parameter_values() -> dict[str, Any]:
     """
     Generate reference parameter values for test validation.
     return: dictionary containing parameterValues list with default settings
@@ -266,6 +267,25 @@ def get_reference_parameter_values():
     )
 
     return {"parameterValues": param_values}
+
+
+def _update_gpu_raytracing_based_on_region_rendering(params: list) -> None:
+    """
+    Update GPU Ray Tracing setting based on Region Rendering setting.
+    When Region Rendering is enabled, GPU Ray Tracing should also be enabled.
+
+    :param params: List of parameter dictionaries containing name and value pairs
+    """
+    region_rendering_param = next(
+        (param for param in params if param[Constants.NAME_FIELD] == "RegionRendering"), None
+    )
+    gpu_raytracing_param = next(
+        (param for param in params if param[Constants.NAME_FIELD] == "GPURaytracing"), None
+    )
+
+    if region_rendering_param and gpu_raytracing_param:
+        if region_rendering_param[Constants.VALUE_FIELD] == "true":
+            gpu_raytracing_param[Constants.VALUE_FIELD] = "true"
 
 
 def get_reference_asset_references():
@@ -314,6 +334,10 @@ class TestVREDSubmitter:
         for param in expected_parameter_values[Constants.PARAMETER_VALUES_FIELD]:
             if param[Constants.NAME_FIELD] in all_parameter_overrides:
                 param[Constants.VALUE_FIELD] = all_parameter_overrides[param[Constants.NAME_FIELD]]
+
+        _update_gpu_raytracing_based_on_region_rendering(
+            expected_parameter_values[Constants.PARAMETER_VALUES_FIELD]
+        )
 
         expected_asset_references = get_reference_asset_references().copy()
         expected_asset_references["assetReferences"]["inputs"]["filenames"] = [str(scene_file_path)]
