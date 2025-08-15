@@ -44,12 +44,15 @@ def assert_parameter_values_similar(
     with open(job_history_dir / Constants.PARAMETER_VALUES_FILENAME) as file_handle:
         actual = yaml.safe_load(file_handle)[Constants.PARAMETER_VALUES_FIELD]
         expected = expected_parameter_values[Constants.PARAMETER_VALUES_FIELD]
-        assert len(actual) == len(expected)
+        assert len(actual) == len(
+            expected
+        ), f"Parameter count mismatch: expected {len(expected)}, got {len(actual)}"
         for param in expected:
             name, value = param[Constants.NAME_FIELD], param[Constants.VALUE_FIELD]
-            assert value == extract_parameter_value(
-                {Constants.PARAMETER_VALUES_FIELD: actual}, name
-            )
+            actual_value = extract_parameter_value({Constants.PARAMETER_VALUES_FIELD: actual}, name)
+            assert (
+                value == actual_value
+            ), f"Parameter '{name}' mismatch: expected '{value}', got '{actual_value}'"
 
 
 def assert_asset_references_similar(

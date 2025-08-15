@@ -427,6 +427,40 @@ class TestVREDSubmitter:
         assert render_param is not None
         assert render_param["value"] == "true"
 
+    def test_shared_parameters_filtered_out(self, submitter):
+        """Test that deadline-cloud shared parameters are filtered out of job bundle parameters."""
+        settings = RenderSubmitterUISettings()
+        settings.priority = 75
+        settings.initial_status = "SUSPENDED"
+        settings.max_failed_tasks_count = 10
+        settings.max_retries_per_task = 3
+        settings.max_worker_count = 5
+        # Set some regular parameters that should be included
+        settings.ImageWidth = 1920
+        settings.OutputDir = "/test/output"
+        queue_parameters: list[dict] = []
+
+        result = submitter._get_parameter_values(settings, queue_parameters)
+
+        # Shared parameters should NOT be included in job bundle parameters
+        parameter_names = {param["name"] for param in result}
+        shared_parameters = {
+            "priority",
+            "initial_status",
+            "max_failed_tasks_count",
+            "max_retries_per_task",
+            "max_worker_count",
+        }
+
+        for shared_param in shared_parameters:
+            assert (
+                shared_param not in parameter_names
+            ), f"Shared parameter '{shared_param}' should be filtered out"
+
+        # Regular parameters should still be included
+        assert "ImageWidth" in parameter_names
+        assert "OutputDir" in parameter_names
+
     def test_text_elements_enforce_length_checks(self, submitter):
         import sys
         from unittest.mock import Mock

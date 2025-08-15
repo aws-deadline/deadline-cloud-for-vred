@@ -33,15 +33,17 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from .constants import Constants
+from deadline.vred_submitter.constants import Constants
+
+from .constants import Constants as TestConstants
 from .output_comparison import assert_parameter_values_similar, assert_asset_references_similar
 from .path_resolver import PathResolver
+from .sticky_settings_verification import verify_sticky_settings_file
 
 # Add path to access data classes
 import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-from deadline.vred_submitter.data_classes import RenderSubmitterUISettings
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -52,7 +54,7 @@ class VREDRenderTestRunner:
     def __init__(self):
         self.current_module_path = Path(__file__).resolve().parent
         self.submitter_path = (
-            self.current_module_path.parent.parent / Constants.VRED_SUBMITTER_SOURCE_PATH
+            self.current_module_path.parent.parent / TestConstants.VRED_SUBMITTER_SOURCE_PATH
         )
 
     def get_bootstrap_code(self, test_settings: list, bundle_path: str) -> str:
@@ -88,20 +90,20 @@ terminateVred();
         raise: OSError: if a valid VRED binary cannot be determined.
         """
 
-        for env_var in [Constants.VRED_CORE_ENV_VAR, Constants.VRED_PRO_ENV_VAR]:
+        for env_var in [TestConstants.VRED_CORE_ENV_VAR, TestConstants.VRED_PRO_ENV_VAR]:
             if executable := os.environ.get(env_var):
                 if os.path.isfile(executable):
                     return executable
-        raise OSError(Constants.ERROR_UNKNOWN_VRED_PATH)
+        raise OSError(TestConstants.ERROR_UNKNOWN_VRED_PATH)
 
     def setup_environment(self) -> None:
         """
         Configure VRED environment variables for web interface disabling, license release timing, and diagnostics.
         """
         env_settings = {
-            Constants.DISABLE_WEBINTERFACE_ENV_VAR: Constants.DISABLE_WEBINTERFACE_VALUE,
-            Constants.LICENSE_RELEASE_TIME_ENV_VAR: Constants.LICENSE_RELEASE_TIME_SECONDS_LIMIT,
-            Constants.FLEXLM_DIAGNOSTICS_ENV_VAR: Constants.FLEXLM_DIAGNOSTICS_HIGH_VALUE,
+            TestConstants.DISABLE_WEBINTERFACE_ENV_VAR: TestConstants.DISABLE_WEBINTERFACE_VALUE,
+            TestConstants.LICENSE_RELEASE_TIME_ENV_VAR: TestConstants.LICENSE_RELEASE_TIME_SECONDS_LIMIT,
+            TestConstants.FLEXLM_DIAGNOSTICS_ENV_VAR: TestConstants.FLEXLM_DIAGNOSTICS_HIGH_VALUE,
         }
         os.environ.update(env_settings)
 
@@ -113,26 +115,26 @@ terminateVred();
         :param: scene_file: path to the scene file to load
         :return: True if VRED invocation succeeded; False otherwise
         """
-        os.environ[Constants.CODE_PASSING_ENV_VAR] = self.get_bootstrap_code(
+        os.environ[TestConstants.CODE_PASSING_ENV_VAR] = self.get_bootstrap_code(
             test_settings, bundle_path
         )
 
         executable = self.get_vred_executable()
-        if Constants.IS_WINDOWS:
+        if TestConstants.IS_WINDOWS:
             executable = f'"{executable}"'
             scene_file = f'"{scene_file}"'
 
         cmd = [
             executable,
             scene_file,
-            Constants.DISABLE_PYTHON_SANDBOX_PARAM,
-            Constants.FAST_START_PARAM,
-            Constants.POST_PYTHON_PARAM,
-            Constants.VRED_PYTHON_PRE_BOOTSTRAP_CODE,
+            TestConstants.DISABLE_PYTHON_SANDBOX_PARAM,
+            TestConstants.FAST_START_PARAM,
+            TestConstants.POST_PYTHON_PARAM,
+            TestConstants.VRED_PYTHON_PRE_BOOTSTRAP_CODE,
         ]
 
         try:
-            invocation = " ".join(cmd) if Constants.IS_WINDOWS else cmd
+            invocation = " ".join(cmd) if TestConstants.IS_WINDOWS else cmd
             result = subprocess.run(invocation, stderr=subprocess.STDOUT, check=True, text=True)
             logging.debug(result)
         except subprocess.CalledProcessError as e:
@@ -155,8 +157,8 @@ def run_vred_submitter_test(
     raise: FileNotFoundError: If scene file or expected output folder doesn't exist
     raise: RuntimeError: If output directory setup fails
     """
-    logging.info(Constants.DEADLINE_CLOUD_FOR_VRED_SUBMITTER_UI_TEST_TITLE)
-    logging.info("=" * (len(Constants.DEADLINE_CLOUD_FOR_VRED_SUBMITTER_UI_TEST_TITLE) - 1))
+    logging.info(TestConstants.DEADLINE_CLOUD_FOR_VRED_SUBMITTER_UI_TEST_TITLE)
+    logging.info("=" * (len(TestConstants.DEADLINE_CLOUD_FOR_VRED_SUBMITTER_UI_TEST_TITLE) - 1))
 
     path_resolver = PathResolver()
     scene_file_path = (
@@ -174,9 +176,10 @@ def run_vred_submitter_test(
             f"Expected output folder '{expected_output_folder.name}' does not exist"
         )
 
+    # Clean up resources that may be left over from a previous run
     cleanup_output_directory()
 
-    generated_output_folder = Path(__file__).parent / Constants.OUTPUT_DIRECTORY_NAME
+    generated_output_folder = Path(__file__).parent / TestConstants.OUTPUT_DIRECTORY_NAME
     if not setup_output_directory(str(generated_output_folder)):
         raise RuntimeError(
             f"Error: output folder already exists or can't be accessed: {generated_output_folder}"
@@ -211,7 +214,7 @@ def setup_output_directory(output_dir: str) -> bool:
 
 def cleanup_output_directory():
     """Remove existing output directory and its contents."""
-    output_dir = Path(__file__).parent / Constants.OUTPUT_DIRECTORY_NAME
+    output_dir = Path(__file__).parent / TestConstants.OUTPUT_DIRECTORY_NAME
     if output_dir.exists():
         shutil.rmtree(output_dir)
 
@@ -237,22 +240,43 @@ def get_reference_parameter_values():
     Generate reference parameter values for test validation.
     return: dictionary containing parameterValues list with default settings
     """
+    # Mock vred_logger before importing data_classes to avoid vrController import issues
+    from unittest.mock import MagicMock
+    import sys
+
+    sys.modules["deadline.vred_submitter.vred_logger"] = MagicMock()
+
+    from deadline.vred_submitter.data_classes import RenderSubmitterUISettings
+
     settings = RenderSubmitterUISettings()
     param_values = []
 
-    # Add parameters from RenderSubmitterUISettings defaults
+    # Exclude the same shared parameters that are filtered out in the actual submitter
+    shared_parameters = {
+        "priority",
+        "initial_status",
+        "max_failed_tasks_count",
+        "max_retries_per_task",
+        "max_worker_count",
+    }
+
+    # Add parameters from RenderSubmitterUISettings defaults (excluding shared parameters)
     for field_name, field_value in settings.__dict__.items():
+        if field_name in shared_parameters:
+            continue  # Skip shared parameters that are filtered out
         if isinstance(field_value, bool):
             field_value = "true" if field_value else "false"
         elif isinstance(field_value, list):
             field_value = ""
-        param_values.append({Constants.NAME_FIELD: field_name, Constants.VALUE_FIELD: field_value})
+        param_values.append(
+            {TestConstants.NAME_FIELD: field_name, TestConstants.VALUE_FIELD: field_value}
+        )
 
     # Override specific values
     [
-        param.update({Constants.VALUE_FIELD: "scripts"})
+        param.update({TestConstants.VALUE_FIELD: "scripts"})
         for param in param_values
-        if param[Constants.NAME_FIELD] == "JobScriptDir"
+        if param[TestConstants.NAME_FIELD] == "JobScriptDir"
     ]
 
     # Add deadline-specific fields
@@ -264,6 +288,10 @@ def get_reference_parameter_values():
             {"name": "deadline:priority", "value": 50},
         ]
     )
+
+    # Note: Shared parameters (priority, initial_status, max_failed_tasks_count,
+    # max_retries_per_task, max_worker_count) are now filtered out of job bundle
+    # parameters and handled by deadline-cloud library at a higher level
 
     return {"parameterValues": param_values}
 
@@ -290,30 +318,43 @@ class TestVREDSubmitter:
         self, test_name: str, scene_name: str, parameter_overrides=None, asset_overrides=None
     ):
         """Helper method for VRED submitter dialog tests"""
-        job_history_dir = Path(__file__).parent / Constants.OUTPUT_DIRECTORY_NAME
+        job_history_dir = Path(__file__).parent / TestConstants.OUTPUT_DIRECTORY_NAME
         job_history_dir.mkdir(parents=True, exist_ok=True)
 
         path_resolver = PathResolver()
         scene_file_path = path_resolver.get_scene_file(scene_name)
+        assert (
+            scene_file_path is not None
+        ), f"Scene file path should not be None for scene: {scene_name}"
+        expected_sticky_settings_filename = scene_file_path.with_suffix(
+            Constants.RENDER_SUBMITTER_SETTINGS_FILE_EXT
+        )
+        if expected_sticky_settings_filename.exists():
+            expected_sticky_settings_filename.unlink()
+        assert (
+            not expected_sticky_settings_filename.exists()
+        ), f"Sticky settings file should not exist yet: {expected_sticky_settings_filename}"
 
         # Convert parameter_overrides to test_settings format expected by submitter_dialog_controller
         test_settings = [{"name": k, "value": v} for k, v in parameter_overrides.items()]
 
         assert run_vred_submitter_test(test_name, scene_name, test_settings)
-        assert is_valid_template(job_history_dir / Constants.TEMPLATE_FILENAME)
+        assert is_valid_template(job_history_dir / TestConstants.TEMPLATE_FILENAME)
 
         expected_parameter_values = get_reference_parameter_values().copy()
         base_parameter_overrides = {
-            Constants.SCENE_FILE_FIELD: str(scene_file_path),
-            Constants.OUTPUT_DIRECTORY_FIELD: str(job_history_dir),
+            TestConstants.SCENE_FILE_FIELD: str(scene_file_path),
+            TestConstants.OUTPUT_DIRECTORY_FIELD: str(job_history_dir),
             "input_directories": [],
             "input_filenames": [],
-            "JobScriptDir": str(Constants.JOB_BUNDLE_SCRIPTS_FOLDER_PATH),
+            "JobScriptDir": str(TestConstants.JOB_BUNDLE_SCRIPTS_FOLDER_PATH),
         }
         all_parameter_overrides = {**base_parameter_overrides, **parameter_overrides}
-        for param in expected_parameter_values[Constants.PARAMETER_VALUES_FIELD]:
-            if param[Constants.NAME_FIELD] in all_parameter_overrides:
-                param[Constants.VALUE_FIELD] = all_parameter_overrides[param[Constants.NAME_FIELD]]
+        for param in expected_parameter_values[TestConstants.PARAMETER_VALUES_FIELD]:
+            if param[TestConstants.NAME_FIELD] in all_parameter_overrides:
+                param[TestConstants.VALUE_FIELD] = all_parameter_overrides[
+                    param[TestConstants.NAME_FIELD]
+                ]
 
         expected_asset_references = get_reference_asset_references().copy()
         expected_asset_references["assetReferences"]["inputs"]["filenames"] = [str(scene_file_path)]
@@ -324,6 +365,12 @@ class TestVREDSubmitter:
 
         assert_parameter_values_similar(job_history_dir, expected_parameter_values)
         assert_asset_references_similar(job_history_dir, expected_asset_references)
+        assert (
+            expected_sticky_settings_filename.exists()
+        ), f"Sticky settings file should exist in: {expected_sticky_settings_filename}"
+
+        # Verify sticky settings file contents
+        verify_sticky_settings_file(expected_sticky_settings_filename, parameter_overrides)
 
     @pytest.mark.scene_files(Path("scene_files") / "LightweightWith Spaces.vpb")
     def test_submitter_dialog_basic_settings(self):
@@ -333,9 +380,11 @@ class TestVREDSubmitter:
             "LightweightWith Spaces.vpb",
             {
                 "output_directories": ["c:\\vred-snapshots"],
+                "StartFrame": 0,
                 "EndFrame": 25,
                 "OutputDir": "c:\\vred-snapshots",
                 "OutputFileNamePrefix": "image",
+                "OutputFormat": "PNG",
                 "RenderAnimation": "false",
                 "View": "Back",
             },
@@ -350,8 +399,8 @@ class TestVREDSubmitter:
             {
                 "output_directories": ["c:\\vred-snapshots"],
                 "EndFrame": 100,
-                Constants.NUM_X_TILES_FIELD: 7,
-                Constants.NUM_Y_TILES_FIELD: 5,
+                TestConstants.NUM_X_TILES_FIELD: 7,
+                TestConstants.NUM_Y_TILES_FIELD: 5,
                 "OutputDir": "c:\\vred-snapshots",
                 "OutputFileNamePrefix": "testimage",
                 "OutputFormat": "JPG",
@@ -370,13 +419,15 @@ class TestVREDSubmitter:
             "FileReferencing.vpb",
             {
                 "output_directories": ["c:\\vred-snapshots"],
+                "StartFrame": 0,
                 "EndFrame": 25,
                 "OutputDir": "c:\\vred-snapshots",
                 "OutputFileNamePrefix": "image",
+                "OutputFormat": "PNG",
                 "RenderAnimation": "false",
                 "RegionRendering": "false",
-                Constants.NUM_X_TILES_FIELD: 1,
-                Constants.NUM_Y_TILES_FIELD: 1,
+                TestConstants.NUM_X_TILES_FIELD: 1,
+                TestConstants.NUM_Y_TILES_FIELD: 1,
                 "SequenceName": "Sequence",
                 "View": "Back",
             },
