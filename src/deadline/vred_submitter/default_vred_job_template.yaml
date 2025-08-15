@@ -430,7 +430,7 @@ steps:
           data: |-
             from typing import Any, Dict
 
-            def str_to_bool(s:str)->bool: return s.lower() == 'true'
+            def str_to_bool(s:str) -> bool: return s.lower() == 'true'
 
             def get_vred_render_parameters() -> Dict[str, Any]:
                 """
@@ -645,10 +645,14 @@ steps:
           import platform
           import subprocess
 
-          END_FRAME = int("{{Param.EndFrame}}")
-          EVALUATE_SEQUENCE_PARAM = "-evaluate-sequence max"
           IS_WINDOWS = platform.system().lower() == "windows"
-          MAGICK_BIN = os.path.normpath(os.environ.get("MAGICK") or "").replace("\\", "/")
+
+          # Path to the ImageMagick binary, either by using the "MAGICK" env variable if it's set, 
+          # or by defaulting to the "magick" command
+          MAGICK_BIN = os.path.normpath(os.environ.get("MAGICK") or "magick").replace("\\", "/")
+
+          EVALUATE_SEQUENCE_PARAM = "-evaluate-sequence"
+          EVALUATE_SEQUENCE_PARAM_VALUE = "max"
           MIN_WORKERS_IF_UNKNOWN = 4
           NUM_X_TILES = int("{{Param.NumXTiles}}")
           NUM_Y_TILES = int("{{Param.NumYTiles}}")
@@ -656,30 +660,42 @@ steps:
           OUTPUT_FILE_PREFIX = "{{Param.OutputFileNamePrefix}}"
           OUTPUT_FORMAT = "{{Param.OutputFormat}}".lower()
           START_FRAME = int("{{Param.StartFrame}}")
+          END_FRAME = int("{{Param.EndFrame}}")
+          IS_RENDER_ANIMATION = "{{Param.RenderAnimation}}".lower() == "true"
 
           def assemble_frame(frame_num: int) -> None:
               """
-              Assembles a given frame from the tiles that comprise it. Filename format: prefix_YxX_AxB.suffix.
-              Assumes that output folder contains tiles in sequential order: left to right from top to bottom.
-              :param: frame_num: frame number
+              Assembles a given frame from the tiles that comprise it.
+              When "Render Animation" is enabled, VRED appends frame numbers to output filenames,
+              so we need to account for this in both input and output filename formats.
+
+              Filename formats:
+              - Single frame: prefix_YxX_AxB.suffix -> prefix.suffix
+              - Animation (multiple frames): prefix_YxX_AxB-NNNNN.suffix -> prefix-NNNNN.suffix
               """
-              frame_str = f"{frame_num:05d}"
-              # Note: tile value is not [rows]x[columns]; it is [columns]x[rows]
+
+              # Note: tile value is [columns count]x[rows count]
               tile_value = f"{NUM_X_TILES}x{NUM_Y_TILES}"
-              input_file_mask = rf"{OUTPUT_DIR}/*_{tile_value}-{frame_str}.*"
-              output_file = rf"{OUTPUT_DIR}/{OUTPUT_FILE_PREFIX}-{frame_str}.{OUTPUT_FORMAT}"
+              frame_suffix = f"-{frame_num:05d}" if IS_RENDER_ANIMATION else ""
+              input_file_mask = f"{OUTPUT_DIR}/*_{tile_value}{frame_suffix}.{OUTPUT_FORMAT}"
+              output_file = f"{OUTPUT_DIR}/{OUTPUT_FILE_PREFIX}{frame_suffix}.{OUTPUT_FORMAT}"              
+
               command_and_arg_list: list[str] = [
                   MAGICK_BIN,
                   input_file_mask,
                   EVALUATE_SEQUENCE_PARAM,
+                  EVALUATE_SEQUENCE_PARAM_VALUE,
                   output_file,
               ]
+
               try:
                   invocation = " ".join(command_and_arg_list) if IS_WINDOWS else command_and_arg_list
-                  output = subprocess.run(invocation, stderr=subprocess.STDOUT, check=True, text=True)
-                  print(output)
+                  result = subprocess.run(invocation, capture_output=True, check=True, text=True)
+                  print(f"command invocation result: {result}")
               except subprocess.CalledProcessError as error:
-                  print(f"Command: [{invocation}] failed: \n{error.output}\n with return code {error.returncode}")
+                  print(f"Command: {invocation} failed with return code {error.returncode}")
+                  print(f"--------------- STDOUT ---------------\n{error.stdout}")
+                  print(f"--------------- STDERR ---------------\n{error.stderr}")
 
           # Parallel processing of frames
           max_workers = os.cpu_count() or MIN_WORKERS_IF_UNKNOWN
