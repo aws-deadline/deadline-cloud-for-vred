@@ -2,7 +2,18 @@
 
 Comprehensive integration test suite for the VRED Deadline Cloud Submitter using pytest with real VRED application instances.
 
-This test requires opening VRED Pro and directly interacting with the Deadline Cloud submitter UI, so it can only be executed on a Windows system that supports VRED Pro.
+**Test Process**: Each test opens VRED Pro, loads a test scene, applies specific settings through the submitter dialog, exports a job bundle, and validates the bundle contents against expected output files.
+Integration tests use scene files located in `test/integ/scene_files/` and compare output against expected baselines in `test/integ/expected_output/`. Test parameters can be customized through parameter and asset overrides in the test configuration.
+
+The integration tests include:
+
+- **Job bundle generation tests** - Verify that VRED submitter UI can generate valid job bundles with correct structure
+- **UI settings application tests** - Validate that various render settings are properly applied through Qt dialog automation
+- **Asset reference validation tests** - Ensure scene asset dependencies are correctly detected and included in job bundles
+- **Parameter comparison tests** - Compare generated parameter values against expected baselines for different render configurations
+
+**Note**: This test requires opening VRED Pro and directly interacting with the Deadline Cloud submitter UI, so it can only be executed on a Windows system that supports VRED Pro.
+
 
 ## Directory Structure
 

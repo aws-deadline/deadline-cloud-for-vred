@@ -48,11 +48,13 @@ def assert_parameter_values_similar(
             expected
         ), f"Parameter count mismatch: expected {len(expected)}, got {len(actual)}"
         for param in expected:
-            name, value = param[Constants.NAME_FIELD], param[Constants.VALUE_FIELD]
-            actual_value = extract_parameter_value({Constants.PARAMETER_VALUES_FIELD: actual}, name)
+            param_name, expected_value = param[Constants.NAME_FIELD], param[Constants.VALUE_FIELD]
+            actual_value = extract_parameter_value(
+                {Constants.PARAMETER_VALUES_FIELD: actual}, param_name
+            )
             assert (
-                value == actual_value
-            ), f"Parameter '{name}' mismatch: expected '{value}', got '{actual_value}'"
+                expected_value == actual_value
+            ), f"\nParameter '{param_name}':\n  Expected: {expected_value}\n  Actual: {actual_value}"
 
 
 def assert_asset_references_similar(

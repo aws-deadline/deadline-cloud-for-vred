@@ -102,6 +102,8 @@ class SubmitterDialogController:
                 self.scene_settings_widget.frames_per_task_widget.setValue(
                     settings["FramesPerTask"]
                 )
+            # Note: GPU Ray Tracing will be automatically enabled when Region Rendering is enabled
+            # This setting will only take effect if Region Rendering is disabled
             if "GPURaytracing" in settings:
                 self.scene_settings_widget.gpu_ray_tracing_widget.setChecked(
                     settings["GPURaytracing"] == "true"
@@ -130,6 +132,7 @@ class SubmitterDialogController:
                 output_path = f"{settings['OutputDir']}/{prefix}.{format_ext}"
                 self.scene_settings_widget.render_output_widget.clear()
                 self.scene_settings_widget.render_output_widget.setText(output_path)
+            # Note: If Region Rendering is enabled, GPU Ray Tracing is also automatically enabled
             if "RegionRendering" in settings:
                 self.scene_settings_widget.enable_region_rendering_widget.setChecked(
                     settings["RegionRendering"] == "true"

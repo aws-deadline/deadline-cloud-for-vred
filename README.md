@@ -22,7 +22,7 @@ AWS Deadline Cloud for VRED is a Python-based package that supports creating and
 
 [vred-requirements]: https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/System-requirements-for-Autodesk-VRED-2026-products.html
 
-## Compatibility
+## Requirements
 
 The AWS Deadline Cloud for VRED package requires:
 
@@ -47,7 +47,7 @@ Before submitting any large, complex, or otherwise compute-heavy VRED render job
 
 If you have installed the submitter using the Deadline Cloud submitter installer you can follow the guide to [Setup Deadline Cloud submitters](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/submitter.html#load-dca-plugin) for the manual steps needed after installation.
 
-If you are setting up the submitter for a developer workflow or manual installation you can follow the instructions in the [DEVELOPMENT](DEVELOPMENT.md#manual-installation) file.
+If you are setting up the submitter for a developer workflow or manual installation you can follow the instructions in the [DEVELOPMENT](DEVELOPMENT.md#how-to-install-submitter-manually) file.
 
 ### VRED Submitter Plug-in
 
@@ -124,7 +124,9 @@ Below are descriptions of the options available in both of the above interfaces.
 - **Enable Region Rendering**: When enabled, the rendered output image will be divided into multiple tiles (subregions) that are first rendered as separate tasks for a given frame. These tiles will then be assembled (combined) into one output image for a given frame (in a separate step).
 - **Tiles in X/Y**: Number of horizontal/vertical tiles to divide the specified rendered output image for a given frame
 
-**Important**: Region rendering (tiling) is designed for scene files that have been configured for Raytracing. Raytracing will automatically be enabled when using this setting. Applying region rendering to scene files that aren't configured for Raytracing may result in solid black-rendered output.
+**Note**: Region rendering (tiling) is designed for scene files that have been configured for Raytracing. When you enable "Enable Region Rendering", the "Use GPU Ray Tracing" option will be automatically enabled to ensure proper tile rendering. Applying region rendering to scene files that aren't configured for Raytracing may result in solid black-rendered output.
+
+**How to use Tile Rendering with Service Managed Fleet (SMF)**: To use tile rendering with SMF, add the `imagemagick` conda package from the `conda-forge` channel to your Queue Environment. This provides the ImageMagick binary needed for tile assembly. For detailed instructions on configuring conda packages, see [Configure jobs using queue environments](https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/configure-jobs.html). Once configured, simply enable "Enable Region Rendering" in the submitter ("Use GPU Ray Tracing" will be automatically enabled) and submit your job.
 
 ### Invoking the Standalone Submitter
 
@@ -148,7 +150,7 @@ deadline bundle gui-submit .
 
 Before submitting a render job, the Submitter first generates a [Job Bundle][job-bundle], and then relies on the [AWS Deadline Cloud Client][deadline-cloud-client] package to submit that Job Bundle to a specified render farm. If you would like to examine that job bundle, then you can use the `Export Bundle` button in the Submitter to export the Job Bundle to a location of your choice. If you want to submit the exported Job Bundle manually outside VRED, then you can use the Standalone [AWS Deadline Cloud Client][deadline-cloud-client] to submit that same Job Bundle to your specified render farm in a platform-agnostic manner.
 
-Standalone [AWS Deadline Cloud Client][deadline-cloud-client] render jobs should use the appropriate Job Bundle Template obtained through this [link][job-bundle-templates]. There, you will find one Job Bundle Template for supporting tile-based rendering (tile_render_vred/template.yaml) and another Job Bundle Template for non-tile rendering (vred_render/template.yaml). When submitting a render job that doesn't rely on tiling, you can use the standard job.
+Standalone [AWS Deadline Cloud Client][deadline-cloud-client] render jobs should use the appropriate Job Bundle Template obtained through this [link][job-bundle-templates]. There, you will find one Job Bundle Template for supporting tile-based rendering (template.yaml) and another Job Bundle Template for non-tile rendering (template_tiling.yaml). When submitting a render job that doesn't rely on tiling, you can use the standard job.
 
 Please also ensure that your Job Bundle directory has a `scripts` subdirectory containing `VRED_RenderScript_DeadlineCloud.py`, which is a required pipeline rendering component for the job bundle. You should also include `parameter_values.yaml` (values for the fields defined in the Job Bundle Template) and `asset_references.yaml` (for defining file dependencies).
 
@@ -212,17 +214,19 @@ While using AWS' Service Managed Fleet (SMF) is highly recommended, you can also
 
 ## [ImageMagick Installation](#imagemagick-installation)
 
-For render jobs using region rendering (tiling), ImageMagick must be installed on the worker nodes:
+For render jobs using region rendering (tiling), ImageMagick must be available on the worker nodes. Install ImageMagick so the `magick` command is available in the system PATH. Or, set the `MAGICK` environment variable to point to a specific ImageMagick executable.
 
 ### Windows
 
 1. Visit the ImageMagick downloads
    page [https://imagemagick.org/script/download.php](https://imagemagick.org/script/download.php)
 2. Download and install the 64-bit static binary release
-3. Set the `MAGICK` environment variable as appropriate (depending on installation path/version):
-   ```cmd
-   setx MAGICK "C:\Program Files\ImageMagick-7.1.1-Q16\magick.exe"
-   ```
+3. Choose one of the following options:
+   - **Option A**: Add ImageMagick to your system PATH so `magick` command is available globally
+   - **Option B**: Set the `MAGICK` environment variable to point to the specific executable:
+     ```cmd
+     setx MAGICK "C:\Program Files\ImageMagick-7.1.1-Q16\magick.exe"
+     ```
 4. Logout, login.
 
 ### Linux
@@ -270,7 +274,7 @@ One of these environment variables must be set:
 
 ### Environment Variables for Tile Assembly
 
-- `MAGICK`: Path to ImageMagick static binary executable (required for region rendering jobs)
+- `MAGICK`: (Optional) Path to ImageMagick binary executable (required for region rendering jobs). If not set, the default `magick` command from PATH will be used.
 
 ## Troubleshooting
 
@@ -308,7 +312,9 @@ In general, the AWS Deadline Cloud Monitor provides valuable insights into the a
           requirements configuration.
 
 5. **Tile Assembly Failed**
-    - Verify that ImageMagick is installed and that the `MAGICK` environment variable is set on the worker node
+    - Verify that ImageMagick is installed and accessible either via:
+        - The `magick` command in system PATH, or
+        - The `MAGICK` environment variable pointing to the executable
     - Check ImageMagick executable permissions
     - Ensure sufficient disk space for tile processing
 
