@@ -43,5 +43,6 @@ class HatchCustomBuildHook(BuildHookInterface):
                 os.remove(clean_path)
                 cleaned_count += 1
             except FileNotFoundError:
+                # Ignore any version files that might've been cleaned up already
                 pass
         print(f"Cleaned {cleaned_count} items")

@@ -188,7 +188,7 @@ class TestVREDSubmitter:
             Path("/test/asset2"),
         }
         mock_introspector_class.return_value = mock_introspector
-        mock_get_normalized_path.side_effect = lambda x: str(x)
+        mock_get_normalized_path.side_effect = str
 
         mock_auto_detected = Mock()
         mock_user_defined = Mock()
