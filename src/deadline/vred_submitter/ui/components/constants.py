@@ -19,9 +19,15 @@ _global_dpi_scale = DPIScale()
 
 class ClassProperty:
     def __init__(self, func):
+        if not callable(func):
+            raise TypeError("ClassProperty requires a callable function")
         self.func = func
 
     def __get__(self, instance, owner):
+        if owner is None:
+            return self
+        if not isinstance(owner, type):
+            raise TypeError("ClassProperty can only be used on classes")
         return self.func(owner)
 
 

@@ -44,7 +44,7 @@ from deadline.client.ui.dialogs.submit_job_to_deadline_dialog import (
 from PySide6.QtCore import Qt
 
 # Note: this logger can be repurposed/used later
-#
+# Need to initialize to be used inside VRED context
 _global_logger = get_logger(__name__)
 
 

@@ -123,6 +123,7 @@ class SceneSettingsCallbacks:
             try:
                 disconnect_function()
             except Exception:
+                # if any disconnections fail, we continue to ensure we disconnect all of them
                 pass
 
     def job_type_changed_callback(self) -> None:

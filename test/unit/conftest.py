@@ -3,7 +3,7 @@
 import pytest
 import sys
 
-# Prevent MemoryError messages
+# Used to prevent MemoryError messages
 import yaml  # noqa: F401
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -174,6 +174,7 @@ class MockQtWidget:
             if float_value < 0.04 or float_value > 25400.0:
                 return False
         except ValueError:
+            # Not a float, must be a string, just continue on
             pass
 
         return True
@@ -303,16 +304,14 @@ class MockQComboBox(MockQtWidget):
     """Mock QComboBox with size adjustment policy."""
 
     def __init__(self, parent=None):
-        super().__init__()
-        self._parent = parent
+        super().__init__(parent)
 
 
 class MockQMessageBox(MockQtWidget):
     """Mock QMessageBox with icon and button constants."""
 
     def __init__(self, parent=None):
-        super().__init__()
-        self._parent = parent
+        super().__init__(parent)
 
 
 # Create QtWidgets module mock
