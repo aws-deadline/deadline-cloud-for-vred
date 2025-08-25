@@ -1,3 +1,11 @@
+## 0.1.1 (2025-08-25)
+
+
+### Features
+* Adds sticky settings to the submitter (#65) ([`d6e9908`](https://github.com/aws-deadline/deadline-cloud-for-vred/commit/d6e9908240cba2154e27d6927c6a3a7da1747118))
+* improve tile rendering setup and usability ([`d74b3e8`](https://github.com/aws-deadline/deadline-cloud-for-vred/commit/d74b3e80fd3d703306e03ce7f4e17ff014b7bee3))
+
+
 ## 0.1.0 (2025-08-06)
 
 
