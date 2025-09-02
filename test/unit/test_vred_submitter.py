@@ -137,6 +137,50 @@ class TestVREDSubmitter:
         with pytest.raises(Exception):  # DeadlineOperationError
             submitter._get_parameter_values(settings, queue_parameters)
 
+    def test_get_parameter_values_when_region_rendering_disabled(self, submitter):
+        # Test that NumXTiles and NumYTiles are overridden to 1 when RegionRendering is False.
+
+        # Create settings with RegionRendering disabled but the number of tiles > 1
+        settings = RenderSubmitterUISettings()
+        settings.RegionRendering = False
+        settings.NumXTiles = 3
+        settings.NumYTiles = 2
+        queue_parameters: list[dict] = []
+
+        # Get parameter values
+        parameter_values = submitter._get_parameter_values(settings, queue_parameters)
+
+        # Find NumXTiles and NumYTiles parameters
+        num_x_tiles_param = next((p for p in parameter_values if p["name"] == "NumXTiles"), None)
+        num_y_tiles_param = next((p for p in parameter_values if p["name"] == "NumYTiles"), None)
+
+        # Verify they are overridden to 1
+        assert num_x_tiles_param is not None, "NumXTiles parameter not found"
+        assert num_y_tiles_param is not None, "NumYTiles parameter not found"
+        assert (
+            num_x_tiles_param["value"] == 1
+        ), f"Expected NumXTiles=1, got {num_x_tiles_param['value']}"
+        assert (
+            num_y_tiles_param["value"] == 1
+        ), f"Expected NumYTiles=1, got {num_y_tiles_param['value']}"
+
+        # Test with RegionRendering enabled
+        settings.RegionRendering = True
+        parameter_values = submitter._get_parameter_values(settings, queue_parameters)
+
+        num_x_tiles_param = next((p for p in parameter_values if p["name"] == "NumXTiles"), None)
+        num_y_tiles_param = next((p for p in parameter_values if p["name"] == "NumYTiles"), None)
+
+        # Verify original values are preserved
+        assert num_x_tiles_param is not None, "NumXTiles parameter not found"
+        assert num_y_tiles_param is not None, "NumYTiles parameter not found"
+        assert (
+            num_x_tiles_param["value"] == 3
+        ), f"Expected NumXTiles=3, got {num_x_tiles_param['value']}"
+        assert (
+            num_y_tiles_param["value"] == 2
+        ), f"Expected NumYTiles=2, got {num_y_tiles_param['value']}"
+
     @patch("vred_submitter.vred_submitter.center_widget")
     @patch("vred_submitter.vred_submitter.get_deadline_cloud_library_telemetry_client")
     def test_show_submitter(self, mock_telemetry_client, mock_center_widget, submitter):

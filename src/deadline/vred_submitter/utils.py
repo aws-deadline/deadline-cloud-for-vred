@@ -155,13 +155,17 @@ def get_yaml_contents(file_path: str) -> Dict[str, Any]:
             f"{Constants.ERROR_YAML_INVALID_FORMAT} {file_path}: {str(yaml_err)}"
         ) from yaml_err
     except FileNotFoundError as error:
-        raise FileNotFoundError(f"{Constants.ERROR_FILE_NOT_FOUND_ISSUE} {file_path}") from error
+        raise FileNotFoundError(f"{Constants.ERROR_FILE_NOT_FOUND} {file_path}") from error
     except TypeError:
         raise
     except PermissionError as error:
-        raise PermissionError(f"{Constants.ERROR_FILE_PERMISSIONS_ISSUE} {file_path}") from error
+        raise PermissionError(
+            f"{Constants.ERROR_FILE_ACCESS_PERMISSION_DENIED} {file_path}"
+        ) from error
     except Exception as exc:
-        raise RuntimeError(f"{Constants.ERROR_YAML_GENERAL_ERROR} {file_path}: {str(exc)}") from exc
+        raise RuntimeError(
+            f"{Constants.ERROR_YAML_UNEXPECTED_ERROR} {file_path}: {str(exc)}"
+        ) from exc
 
 
 def is_number(string: str) -> bool:

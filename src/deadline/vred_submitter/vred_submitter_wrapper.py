@@ -43,21 +43,19 @@ def add_deadline_cloud_menu() -> None:
     vred_menu_bar = get_main_window().menuBar()
     deadline_cloud_menu = None
     for child in vred_menu_bar.findChildren(QMenu):
-        if child.title() == Constants.DEADLINE_CLOUD_MENU_NAME:
+        if child.title() == Constants.DEADLINE_CLOUD_MENU:
             deadline_cloud_menu = child
             break
     if deadline_cloud_menu is None:
-        deadline_cloud_menu = QMenu(Constants.DEADLINE_CLOUD_MENU_NAME, vred_menu_bar)
-        deadline_cloud_menu.setObjectName(Constants.DEADLINE_CLOUD_MENU_NAME)
+        deadline_cloud_menu = QMenu(Constants.DEADLINE_CLOUD_MENU, vred_menu_bar)
+        deadline_cloud_menu.setObjectName(Constants.DEADLINE_CLOUD_MENU)
         vred_menu_bar.addMenu(deadline_cloud_menu)
     submit_action_exists = any(
-        action.text() == Constants.SUBMIT_TO_DEADLINE_CLOUD_ACTION_NAME
+        action.text() == Constants.SUBMIT_TO_DEADLINE_CLOUD_ACTION
         for action in deadline_cloud_menu.actions()
     )
     if not submit_action_exists:
-        deadline_action = QAction(
-            Constants.SUBMIT_TO_DEADLINE_CLOUD_ACTION_NAME, deadline_cloud_menu
-        )
+        deadline_action = QAction(Constants.SUBMIT_TO_DEADLINE_CLOUD_ACTION, deadline_cloud_menu)
         deadline_action.triggered.connect(submit_to_deadline_cloud)
         deadline_cloud_menu.addAction(deadline_action)
 

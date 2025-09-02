@@ -46,7 +46,7 @@ class ConstantsMeta(type):
 class Constants(metaclass=ConstantsMeta):
     """Constants class for UI settings."""
 
-    ANIMATION_SETTINGS_DIALOG_NAME: Final[str] = "Animation Settings"
+    ANIMATION_SETTINGS_DIALOG: Final[str] = "Animation Settings"
     ANIMATION_CLIP_LABEL: Final[str] = "Animation Clip"
     ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The name of the animation clip to render."
     ANIMATION_TYPE_LABEL: Final[str] = "Animation Type"
@@ -66,7 +66,7 @@ class Constants(metaclass=ConstantsMeta):
     def COMBO_BOX_PADDING(cls) -> int:
         return int(24 * _global_dpi_scale.factor)
 
-    CUSTOM_SPEED_FIELD_NAME: Final[str] = "_customSpeed"
+    CUSTOM_SPEED_NAME: Final[str] = "_customSpeed"
     DEFAULT_IMAGE_SIZE_PRESET: Final[str] = "SVGA (800 x 600)"
     DEFAULT_SCENE_FILE_FPS_COUNT: Final[float] = 24.0
     DEFAULT_DPI_RESOLUTION: Final[int] = 72
@@ -291,7 +291,7 @@ class Constants(metaclass=ConstantsMeta):
     TILES_IN_Y_LABEL_DESCRIPTION: Final[str] = (
         "The number of tiles to vertically divide the specified  image size."
     )
-    TIMELINE_ACTION_NAME: Final[str] = "Timeline"
+    TIMELINE_ACTION: Final[str] = "Timeline"
     TIMELINE_ANIMATION_PREFS_BUTTON_NAME: Final[str] = "_prefs"
     TIMELINE_TOOLBAR_NAME: Final[str] = "Timeline_Toolbar"
     USE_CLIP_RANGE_LABEL: Final[str] = "Use Clip Range"

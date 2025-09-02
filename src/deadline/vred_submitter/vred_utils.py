@@ -299,7 +299,7 @@ def get_scene_fps() -> float:
             (
                 obj
                 for obj in vrMainWindow.findChildren(QAction)
-                if obj.text() == Constants.TIMELINE_ACTION_NAME
+                if obj.text() == Constants.TIMELINE_ACTION
             ),
             None,
         )
@@ -339,16 +339,14 @@ def get_scene_fps() -> float:
 
         # In the animation settings dialog, get the FPS value from settings dialog
         animation_settings_widget = vrMainWindow.findChild(
-            QDialog, Constants.ANIMATION_SETTINGS_DIALOG_NAME
+            QDialog, Constants.ANIMATION_SETTINGS_DIALOG
         )
         if not animation_settings_widget:
             raise LookupError(Constants.ERROR_ANIMATION_SETTINGS_DIALOG_NOT_FOUND)
 
         animation_settings_widget.hide()
 
-        speed_widget = animation_settings_widget.findChild(
-            QObject, Constants.CUSTOM_SPEED_FIELD_NAME
-        )
+        speed_widget = animation_settings_widget.findChild(QObject, Constants.CUSTOM_SPEED_NAME)
         if not speed_widget:
             raise LookupError(Constants.ERROR_SPEED_SETTINGS_WIDGET_NOT_FOUND)
         return float(speed_widget.text().split()[0])

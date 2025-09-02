@@ -82,11 +82,10 @@ class VREDSubmitter:
             job_template[Constants.DESCRIPTION_FIELD] = settings.description
         if not settings.RegionRendering:
             # For regular render jobs (not relying on region rendering), exclude tile assembly step from job template
-            #
             job_template[Constants.STEPS_FIELD] = [
                 step
                 for step in job_template[Constants.STEPS_FIELD]
-                if step.get(Constants.NAME_FIELD) != Constants.TILE_ASSEMBLY_STEP_NAME
+                if step.get(Constants.NAME_FIELD) != Constants.TILE_ASSEMBLY_STEP
             ]
         return job_template
 
@@ -113,22 +112,32 @@ class VREDSubmitter:
         }
 
         # Note: represent the bool-typed settings values as string-equivalents of "true" or "false" value for OpenJD
-        parameter_values = [
-            {
-                Constants.NAME_FIELD: field.name,  # type: ignore
-                Constants.VALUE_FIELD: (  # type: ignore
-                    str(getattr(settings, field.name)).lower()
-                    if isinstance(getattr(settings, field.name), bool)
-                    else getattr(settings, field.name)
-                ),
-            }
-            for field in fields(type(settings))
-            if field.name not in shared_parameters
-        ]
+        parameter_values = []
+        for field in fields(type(settings)):
+            if field.name not in shared_parameters:
+                field_value = getattr(settings, field.name)
+
+                # Override NumXTiles and NumYTiles to 1 when region rendering is disabled
+                # to prevent creating multiple tasks (rendering the same output image) when tiling is not intended
+                if not settings.RegionRendering and field.name in [
+                    Constants.NUM_X_TILES_JOB_PARAM,
+                    Constants.NUM_Y_TILES_JOB_PARAM,
+                ]:
+                    field_value = 1
+
+                parameter_values.append(
+                    {
+                        Constants.NAME_FIELD: field.name,  # type: ignore
+                        Constants.VALUE_FIELD: (  # type: ignore
+                            str(field_value).lower()
+                            if isinstance(field_value, bool)
+                            else field_value
+                        ),
+                    }
+                )
 
         # Check for any overlap between the job parameters we've defined and the queue parameters. This is an error,
         # as we weren't synchronizing the values between the two different tabs where they came from.
-        #
         parameter_names = {param[Constants.NAME_FIELD] for param in parameter_values}  # type: ignore
         queue_parameter_names = {param[Constants.NAME_FIELD] for param in queue_parameters}  # type: ignore
         parameter_overlap = parameter_names.intersection(queue_parameter_names)
@@ -155,8 +164,8 @@ class VREDSubmitter:
         # Initialize the telemetry client, opt-out is respected
         get_deadline_cloud_library_telemetry_client().update_common_details(
             {
-                Constants.DEADLINE_CLOUD_FOR_VRED_SUBMITTER_VERSION_FIELD: version,
-                Constants.VRED_VERSION_FIELD: get_major_version(),
+                Constants.DEADLINE_CLOUD_FOR_VRED_SUBMITTER_VERSION_KEY: version,
+                Constants.VRED_VERSION_KEY: get_major_version(),
             }
         )
         submitter_dialog = self._create_submitter_dialog(render_settings, attachments)
@@ -226,9 +235,9 @@ class VREDSubmitter:
         )
         conda_packages = os.getenv(Constants.CONDA_PACKAGES_OVERRIDE_ENV_VAR) or conda_packages
         conda_channels = os.getenv(Constants.CONDA_CHANNELS_OVERRIDE_ENV_VAR)
-        shared_parameter_values = {Constants.CONDA_PACKAGES_FIELD: conda_packages}
+        shared_parameter_values = {Constants.CONDA_PACKAGES_JOB_PARAM: conda_packages}
         if conda_channels:
-            shared_parameter_values[Constants.CONDA_CHANNELS_FIELD] = conda_channels
+            shared_parameter_values[Constants.CONDA_CHANNELS_JOB_PARAM] = conda_channels
         # Need to apply these settings prior in order to ensure that Qt Controls are sized as expected!
         _global_dpi_scale.factor = get_dpi_scale_factor()
         submitter_dialog = SubmitJobToDeadlineDialog(
@@ -326,7 +335,6 @@ class VREDSubmitter:
         """
         # Keep the job bundle render script contained in its own directory to avoid accumulating recursive references.
         # Ensure no spaces in the job bundle render script path (spaces can interfere with module path searches).
-        #
         settings.JobScriptDir = Constants.JOB_BUNDLE_SCRIPTS_FOLDER_PATH
         try:
             if not os.path.exists(settings.JobScriptDir):
@@ -336,7 +344,9 @@ class VREDSubmitter:
                 settings.JobScriptDir,
             )
         except Exception as exc:
-            raise IOError(f"{Constants.ERROR_FILE_WRITE_ISSUE}: {settings.JobScriptDir} {exc}")
+            raise IOError(
+                f"{Constants.ERROR_FILE_WRITE_PERMISSION_DENIED}: {settings.JobScriptDir} {exc}"
+            )
         job_template = self._get_job_template(
             default_job_template=self.default_job_template, settings=settings
         )
