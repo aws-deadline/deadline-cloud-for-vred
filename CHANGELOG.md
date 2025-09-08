@@ -1,3 +1,10 @@
+## 0.1.2 (2025-09-08)
+
+
+
+### Bug Fixes
+* prevent multiple tasks when region rendering is not enabled (#72) ([`86eac7c`](https://github.com/aws-deadline/deadline-cloud-for-vred/commit/86eac7cad325757eeec02097ebeb6ee653207230))
+
 ## 0.1.1 (2025-08-25)
 
 
