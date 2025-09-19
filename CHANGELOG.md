@@ -1,3 +1,10 @@
+## 0.1.3 (2025-09-19)
+
+
+
+### Bug Fixes
+* Add license error detection in VRED job rendering (#76) ([`7d78b93`](https://github.com/aws-deadline/deadline-cloud-for-vred/commit/7d78b933087765d21e6af14e9ff967b94e51c3cb))
+
 ## 0.1.2 (2025-09-08)
 
 
