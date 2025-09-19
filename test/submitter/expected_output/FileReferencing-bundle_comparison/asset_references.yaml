@@ -1,0 +1,10 @@
+assetReferences:
+  inputs:
+    directories: []
+    filenames:
+    - FileReferencing.vpb  # C:\Users\Administrator\vred\deadline-cloud-for-vred-forked\test\integ\scene_files\FileReferencing.vpb
+    - C:\WorkArea\Only\LightweightWithoutSpaces.vpb
+    - C:\WorkArea\test.wire
+  outputs:
+    directories: []
+  referencedPaths: []

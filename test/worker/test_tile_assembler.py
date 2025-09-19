@@ -24,7 +24,6 @@ from test.worker.load_render_parameter_values import get_vred_render_parameters
 from test.worker.output_comparison import are_images_similar_by_folder
 from test.worker.path_resolver import PathResolver
 
-COMMAND_LINE_USAGE = f"Usage: python {sys.argv[0]} <job_bundle_config_name>"
 
 sys.path.extend([os.path.realpath(os.path.dirname(os.path.abspath(__file__)))])
 logging.basicConfig(format="%(message)s", level=logging.INFO)
@@ -171,28 +170,3 @@ def test_tile_assembler_5x2():
     """Test tile assembler with 5x2 tiles configuration."""
     cleanup_output_directory()
     run_tile_assembler_test("5x2_tiles")
-
-
-def main_routine():
-    """
-    Processes command-line arguments to process tiles based on a job bundle configuration.
-    Note: sample invocation:
-        sys.argv[1]: Test configuration name (relative to "job_bundles" subdirectory)
-    """
-    global COMMAND_LINE_USAGE
-
-    if len(sys.argv) < 2:
-        logging.error(COMMAND_LINE_USAGE)
-        return
-
-    test_config_name_arg = sys.argv[1]
-
-    try:
-        run_tile_assembler_test(test_config_name_arg)
-    except (FileNotFoundError, RuntimeError) as e:
-        logging.error(str(e))
-        return
-
-
-if __name__ == "__main__":
-    main_routine()

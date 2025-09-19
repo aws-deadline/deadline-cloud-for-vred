@@ -30,9 +30,9 @@ SKIP_BOOTSTRAP_TEST_RESOURCES="True"
 [envs.codebuild.scripts]
 build = "hatch build"
 
-[envs.integ]
+[envs.submitter]
 pre-install-commands = [
-  "pip install -r requirements-integ-testing.txt",
+  "pip install -r requirements-submitter-testing.txt",
   "pip install -r requirements-testing.txt"
 ]
 
@@ -48,9 +48,9 @@ pre-install-commands = [
   "pip install -r requirements-testing.txt"
 ]
 
-[envs.integ.scripts]
-test = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1"
-test_submitters = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1 -m submitter"
+[envs.submitter.scripts]
+test = "pytest --no-cov {args:test/submitter} -vvv --numprocesses=1"
+test_submitters = "pytest --no-cov {args:test/submitter} -vvv --numprocesses=1 -m submitter"
 
 [envs.unit.scripts]
 test = "pytest --cov=vred_submitter --cov-config pyproject.toml {args:test/unit} -vvv"

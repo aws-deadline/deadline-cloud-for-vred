@@ -3,11 +3,13 @@
 """
 Deadline Cloud for VRED Rendering - local semi-automated test module.
 
-Tests output generated from main worker module. Launches VRED, loads a scene file, initializes rendering configuration
-(via load_render_parameter_values.py and JSON configuration) and initiates VRED_RenderScript_DeadlineCloud.py to
-launch the actual rendering process.
+Tests output generated from main worker module.
+Launches VRED, loads a scene file, initializes rendering configuration
+(via load_render_parameter_values.py and JSON configuration) and
+initiates VRED_RenderScript_DeadlineCloud.py to launch the actual rendering process.
 
-Note: requires either VREDCORE or VREDPRO environment variable to be set with a valid path to the VRED executable.
+Note: requires either VREDCORE or VREDPRO environment variable to be set with
+a valid path to the VRED executable.
 
 Example paths:
     Linux: /opt/Autodesk/VREDCluster-{version}/bin/VREDCore
@@ -20,6 +22,7 @@ Note:
 import io
 import logging
 import os
+import pytest
 import shutil
 import subprocess
 import sys
@@ -33,7 +36,6 @@ from test.worker.load_render_parameter_values import get_vred_render_parameters
 from test.worker.output_comparison import are_images_similar_by_folder
 from test.worker.path_resolver import PathResolver
 
-COMMAND_LINE_USAGE = f"Usage: python {sys.argv[0]} <job_bundle_config_name> [scene_file]"
 
 sys.path.extend([os.path.realpath(os.path.dirname(os.path.abspath(__file__)))])
 logging.basicConfig(format="%(message)s", level=logging.INFO)
@@ -56,7 +58,8 @@ class VREDRenderTestRunner:
         Generate bootstrap code for VRED execution (via CODE_PASSING_ENV_VAR).
         returns: generated bootstrap code with paths and imports configured
         """
-        # Inject render parameters into render script, loading both of them at startup, enforce universal exit
+        # Inject render parameters into render script, loading both of them at startup,
+        # enforce universal exit
         return (
             rf"""
 import importlib;
@@ -95,7 +98,7 @@ terminateVred();
 
     def setup_environment(self) -> None:
         """
-        Disable VRED's web interface, release license on idle, pass bootstrapping code via environment variable
+        Disable VRED's web interface, release license on idle, pass bootstrap code via env variable
         """
         env_settings = {
             Constants.DISABLE_WEBINTERFACE_ENV_VAR: Constants.DISABLE_WEBINTERFACE_VALUE,
@@ -106,8 +109,8 @@ terminateVred();
 
     def invoke_vred(self, test_configuration_name: str, scene_file: str) -> None:
         """
-        Invoke VRED binary, passing it parameters to run headless, grant script access, load scene file,
-        and execute code for the render process to complete
+        Invoke VRED binary, passing it parameters to run headless, grant script access,
+        load scene file, and execute code for the render process to complete
         :param: test_configuration_name: name of test configuration
         :param: scene_file: path to the scene file to render
         """
@@ -137,23 +140,23 @@ terminateVred();
             logging.error(f"Command failed: {invocation}\n{e.output}\nReturn code: {e.returncode}")
 
 
-def setup_output_directory(output_dir: str) -> bool:
+def setup_render_output_directory(output_dir: str) -> bool:
     """
     Create output directory if it doesn't exist.
     :param: output_dir: Path to the output directory to create
     :return: True if directory was created successfully; False otherwise
     """
     try:
-        os.makedirs(output_dir, exist_ok=False)
+        os.makedirs(output_dir, exist_ok=True)
         return True
-    except (PermissionError, FileExistsError):
+    except PermissionError:
         return False
 
 
 def run_vred_render_test(test_config_name_arg: str, scene_filename_arg: str | None = None):
     """
-    Processes arguments to launch VRED to render based on a job bundle configuration and optional scene
-    file override (to the scene file specified within the job bundle).
+    Processes arguments to launch VRED to render based on a job bundle configuration and
+    optional scene file override (to the scene file specified within the job bundle).
     """
     logging.info(Constants.DEADLINE_CLOUD_FOR_VRED_RENDER_TEST_TITLE)
     logging.info("=" * (len(Constants.DEADLINE_CLOUD_FOR_VRED_RENDER_TEST_TITLE) - 1))
@@ -173,7 +176,7 @@ def run_vred_render_test(test_config_name_arg: str, scene_filename_arg: str | No
         test_config_name_arg, str(scene_file_path) if scene_file_path else None
     )
     generated_output_folder = Path(render_params[Constants.OUTPUT_DIRECTORY_FIELD])
-    if not setup_output_directory(str(generated_output_folder)):
+    if not setup_render_output_directory(str(generated_output_folder)):
         raise RuntimeError(
             f"Error: output folder already exists or can't be accessed: {generated_output_folder}"
         )
@@ -200,49 +203,46 @@ def run_vred_render_test(test_config_name_arg: str, scene_filename_arg: str | No
     assert result, "Image comparison failed"
 
 
-def cleanup_output_directory():
-    """Remove and recreate output directory."""
-    output_dir = Path(__file__).parent / "output"
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
-    output_dir.mkdir(exist_ok=True)
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup_worker_output():
+    """
+    Module-scoped fixture to clean up output directory before and after all worker tests.
+    This fixture runs automatically for all tests in this module.
+    """
+    output_dir = Path(__file__).parent / Constants.OUTPUT_DIRECTORY_NAME
+
+    # Setup: Clean output directory before tests
+    logging.info("Cleaning up worker output directory before tests...")
+    try:
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+        output_dir.mkdir(exist_ok=True)
+        logging.info(f"Worker output directory prepared: {output_dir}")
+    except (OSError, PermissionError) as e:
+        logging.warning(f"Could not clean worker output directory: {e}")
+
+    yield  # Run all tests
+
+    # Teardown: Clean output directory after tests
+    logging.info("Cleaning up worker output directory after tests...")
+    try:
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+        logging.info("Worker output directory cleaned up")
+    except (OSError, PermissionError) as e:
+        logging.warning(f"Could not clean worker output directory: {e}")
 
 
 def test_vred_render_one_frame_japanese():
     """Test VRED rendering one frame with Japanese filename."""
-    cleanup_output_directory()
     run_vred_render_test("one_frame", "ここにテキストを入力.vpb")
 
 
 def test_vred_render_one_frame_spaces():
     """Test VRED rendering one frame with spaces in filename."""
-    cleanup_output_directory()
     run_vred_render_test("one_frame", "LightweightWith Spaces.vpb")
 
 
-def main_routine():
-    """
-    Processes command-line arguments to launch VRED to render based on a job bundle configuration and optional scene
-    file override (to the scene file specified within the job bundle).
-    Note: sample invocations:
-        sys.argv[1]: Test configuration name (relative to "job_bundles" subdirectory)
-        sys.argv[2]: Optional: scene file name (relative to "scene_files" subdirectory)
-    """
-    global COMMAND_LINE_USAGE
-
-    if len(sys.argv) < 2:
-        logging.error(COMMAND_LINE_USAGE)
-        return
-
-    test_config_name_arg = sys.argv[1]
-    scene_filename_arg = sys.argv[2] if len(sys.argv) == 3 else None
-
-    try:
-        run_vred_render_test(test_config_name_arg, scene_filename_arg)
-    except (FileNotFoundError, RuntimeError) as e:
-        logging.error(str(e))
-        return
-
-
-if __name__ == "__main__":
-    main_routine()
+def test_vred_render_gpu_raytracing():
+    """Test VRED rendering with GPU ray tracing enabled."""
+    run_vred_render_test("gpu_raytracing", "Cone.vpb")

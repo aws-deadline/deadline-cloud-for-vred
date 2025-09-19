@@ -24,9 +24,10 @@ To develop the Python code in this repository you will need:
 1. Python 3.11 or higher. We recommend [mise](https://github.com/jdx/mise) if you would like to run more than one version of Python on the same system. When running unit tests against all supported Python versions, for instance.
 2. The [hatch](https://github.com/pypa/hatch) package installed (`pip install hatch`) into your Python environment.
 3. A supported version of VRED Pro or VRED Core with valid bring your own licensing (BYOL).
-4. (Optional) ImageMagick for tile assembly testing (download from [imagemagick.org](https://imagemagick.org/script/download.php)).
-5. A valid AWS Account.
-6. An AWS Deadline Cloud Farm to run jobs on. We recommend following the quickstart in the Deadline Cloud console to create a Queue with the default Queue Environment, and a Service Managed Fleet.
+4. **GPU Requirements** (for worker tests): NVIDIA GPU with 4GB+ VRAM and driver 553.xx recommended.
+5. (Optional) ImageMagick for tile assembly testing (download from [imagemagick.org](https://imagemagick.org/script/download.php)).
+6. A valid AWS Account.
+7. An AWS Deadline Cloud Farm to run jobs on. We recommend following the quickstart in the Deadline Cloud console to create a Queue with the default Queue Environment, and a Service Managed Fleet.
 
 **Important**: VRED requires **bring your own licensing (BYOL)**. Ensure you have valid VRED licenses available for both development and production render farm usage.
 
@@ -218,6 +219,12 @@ hatch run unit:test
 ##### Worker Tests
 
 Worker tests are located under the `test/worker` directory and test the VRED render script and tile assembly functionality.
+
+**Prerequisites**: Worker tests perform actual VRED rendering and require:
+- NVIDIA GPU with 4GB+ VRAM
+- NVIDIA driver 553.xx (recommended for VRED 2025/2026)
+- ImageMagick for tile assembly testing
+- Valid VRED licenses
 
 To run the worker tests:
 
