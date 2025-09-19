@@ -498,6 +498,10 @@ steps:
             import platform
             import subprocess
             import sys
+            import time
+            import re
+            import threading
+            import queue
 
             sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
@@ -539,6 +543,7 @@ steps:
             import os;
             import sys;
             from vrController import terminateVred, vrLogError;
+
             sys.path.extend([r'{{Param.JobScriptDir}}', os.path.dirname(r'{{Task.File.LoadRenderParameterValues}}')]);
             render_module_name='VRED_RenderScript_DeadlineCloud';
             render_param_module_name='load_render_parameter_values';
@@ -587,6 +592,40 @@ steps:
                 os.environ[CODE_PASSING_ENV_VAR] = VRED_PYTHON_BOOTSTRAP_CODE
                 os.environ[FLEXLM_DIAGNOSTICS_ENV_VAR] = FLEXLM_DIAGNOSTICS_HIGH_VALUE
 
+
+            def reader_thread(pipe, output_queue, error_queue):
+                """
+                Thread to read output from pipe and put it into queue with proper error handling
+                """
+                try:
+                    while True:
+                        line = pipe.readline()
+                        if not line:
+                            break
+
+                        try:
+                            output_queue.put(line, timeout=5.0)
+                        except queue.Full:
+                            # Report output queue overflow
+                            try:
+                                error_queue.put_nowait("OUTPUT_QUEUE_FULL")
+                            except queue.Full:
+                                # Error queue is also full - use fallback error reporting
+                                print("CRITICAL: Both output and error queues are full")
+                            break
+
+                except Exception as e:
+                    # Report thread exception
+                    error_msg = f"THREAD_ERROR: {str(e)}"
+                    try:
+                        error_queue.put_nowait(error_msg)
+                    except queue.Full:
+                        # Error queue is full - use fallback error reporting
+                        print(f"CRITICAL: Cannot report thread error due to queue overflow! Thread error unreportable: {error_msg}")
+                finally:
+                    pipe.close()
+
+
             def invoke_vred(vred_executable: str) -> None:
                 """
                 Invoke VRED binary, passing it parameters to run headless, grant script access, load scene file,
@@ -604,12 +643,94 @@ steps:
                     POST_PYTHON_PARAM,
                     VRED_PYTHON_PRE_BOOTSTRAP_CODE,
                 ]
+                invocation = " ".join(command_and_arg_list) if IS_WINDOWS else command_and_arg_list
+                process = None
+                output_queue = None
+                error_queue = None
+                output_reader_thread = None
+
                 try:
-                    invocation = " ".join(command_and_arg_list) if IS_WINDOWS else command_and_arg_list
-                    output = subprocess.run(invocation, stderr=subprocess.STDOUT, check=True, text=True)
-                    print(output)
+                    process = subprocess.Popen(
+                        invocation,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        bufsize=1,
+                    )
+
+                    # Create queues for inter-thread communication
+                    output_queue = queue.Queue(maxsize=1000)
+                    error_queue = queue.Queue(maxsize=100)
+
+                    # Start thread to read output
+                    output_reader_thread = threading.Thread(
+                      target=reader_thread,
+                      args=(process.stdout, output_queue, error_queue)
+                    )
+                    output_reader_thread.daemon = True  # Terminate thread when the main process ends
+                    output_reader_thread.start()
+
+                    license_error_detected = False
+
+                    # Read queue output in real-time from main thread
+                    while output_reader_thread.is_alive() or not output_queue.empty():
+                        # Error check
+                        try:
+                            error_msg = error_queue.get_nowait()
+                            if error_msg.startswith("THREAD_ERROR:"):
+                                process.terminate()
+                                raise Exception(error_msg)
+                            elif error_msg == "OUTPUT_QUEUE_FULL":
+                                print("Warning: Output queue overflow, some output may be lost")
+                        except queue.Empty:
+                            pass
+
+                        # Print console output
+                        try:
+                            # Get output from queue in non-blocking manner
+                            # Set timeout to avoid infinite waiting
+                            line = output_queue.get_nowait()
+                            print(line.strip())
+
+                            # Error message detection logic
+                            if re.search(r"No valid license found", line):
+                                license_error_detected = True
+                                break
+
+                        except queue.Empty:
+                            # When queue is empty
+                            if process.poll() is not None:
+                                # Exit loop if process terminated and queue is empty
+                                print("Process has terminated.")
+                                break
+                            # Otherwise, wait 1 second to prevent unnecessary CPU usage
+                            time.sleep(1)
+
+                    # When license error has been detected, raise exception
+                    if license_error_detected:
+                        process.terminate()
+                        raise Exception("License error detected")
+
+                    process.wait()
+
                 except subprocess.CalledProcessError as error:
                     print(f"Command: [{invocation}] failed: \n{error.output}\n with return code {error.returncode}")
+                    # Exit with non-zero status to indicate failure
+                    sys.exit(1)
+                except Exception as error:
+                    print(f"Command: [{invocation}] failed: \n{error}")
+                    sys.exit(1)
+                finally:
+                    # Clean up resources
+                    if output_reader_thread and output_reader_thread.is_alive():
+                        output_reader_thread.join(timeout=1)
+                    # Empty the queue
+                    if output_queue:
+                        while not output_queue.empty():
+                            try:
+                                output_queue.get_nowait()
+                            except queue.Empty:
+                                break
 
             setup_vred_environment()
             invoke_vred(get_vred_executable())
@@ -626,6 +747,7 @@ steps:
           anyOf:
             - linux
             - windows
+
   - name: Tile Assembly
     description: Combines tiles into individual frames. (step can be excluded as needed.)
     dependencies:
