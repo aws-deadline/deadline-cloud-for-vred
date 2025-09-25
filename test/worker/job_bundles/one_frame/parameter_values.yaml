@@ -8,10 +8,10 @@ parameterValues:
 - name: JobScriptDir
   value: scripts
 - name: name
-  value: LightweightWithoutSpaces
+  value: ''
 - name: output_directories
   value:
-  - c:\vred-output
+  - c:\vred-snapshots
 - name: submitter_name
   value: VRED
 - name: AnimationClip

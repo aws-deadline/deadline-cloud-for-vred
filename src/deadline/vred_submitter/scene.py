@@ -41,11 +41,6 @@ class FrameRange:
         return iter(range(self.start, stop + 1, step))
 
 
-"""
-Functionality used for querying scene settings
-"""
-
-
 class Animation:
     """
     Functionality for retrieving Animation related settings from the active scene

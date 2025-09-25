@@ -5,6 +5,7 @@ __pycache__/
 .DS_Store
 .tox
 .venv
+.kiro/
 /htmlcov
 .vscode
 *_version.py

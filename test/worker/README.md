@@ -28,6 +28,15 @@ environment (etc.) are impacting expected rendering results. There tests are int
 
 ## Prerequisites
 
+### Hardware Requirements
+
+**GPU Requirements**: VRED rendering requires a dedicated graphics card for proper operation:
+
+- **NVIDIA GPU**: Recommended (RTX series, Quadro, or Tesla)
+- **GPU Memory**: Minimum 4GB VRAM
+- **Driver Version**: NVIDIA driver 553.xx recommended for VRED 2025/2026
+- **CUDA Support**: Required for GPU raytracing and DLSS features
+
 ### Environment Variables
 
 Before invoking the test suite, please set these environment variables as appropriate, substituting for the intended 
@@ -40,12 +49,13 @@ VRED version below:
     - Windows: `C:\Program Files\ImageMagick-[version]-Q16\magick.exe`
     - Linux: `/usr/local/bin/magick`
 
-### Dependencies
+### Software Dependencies
 
 Please install these dependencies:
 
 - VRED Core or Pro (version 2025+) - https://www.autodesk.com/products/vred/overview
 - ImageMagick (version 7+) - https://imagemagick.org/script/download.php
+- Valid VRED licenses
 
 ## Usage: Running Tests
 
