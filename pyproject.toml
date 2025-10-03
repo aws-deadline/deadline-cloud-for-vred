@@ -27,6 +27,9 @@ dependencies = [
     "deadline >= 0.51.1,< 0.54",
 ]
 
+[project.scripts]
+install-deadline-cloud-for-vred = "scripts.install_submitter:main"
+
 [project.urls]
 Homepage = "https://github.com/aws-deadline/deadline-cloud-for-vred"
 Source = "https://github.com/aws-deadline/deadline-cloud-for-vred"
@@ -61,7 +64,8 @@ include = [
 
 [tool.hatch.build.targets.wheel]
 packages = [
-  "src/deadline"
+  "src/deadline",
+  "scripts"
 ]
 
 [tool.mypy]
