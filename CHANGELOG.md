@@ -1,3 +1,10 @@
+## 0.1.5 (2025-10-07)
+
+
+### Features
+* add CLI-based installer for VRED in-app submitter (#85) ([`f588334`](https://github.com/aws-deadline/deadline-cloud-for-vred/commit/f5883346bead4e5b8f2f3f9bb338f7c192b5a20b))
+
+
 ## 0.1.4 (2025-09-23)
 
 
