@@ -1,6 +1,6 @@
 parameterValues:
 - name: description
-  value: ''
+  value: '5x2 tiles test'
 - name: input_filenames
   value: []
 - name: input_directories
@@ -8,7 +8,7 @@ parameterValues:
 - name: JobScriptDir
   value: scripts
 - name: name
-  value: ''
+  value: 'TileTest5x2'
 - name: output_directories
   value:
   - c:\vred-snapshots
@@ -63,7 +63,7 @@ parameterValues:
 - name: SceneFile
   value: Automotive_Genesis.vpb
 - name: SequenceName
-  value: ''
+  value: '__all__'
 - name: StartFrame
   value: 0
 - name: TonemapHDR
