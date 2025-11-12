@@ -7,11 +7,10 @@ import PIL.Image
 import yaml
 from pathlib import Path
 from typing import Any
+from .constants import Constants
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from test.worker.constants import Constants
 
 
 def are_images_similar_by_folder(expected_dir: Path, actual_dir: Path, tolerance: float) -> bool:
@@ -90,7 +89,7 @@ def are_parameter_values_similar(
     :param job_history_dir: directory containing job history files
     :param expected_parameter_values: expected parameter values to compare against
     """
-    with open(job_history_dir / Constants.PARAMETER_VALUES) as f:
+    with open(job_history_dir / Constants.PARAMETER_VALUES_FILENAME) as f:
         actual = yaml.safe_load(f)["parameterValues"]
         expected = expected_parameter_values["parameterValues"]
         assert len(actual) == len(expected)
@@ -109,7 +108,7 @@ def are_asset_references_similar(
     :param: job_history_dir: directory containing job history files
     :param: expected_asset_references: expected asset references to compare against
     """
-    with open(job_history_dir / Constants.ASSET_REFERENCES) as f:
+    with open(job_history_dir / Constants.ASSET_REFERENCES_FILENAME) as f:
         actual = yaml.safe_load(f)
         actual_filenames = set(actual["assetReferences"]["inputs"]["filenames"])
         expected_filenames = expected_asset_references["assetReferences"]["inputs"]["filenames"]

@@ -15,7 +15,7 @@ from typing import Any, Dict
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from test.submitter.constants import Constants
+from test.common.constants import Constants
 
 from deadline.client.ui.dialogs.submit_job_to_deadline_dialog import JobBundlePurpose
 from deadline.vred_submitter.data_classes import RenderSubmitterUISettings
@@ -239,7 +239,7 @@ class SubmitterDialogController:
             QTest.qWait(3000)
 
 
-def run_submitter_integration_test(test_settings: Dict[str, Any], bundle_output_path: str) -> bool:
+def run_submitter_test(test_settings: Dict[str, Any], bundle_output_path: str) -> bool:
     """
     Run integration test specifically for the submitter dialog.
     param: test_settings: list of setting dictionaries to apply to the dialog's Qt controls

@@ -25,28 +25,21 @@ Example paths:
 """
 
 import logging
-import os
 import pytest
 import shutil
-import subprocess
-import sys
 import yaml
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock
 
 from deadline.vred_submitter.constants import Constants
 
-from .constants import Constants as TestConstants
-from .job_bundle_output_comparison import assert_job_bundle_matches
+from test.common.vred_runner import VREDRunner
+from test.common.job_bundle_output_comparison import assert_job_bundle_matches
+from test.common.sticky_settings_verification import verify_sticky_settings_file
 from .path_resolver import PathResolver
-from .sticky_settings_verification import verify_sticky_settings_file
-
-
-# Add path to access data classes
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
+
+OUTPUT_DIRECTORY_NAME = "output"
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -55,7 +48,7 @@ def setup_and_cleanup_submitter_output():
     Module-scoped fixture to clean up output directory before and after all submitter tests.
     This fixture runs automatically for all tests in this module.
     """
-    output_dir = Path(__file__).parent / TestConstants.OUTPUT_DIRECTORY_NAME
+    output_dir = Path(__file__).parent / OUTPUT_DIRECTORY_NAME
 
     # Setup: Clean output directory before tests
     logging.info("Cleaning up submitter test output directory before tests...")
@@ -79,103 +72,6 @@ def setup_and_cleanup_submitter_output():
         logging.warning(f"Could not clean submitter test output directory: {e}")
 
 
-class VREDSubmitterTestRunner:
-    """Handles VRED execution and UI operations."""
-
-    def __init__(self):
-        self.current_module_path = Path(__file__).resolve().parent
-        self.submitter_path = (
-            self.current_module_path.parent.parent / TestConstants.VRED_SUBMITTER_SOURCE_PATH
-        )
-
-    def get_bootstrap_code(self, test_settings: list, bundle_path: str) -> str:
-        """
-        Generate bootstrap code for submitter dialog testing.
-        param: test_settings: List of setting dictionaries having 'name' and 'value' keys
-        param: bundle_path: Path where job bundle should be exported
-        return: generated bootstrap code for submitter dialog interaction
-        """
-        return (
-            rf"""
-import importlib;
-import os;
-import sys;
-from vrController import terminateVred, vrLogError;
-sys.path.extend([r'{self.current_module_path}','{self.submitter_path}']);
-controller_module_name='submitter_dialog_controller';
-controller_module = importlib.util.find_spec(controller_module_name) is not None and importlib.import_module(
-controller_module_name) or None;
-controller_module.run_submitter_integration_test({test_settings}, r'{bundle_path}');
-terminateVred();
-""".replace(
-                "\n", ""
-            )
-            .replace("\\", "/")
-            .replace("\t", "")
-        )
-
-    def get_vred_executable(self) -> str:
-        """
-        Determine VRED binary (VRED Pro) to use for GUI testing.
-        return: path to VRED Pro binary
-        raise: OSError: if a valid VRED Pro binary cannot be determined.
-        """
-        # GUI tests require VRED Pro - VRED Core is headless and cannot run GUI dialogs
-        if executable := os.environ.get(TestConstants.VRED_PRO_ENV_VAR):
-            if os.path.isfile(executable):
-                return executable
-
-        # If VRED Pro is not available, provide a more specific error message
-        raise OSError(TestConstants.ERROR_VRED_PRO_REQUIRED)
-
-    def setup_environment(self) -> None:
-        """
-        Configure VRED environment variables for web interface disabling, license release timing,
-        and diagnostics.
-        """
-        env_settings = {
-            TestConstants.DISABLE_WEBINTERFACE_ENV_VAR: TestConstants.DISABLE_WEBINTERFACE_VALUE,
-            TestConstants.LICENSE_RELEASE_TIME_ENV_VAR: TestConstants.LICENSE_RELEASE_TIME_SECONDS_LIMIT,
-            TestConstants.FLEXLM_DIAGNOSTICS_ENV_VAR: TestConstants.FLEXLM_DIAGNOSTICS_HIGH_VALUE,
-        }
-        os.environ.update(env_settings)
-
-    def invoke_vred(self, test_settings: list, bundle_path: str, scene_file: str) -> bool:
-        """
-        Invoke VRED binary with submitter dialog controller for submitter testing.
-        :param: test_settings: list of settings dictionaries to apply to the Qt dialog
-        :param: bundle_path: path where the job bundle should be exported
-        :param: scene_file: path to the scene file to load
-        :return: True if VRED invocation succeeded; False otherwise
-        """
-        os.environ[TestConstants.CODE_PASSING_ENV_VAR] = self.get_bootstrap_code(
-            test_settings, bundle_path
-        )
-
-        executable = self.get_vred_executable()
-        if TestConstants.IS_WINDOWS:
-            executable = f'"{executable}"'
-            scene_file = f'"{scene_file}"'
-
-        cmd = [
-            executable,
-            scene_file,
-            TestConstants.DISABLE_PYTHON_SANDBOX_PARAM,
-            TestConstants.FAST_START_PARAM,
-            TestConstants.POST_PYTHON_PARAM,
-            TestConstants.VRED_PYTHON_PRE_BOOTSTRAP_CODE,
-        ]
-
-        try:
-            invocation = " ".join(cmd) if TestConstants.IS_WINDOWS else cmd
-            result = subprocess.run(invocation, stderr=subprocess.STDOUT, check=True, text=True)
-            logging.debug(result)
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Command failed: {invocation}\n{e.output}\nReturn code: {e.returncode}")
-            return False
-        return True
-
-
 def run_vred_submitter_test(
     test_config_name_arg: str,
     test_output_dir: str,
@@ -191,9 +87,6 @@ def run_vred_submitter_test(
     raise: FileNotFoundError: If scene file or expected output folder doesn't exist
     raise: RuntimeError: If output directory setup fails
     """
-    logging.info(TestConstants.DEADLINE_CLOUD_FOR_VRED_SUBMITTER_UI_TEST_TITLE)
-    logging.info("=" * (len(TestConstants.DEADLINE_CLOUD_FOR_VRED_SUBMITTER_UI_TEST_TITLE) - 1))
-
     path_resolver = PathResolver()
     scene_file_path = (
         path_resolver.get_scene_file(scene_filename_arg) if scene_filename_arg else None
@@ -220,12 +113,13 @@ def run_vred_submitter_test(
     logging.debug(f"Expected output folder: {expected_output_folder}")
     logging.debug(f"Generated output folder: {test_output_dir}")
 
-    vred_test_runner = VREDSubmitterTestRunner()
-    vred_test_runner.setup_environment()
-    return vred_test_runner.invoke_vred(
-        test_settings if test_settings is not None else [],
-        str(test_output_dir),
-        str(scene_file_path) if scene_file_path else "",
+    vred_runner = VREDRunner()
+    vred_runner.setup_environment()
+    bootstrap_code = vred_runner.get_submitter_bootstrap_code(
+        test_settings if test_settings is not None else [], str(test_output_dir)
+    )
+    return vred_runner.invoke_vred(
+        bootstrap_code, str(scene_file_path) if scene_file_path else "", require_pro=True
     )
 
 
@@ -236,7 +130,7 @@ def setup_output_directory(output_dir: str) -> bool:
     return: True if directory was created successfully; False otherwise
     """
     try:
-        os.makedirs(output_dir, exist_ok=True)
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
         return True
     except PermissionError:
         return False
@@ -256,98 +150,6 @@ def is_valid_template(template_path: Path) -> bool:
         return False
 
 
-def get_reference_parameter_values() -> dict[str, Any]:
-    """
-    Generate reference parameter values for test validation.
-    return: dictionary containing parameterValues list with default settings
-    """
-    # Mock vred_logger before importing data_classes to avoid vrController import issues
-    sys.modules["deadline.vred_submitter.vred_logger"] = MagicMock()
-
-    from deadline.vred_submitter.data_classes import RenderSubmitterUISettings
-
-    settings = RenderSubmitterUISettings()
-    param_values = []
-
-    # Exclude the same shared parameters that are filtered out in the actual submitter
-    shared_parameters = {
-        "priority",
-        "initial_status",
-        "max_failed_tasks_count",
-        "max_retries_per_task",
-        "max_worker_count",
-    }
-
-    # Add parameters from RenderSubmitterUISettings defaults (excluding shared parameters)
-    for field_name, field_value in settings.__dict__.items():
-        if field_name in shared_parameters:
-            continue  # Skip shared parameters that are filtered out
-        if isinstance(field_value, bool):
-            field_value = "true" if field_value else "false"
-        elif isinstance(field_value, list):
-            field_value = ""
-        param_values.append(
-            {TestConstants.NAME_FIELD: field_name, TestConstants.VALUE_FIELD: field_value}
-        )
-
-    # Override specific values
-    [
-        param.update({TestConstants.VALUE_FIELD: "scripts"})
-        for param in param_values
-        if param[TestConstants.NAME_FIELD] == "JobScriptDir"
-    ]
-
-    # Add deadline-specific fields
-    param_values.extend(
-        [
-            {"name": "deadline:targetTaskRunStatus", "value": "READY"},
-            {"name": "deadline:maxFailedTasksCount", "value": 20},
-            {"name": "deadline:maxRetriesPerTask", "value": 5},
-            {"name": "deadline:priority", "value": 50},
-        ]
-    )
-
-    # Note: Shared parameters (priority, initial_status, max_failed_tasks_count,
-    # max_retries_per_task, max_worker_count) are now filtered out of job bundle
-    # parameters and handled by deadline-cloud library at a higher level
-
-    return {"parameterValues": param_values}
-
-
-def _update_gpu_raytracing_based_on_region_rendering(params: list) -> None:
-    """
-    Update GPU Ray Tracing setting based on Region Rendering setting.
-    When Region Rendering is enabled, it is expected that GPU Ray Tracing will also be enabled.
-
-    :param params: List of parameter dictionaries containing name and value pairs
-    """
-    region_rendering_param = next(
-        (param for param in params if param[Constants.NAME_FIELD] == "RegionRendering"), None
-    )
-    gpu_raytracing_param = next(
-        (param for param in params if param[Constants.NAME_FIELD] == "GPURaytracing"), None
-    )
-
-    if region_rendering_param and gpu_raytracing_param:
-        if region_rendering_param[Constants.VALUE_FIELD] == "true":
-            gpu_raytracing_param[Constants.VALUE_FIELD] = "true"
-
-
-def get_reference_asset_references():
-    """
-    Generate reference asset references structure for test validation.
-    return: dictionary containing assetReferences structure with empty input, output,
-    and referenced paths
-    """
-    return {
-        "assetReferences": {
-            "inputs": {"filenames": [], "directories": []},
-            "outputs": {"directories": []},
-            "referencedPaths": [],
-        }
-    }
-
-
 @pytest.mark.submitter
 class TestVREDSubmitter:
     """Tests that ensure VRED submitters produce the correct job bundle."""
@@ -357,7 +159,7 @@ class TestVREDSubmitter:
     ):
         """Helper method for VRED submitter dialog tests"""
         test_subdir = f"{Path(scene_name).stem}-{test_name}"
-        test_output_dir = Path(__file__).parent / TestConstants.OUTPUT_DIRECTORY_NAME / test_subdir
+        test_output_dir = Path(__file__).parent / OUTPUT_DIRECTORY_NAME / test_subdir
         test_output_dir.mkdir(parents=True, exist_ok=True)
 
         path_resolver = PathResolver()
@@ -379,7 +181,7 @@ class TestVREDSubmitter:
         test_settings = [{"name": k, "value": v} for k, v in parameter_overrides.items()]
 
         assert run_vred_submitter_test(test_name, str(test_output_dir), scene_name, test_settings)
-        assert is_valid_template(test_output_dir / TestConstants.TEMPLATE_FILENAME)
+        assert is_valid_template(test_output_dir / "template.yaml")
 
         expected_output_dir = path_resolver.get_expected_output_folder(
             test_name, Path(scene_name).stem
@@ -423,8 +225,8 @@ class TestVREDSubmitter:
                 "output_directories": ["c:\\vred-snapshots"],
                 "StartFrame": -3,
                 "EndFrame": 100,
-                TestConstants.NUM_X_TILES_FIELD: 7,
-                TestConstants.NUM_Y_TILES_FIELD: 5,
+                "NumXTiles": 7,
+                "NumYTiles": 5,
                 "OutputDir": "c:\\vred-snapshots",
                 "OutputFileNamePrefix": "testimage",
                 "OutputFormat": "JPG",
@@ -449,8 +251,8 @@ class TestVREDSubmitter:
                 "OutputFormat": "PNG",
                 "RenderAnimation": "false",
                 "RegionRendering": "false",
-                TestConstants.NUM_X_TILES_FIELD: 1,
-                TestConstants.NUM_Y_TILES_FIELD: 1,
+                "NumXTiles": 1,
+                "NumYTiles": 1,
                 "SequenceName": "Sequence",
                 "View": "Back",
             },

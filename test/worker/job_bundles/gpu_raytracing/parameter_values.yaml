@@ -8,7 +8,7 @@ parameterValues:
 - name: JobScriptDir
   value: scripts
 - name: name
-  value: GPURayTracingTest
+  value: 'GPURayTracingTest'
 - name: output_directories
   value:
   - c:\vred-snapshots
@@ -63,7 +63,7 @@ parameterValues:
 - name: SceneFile
   value: Cone.vpb
 - name: SequenceName
-  value: ''
+  value: '__all__'
 - name: StartFrame
   value: 0
 - name: TonemapHDR
