@@ -2,11 +2,14 @@
 
 from pathlib import Path
 
-from .constants import Constants
-
 
 class PathResolver:
     """Handles file path resolution and validation."""
+
+    SCENE_FILE_DIRECTORY_NAME = "scene_files"
+    JOB_BUNDLES_DIRECTORY_NAME = "job_bundles"
+    EXPECTED_OUTPUT_DIRECTORY_NAME = "expected_output"
+    PARAMETER_VALUES_FILENAME = "parameter_values.yaml"
 
     def __init__(self):
         self.base_path = Path(__file__).resolve().parent
@@ -19,7 +22,7 @@ class PathResolver:
         """
         if not filename:
             return None
-        return self.base_path / Constants.SCENE_FILE_DIRECTORY_NAME / filename
+        return self.base_path / self.SCENE_FILE_DIRECTORY_NAME / filename
 
     def get_config_file(self, config_name: str) -> Path:
         """
@@ -29,9 +32,9 @@ class PathResolver:
         """
         return (
             self.base_path
-            / Constants.JOB_BUNDLES_DIRECTORY_NAME
+            / self.JOB_BUNDLES_DIRECTORY_NAME
             / config_name
-            / Constants.PARAMETER_VALUES_FILENAME
+            / self.PARAMETER_VALUES_FILENAME
         )
 
     def get_expected_output_folder(self, config_name: str, scene_file_basename: str) -> Path:
@@ -42,4 +45,4 @@ class PathResolver:
         return: expected output directory as a path
         """
         subdir = f"{scene_file_basename}-{config_name}"
-        return self.base_path / Constants.EXPECTED_OUTPUT_DIRECTORY_NAME / subdir
+        return self.base_path / self.EXPECTED_OUTPUT_DIRECTORY_NAME / subdir
