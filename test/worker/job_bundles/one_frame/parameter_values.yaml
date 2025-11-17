@@ -1,6 +1,6 @@
 parameterValues:
 - name: description
-  value: ''
+  value: 'Test render job'
 - name: input_filenames
   value: []
 - name: input_directories
@@ -8,7 +8,7 @@ parameterValues:
 - name: JobScriptDir
   value: scripts
 - name: name
-  value: ''
+  value: 'TestJob'
 - name: output_directories
   value:
   - c:\vred-snapshots
@@ -63,7 +63,7 @@ parameterValues:
 - name: SceneFile
   value: LightweightWith Spaces.vpb
 - name: SequenceName
-  value: ''
+  value: '__all__'
 - name: StartFrame
   value: 0
 - name: TonemapHDR
