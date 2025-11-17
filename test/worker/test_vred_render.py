@@ -1,32 +1,31 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """
-Deadline Cloud for VRED Rendering - local semi-automated test module.
+Deadline Cloud for VRED Rendering Test
 
-Tests output generated from main worker module.
-Launches VRED, loads a scene file, initializes rendering configuration
-(via load_render_parameter_values.py and JSON configuration) and
-initiates VRED_RenderScript_DeadlineCloud.py to launch the actual rendering process.
+Tests VRED rendering using OpenJD CLI to execute the job template used in production.
 
 Note: requires either VREDCORE or VREDPRO environment variable to be set with
 a valid path to the VRED executable.
-
 Example paths:
     Linux: /opt/Autodesk/VREDCluster-{version}/bin/VREDCore
     Windows: C:/Program Files/Autodesk/VREDPro-{version}/bin/WIN64/VREDCore.exe
-
-Note:
-    If both environment variables are set, then VREDCORE takes precedence.
 """
 
 import io
+import json
 import logging
 import pytest
 import shutil
+import subprocess
 import sys
 from pathlib import Path
+from typing import Dict, Any
 
-from test.common.vred_runner import VREDRunner
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from deadline.client.job_bundle.parameters import read_job_bundle_parameters
 from test.common.output_comparison import are_images_similar_by_folder
 from test.worker.path_resolver import PathResolver
 
@@ -36,105 +35,210 @@ if "pytest" not in sys.modules:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 
-def setup_render_output_directory(output_dir: str) -> bool:
+def get_job_template_path() -> Path:
     """
-    Create output directory if it doesn't exist.
-    :param: output_dir: Path to the output directory to create
-    :return: True if directory was created successfully; False otherwise
+    Get the path to the VRED default job template.
     """
-    try:
-        Path(output_dir).mkdir(parents=True, exist_ok=True)
-        return True
-    except PermissionError:
-        return False
+    return (
+        Path(__file__).parent.parent.parent
+        / "src"
+        / "deadline"
+        / "vred_submitter"
+        / "default_vred_job_template.yaml"
+    )
 
 
-def run_vred_render_test(test_config_name_arg: str, scene_filename: str):
+def load_job_parameters_from_bundle(bundle_dir: Path) -> Dict[str, Any]:
     """
-    Processes arguments to launch VRED to render based on a job bundle configuration and
-    optional scene file override (to the scene file specified within the job bundle).
+    Load job parameters from the job bundle using the Deadline Cloud client library.
+
+    This uses the same parameter reading logic as the Deadline Cloud client,
+    ensuring consistency with how parameters are processed in production.
+
+    Note: This function does NOT perform type conversion because OpenJD Runtime
+    expects string values and performs type conversion during template variable
+    substitution (e.g., int({{Param.StartFrame}})).
+
+    :param bundle_dir: Path to the job bundle directory
+    :return: Dictionary of parameter name to value mappings (as strings)
+    """
+    # Use Deadline Cloud client's job bundle parameter reader
+    job_bundle_parameters = read_job_bundle_parameters(str(bundle_dir))
+
+    # Convert list of {name, value} dicts to a simple dict
+    # Keep values as strings for OpenJD Runtime
+    # Filter out Deadline Cloud service parameters (deadline:*) as they are not
+    # defined in the job template and are only used by Deadline Cloud service
+    params = {}
+    for param in job_bundle_parameters:
+        if "value" in param:
+            param_name = param["name"]
+            # Skip Deadline Cloud service parameters
+            if not param_name.startswith("deadline:"):
+                params[param_name] = param["value"]
+
+    return params
+
+
+def run_openjd_render(
+    template_path: Path, job_params: Dict[str, Any], output_dir: Path
+) -> subprocess.CompletedProcess:
+    """
+    Execute VRED rendering using OpenJD CLI.
+
+    :param template_path: Path to the job template YAML file
+    :param job_params: Dictionary of job parameters
+    :param output_dir: Directory path where rendered output will be saved
+    :return: CompletedProcess object from subprocess.run
+    """
+    # Ensure output directory exists
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build OpenJD command
+    cmd = [
+        "openjd",
+        "run",
+        str(template_path),
+        "--job-param",
+        json.dumps(job_params),
+    ]
+
+    # Execute OpenJD
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,  # Don't raise exception, we'll check returncode manually
+    )
+
+    # Log output
+    if result.stdout:
+        logging.debug(f"OpenJD stdout:\n{result.stdout}")
+    if result.stderr:
+        logging.debug(f"OpenJD stderr:\n{result.stderr}")
+
+    return result
+
+
+def run_vred_render_test_openjd(test_config_name: str, scene_filename: str):
+    """
+    Execute VRED rendering test using OpenJD CLI.
+
+    This function:
+    1. Loads job parameters from the test bundle
+    2. Overrides scene file and output directory for test environment
+    3. Executes rendering via OpenJD CLI
+    4. Validates output images against expected results
+
+    :param test_config_name: Name of the test configuration (job bundle directory)
+    :param scene_filename: Name of the scene file to render
     """
     path_resolver = PathResolver()
+
+    # Resolve paths
     scene_file_path = path_resolver.get_scene_file(scene_filename)
-    test_config_file_path = path_resolver.get_config_file(test_config_name_arg)
+    bundle_dir = path_resolver.get_job_bundles_folder() / test_config_name
+    template_path = get_job_template_path()
 
-    if scene_file_path and not scene_file_path.exists():
-        raise FileNotFoundError(f"Scene file '{scene_file_path.name}' does not exist")
-    if not test_config_file_path.exists():
-        raise FileNotFoundError(f"Test config file '{test_config_file_path.name}' does not exist")
+    # Validate paths
+    if not scene_file_path.exists():
+        raise FileNotFoundError(f"Scene file not found: {scene_file_path}")
+    if not bundle_dir.exists():
+        raise FileNotFoundError(f"Job bundle not found: {bundle_dir}")
+    if not template_path.exists():
+        raise FileNotFoundError(f"Job template not found: {template_path}")
 
-    bundle_dir = path_resolver.get_job_bundles_folder() / test_config_name_arg
+    # Load parameters from bundle
+    job_params = load_job_parameters_from_bundle(bundle_dir)
 
-    # Set up the output directory wher the rendered image will be saved
-    output_subdir_name = f"{scene_filename}-{test_config_name_arg}"
-    output_subdir_path = path_resolver.get_output_folder() / output_subdir_name
-    if not setup_render_output_directory(str(output_subdir_path)):
-        raise RuntimeError(
-            f"Error: output folder already exists or can't be accessed: {output_subdir_path}"
-        )
+    # Override parameters for test environment
+    output_subdir_name = f"{scene_filename}-{test_config_name}"
+    output_dir = path_resolver.get_output_folder() / output_subdir_name
 
-    vred_runner = VREDRunner()
-    vred_runner.setup_environment()
-    vred_runner.invoke_vred_render(
-        path_resolver.base_path, scene_file_path, bundle_dir, output_subdir_path
+    job_params["SceneFile"] = str(scene_file_path)
+    job_params["OutputDir"] = str(output_dir)
+    job_params["JobScriptDir"] = str(
+        Path(__file__).parent.parent.parent / "src" / "deadline" / "vred_submitter"
     )
 
+    # Execute rendering via OpenJD
+    result = run_openjd_render(template_path, job_params, output_dir)
+
+    # Check execution result
+    if result.returncode != 0:
+        logging.error(f"OpenJD execution failed with return code {result.returncode}")
+        raise RuntimeError(f"OpenJD rendering failed: {result.stderr}")
+
+    # Validate output images
     scene_file_basename = scene_file_path.stem
-
     expected_output_folder = path_resolver.get_expected_output_folder(
-        test_config_name_arg, scene_file_basename
+        test_config_name, scene_file_basename
     )
-    logging.debug(f"Expected output folder: {expected_output_folder}")
-    logging.debug(f"Generated output folder: {output_subdir_path}")
 
+    logging.debug(f"Expected output folder: {expected_output_folder}")
+    logging.debug(f"Generated output folder: {output_dir}")
+
+    if not expected_output_folder.exists():
+        raise FileNotFoundError(f"Expected output folder not found: {expected_output_folder}")
+
+    # Compare images
     image_similarity_factor = 10.0
-    result = are_images_similar_by_folder(
-        expected_output_folder, output_subdir_path, image_similarity_factor
+    image_comparison_result = are_images_similar_by_folder(
+        expected_output_folder, output_dir, image_similarity_factor
     )
-    logging.info(f"Image comparison match across both folders: {'PASS' if result else 'FAIL'}")
-    assert result, "Image comparison failed"
+
+    assert (
+        image_comparison_result
+    ), "Image comparison failed: rendered output does not match expected images"
 
 
 @pytest.fixture(scope="module", autouse=True)
-def setup_and_cleanup_worker_output():
+def setup_and_cleanup_openjd_output():
     """
-    Module-scoped fixture to clean up output directory before and after all worker tests.
+    Module-scoped fixture to clean up output directory before and after the render tests.
     This fixture runs automatically for all tests in this module.
     """
     output_dir = Path(__file__).parent / "output"
 
     # Setup: Clean output directory before tests
-    logging.info("Cleaning up worker output directory before tests...")
+    logging.info("Cleaning up OpenJD test output directory before tests...")
     try:
         if output_dir.exists():
             shutil.rmtree(output_dir)
         output_dir.mkdir(exist_ok=True)
-        logging.info(f"Worker output directory prepared: {output_dir}")
+        logging.info(f"Render test output directory prepared: {output_dir}")
     except (OSError, PermissionError) as e:
-        logging.warning(f"Could not clean worker output directory: {e}")
+        logging.warning(f"Could not clean Render test output directory: {e}")
 
     yield  # Run all tests
 
     # Teardown: Clean output directory after tests
-    logging.info("Cleaning up worker output directory after tests...")
+    logging.info("Cleaning up Render test output directory after tests...")
     try:
         if output_dir.exists():
             shutil.rmtree(output_dir)
-        logging.info("Worker output directory cleaned up")
+        logging.info("Render test output directory cleaned up")
     except (OSError, PermissionError) as e:
-        logging.warning(f"Could not clean worker output directory: {e}")
+        logging.warning(f"Could not clean Render test output directory: {e}")
 
 
-def test_vred_render_one_frame_japanese():
-    """Test VRED rendering one frame with Japanese filename."""
-    run_vred_render_test("one_frame", "ここにテキストを入力.vpb")
+# Test cases using OpenJD CLI
+def test_vred_render_openjd_one_frame_japanese():
+    """
+    Test VRED rendering (via OpenJD CLI) with Japanese (Unicode) filename.
+    """
+    run_vred_render_test_openjd("one_frame", "ここにテキストを入力.vpb")
 
 
-def test_vred_render_one_frame_spaces():
-    """Test VRED rendering one frame with spaces in filename."""
-    run_vred_render_test("one_frame", "LightweightWith Spaces.vpb")
+def test_vred_render_openjd_one_frame_spaces():
+    """
+    Test VRED rendering (via OpenJD CLI) with spaces in filename.
+    """
+    run_vred_render_test_openjd("one_frame", "LightweightWith Spaces.vpb")
 
 
-def test_vred_render_gpu_raytracing():
-    """Test VRED rendering with GPU ray tracing enabled."""
-    run_vred_render_test("gpu_raytracing", "Cone.vpb")
+def test_vred_render_openjd_gpu_raytracing():
+    """
+    Test VRED rendering (via OpenJD CLI) with GPU ray tracing.
+    """
+    run_vred_render_test_openjd("gpu_raytracing", "Cone.vpb")

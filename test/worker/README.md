@@ -1,9 +1,7 @@
 # VRED Worker Tests
 
-This is a test suite that exercises the Deadline Cloud VRED worker pipeline. It directly uses Job Bundle 
-configurations to define settings for the rendering and tiling processes (locally) for test data using the identical 
-worker pipeline code (found in: src/deadline/vred_submitter/VRED_RenderScript_DeadlineCloud.py). Rendered output is 
-visually compared against expected data. This is useful for confirming whether changes in a Job Bundle, render pipeline, 
+This is a test suite that exercises the Deadline Cloud VRED worker pipeline. It directly uses Job Bundle configurations to define settings for the rendering and tiling processes (locally) for test data using the identical worker pipeline code (found in: src/deadline/vred_submitter/VRED_RenderScript_DeadlineCloud.py).
+Rendered output is visually compared against expected data. This is useful for confirming whether changes in a Job Bundle, render pipeline, 
 environment (etc.) are impacting expected rendering results. There tests are intended to be ran on a local system that has VRED installed.
 
 ## Directory Structure
