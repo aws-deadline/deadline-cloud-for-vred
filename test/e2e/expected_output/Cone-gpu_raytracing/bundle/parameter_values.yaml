@@ -1,14 +1,14 @@
 parameterValues:
 - name: description
-  value: 'Animation Sequence Test'
+  value: ''
 - name: input_filenames
   value: []
 - name: input_directories
   value: []
 - name: JobScriptDir
-  value: scripts
+  value: scripts  # C:\Users\Administrator\.deadline\scripts
 - name: name
-  value: AnimationSequenceTest
+  value: ''
 - name: output_directories
   value:
   - c:\vred-snapshots
@@ -17,7 +17,7 @@ parameterValues:
 - name: AnimationClip
   value: ''
 - name: AnimationType
-  value: Timeline
+  value: Clip
 - name: DLSSQuality
   value: 'Off'
 - name: DPI
@@ -29,7 +29,7 @@ parameterValues:
 - name: FramesPerTask
   value: 1
 - name: GPURaytracing
-  value: 'false'
+  value: 'true'
 - name: ImageHeight
   value: 600
 - name: ImageWidth
@@ -43,9 +43,9 @@ parameterValues:
 - name: NumYTiles
   value: 1
 - name: OutputDir
-  value: ""
+  value: c:\vred-snapshots
 - name: OutputFileNamePrefix
-  value: anim_frame
+  value: gpu_test
 - name: OutputFormat
   value: PNG
 - name: OverrideRenderPass
@@ -55,21 +55,21 @@ parameterValues:
 - name: RegionRendering
   value: 'false'
 - name: RenderAnimation
-  value: 'true'
+  value: 'false'
 - name: RenderQuality
   value: Realistic High
 - name: SSQuality
   value: 'Off'
 - name: SceneFile
-  value: LightweightWith Spaces.vpb
+  value: Cone.vpb  # C:\Users\Administrator\vred\deadline-cloud-for-vred-forked\test\integ\scene_files\Cone.vpb
 - name: SequenceName
-  value: '__all__'
+  value: ''
 - name: StartFrame
-  value: 1
+  value: 0
 - name: TonemapHDR
   value: 'false'
 - name: View
-  value: Back
+  value: Perspective
 - name: deadline:targetTaskRunStatus
   value: READY
 - name: deadline:maxFailedTasksCount

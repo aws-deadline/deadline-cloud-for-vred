@@ -1,6 +1,6 @@
 parameterValues:
 - name: description
-  value: ''
+  value: '7x5 tiles test'
 - name: input_filenames
   value: []
 - name: input_directories
@@ -8,7 +8,7 @@ parameterValues:
 - name: JobScriptDir
   value: scripts
 - name: name
-  value: ''
+  value: 'TileTest7x5'
 - name: output_directories
   value:
   - c:\vred-snapshots
@@ -63,7 +63,7 @@ parameterValues:
 - name: SceneFile
   value: Cone.vpb
 - name: SequenceName
-  value: ''
+  value: '__all__'
 - name: StartFrame
   value: 0
 - name: TonemapHDR
