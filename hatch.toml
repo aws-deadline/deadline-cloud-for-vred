@@ -48,7 +48,7 @@ pre-install-commands = [
   "pip install -r requirements-testing.txt"
 ]
 
-[envs.e2e]
+[envs.integ]
 pre-install-commands = [
   "pip install -r requirements-submitter-testing.txt",
   "pip install -r requirements-worker-testing.txt",
@@ -58,17 +58,9 @@ pre-install-commands = [
 [envs.unit.scripts]
 test = "pytest --cov=vred_submitter --cov-config pyproject.toml {args:test/unit} -vvv"
 
-[envs.submitter.scripts]
-test = "pytest --no-cov {args:test/submitter} -vvv --numprocesses=1"
-test_submitter = "pytest --no-cov {args:test/submitter} -vvv --numprocesses=1 -m submitter"
-
-[envs.worker.scripts]
-test = "pytest --no-cov {args:test/worker} -vvv --numprocesses=1"
-test_worker = "pytest --no-cov {args:test/worker} -vvv --numprocesses=1 -m submitter"
-
-[envs.e2e.scripts]
-test = "pytest --no-cov {args:test/e2e} -vvv --numprocesses=1"
-test_e2e = "pytest --no-cov {args:test/e2e} -vvv --numprocesses=1 -m e2e"
+[envs.integ.scripts]
+test = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1"
+test_integ = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1 -m integ"
 
 [envs.codebuild.env-vars]
 SKIP_BOOTSTRAP_TEST_RESOURCES="True"
