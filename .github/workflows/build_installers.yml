@@ -28,6 +28,10 @@ on:
         options:
         - mainline
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   BuildInstaller:
     if: (github.repository == 'aws-deadline/deadline-cloud-for-vred')
