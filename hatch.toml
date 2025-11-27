@@ -24,12 +24,6 @@ lint = [
 [[envs.all.matrix]]
 python = ["3.11", "3.12"]
 
-[envs.default.env-vars]
-SKIP_BOOTSTRAP_TEST_RESOURCES="True"
-
-[envs.codebuild.scripts]
-build = "hatch build"
-
 [envs.unit]
 pre-install-commands = [
   "pip install -r requirements-unit-testing.txt",
