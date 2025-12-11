@@ -93,4 +93,3 @@ You can track your job progress through the Deadline Cloud monitor. For more inf
 
 - Contact AWS Support
 - For bugs, please log an [issue on GitHub](https://github.com/aws-deadline/deadline-cloud-for-vred/issues) (requires a GitHub account)
-- For feature requests or improvement ideas, please visit our [discussion forum](https://github.com/aws-deadline/deadline-cloud-for-vred/discussions)
