@@ -15,5 +15,4 @@ This user guide covers:
 
 Need help or have feedback? Here's how to get support:
 
-1. **[Report a bug or issue](https://github.com/aws-deadline/deadline-cloud-for-vred/issues)** - Report a bug or issue with the VRED adapter or submitter
-2. **[Discussion forum](https://github.com/aws-deadline/deadline-cloud-for-vred/discussions)** - Add any feature requests, questions and the team can help support you!
+- **[Report a bug or issue](https://github.com/aws-deadline/deadline-cloud-for-vred/issues)** - Report a bug or issue with the VRED adapter or submitter
