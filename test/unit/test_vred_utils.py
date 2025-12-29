@@ -2,7 +2,7 @@
 
 """Tests for VRED-specific utility functions and API wrappers."""
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
 
 from vred_submitter.vred_utils import (
@@ -211,6 +211,38 @@ class TestVredUtils:
         assert isinstance(result, set)
         assert Path("/path/to/source") in result
         assert Path("/path/to/smart") in result
+
+    @patch("vred_submitter.vred_utils.vrReferenceService")
+    def test_get_all_file_references_with_empty_references(self, mock_ref_service):
+        # Test with no file references
+        mock_ref_service.getSceneReferences.return_value = []
+
+        result = get_all_file_references()
+
+        assert result == set()
+
+    @patch("vred_submitter.vred_utils.vrReferenceService")
+    @patch("vred_submitter.vred_utils.get_normalized_path")
+    def test_get_all_file_references_with_multiple_references(
+        self, mock_normalize, mock_ref_service
+    ):
+        # Test with multiple file references
+        mock_ref1 = MagicMock()
+        mock_ref1.getSourcePath.return_value = "/path/to/file1.jpg"
+        mock_ref1.getSmartPath.return_value = ""
+
+        mock_ref2 = MagicMock()
+        mock_ref2.getSourcePath.return_value = "/path/to/file2.png"
+        mock_ref2.getSmartPath.return_value = ""
+
+        mock_ref_service.getSceneReferences.return_value = [mock_ref1, mock_ref2]
+        mock_normalize.side_effect = lambda x: x if x else None
+
+        result = get_all_file_references()
+
+        assert len(result) == 2
+        assert Path("/path/to/file1.jpg") in result
+        assert Path("/path/to/file2.png") in result
 
     @patch("vred_submitter.vred_utils.getSequenceList")
     def test_get_all_sequences(self, mock_get_sequences):

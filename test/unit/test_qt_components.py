@@ -155,3 +155,32 @@ class TestFileSearchLineEdit:
         widget = FileSearchLineEdit()
         widget.path_text_box.setText("/test/path")
         assert widget.text() == "/test/path"
+
+    @patch("vred_submitter.qt_components.QFileDialog.getExistingDirectory")
+    def test_directory_dialog_callback(self, mock_dialog, qapp):
+        # Test directory selection dialog callback
+        mock_dialog.return_value = "/selected/directory"
+
+        widget = FileSearchLineEdit(directory_only=True)
+        widget.common_file_dialog_callback()
+
+        # Verify dialog was called
+        mock_dialog.assert_called_once()
+
+        assert widget.path_text_box.text() == "/selected/directory"
+
+
+class TestAutoSizedComboBoxAdjustSize:
+    """Additional tests for AutoSizedComboBox size adjustment"""
+
+    def test_adjust_size_with_override(self, qapp):
+        # Test size adjustment when width is overridden
+        combo_box = AutoSizedComboBox()
+        combo_box.forced_override_minimum_width = 200
+        combo_box.addItems(["Short", "Very Long Item Name"])
+
+        # Should return early due to override
+        combo_box.adjust_size_callback()
+
+        # Verify it didn't try to adjust
+        assert combo_box.forced_override_minimum_width == 200

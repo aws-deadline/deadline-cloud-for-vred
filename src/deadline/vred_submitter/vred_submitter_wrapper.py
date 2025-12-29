@@ -61,7 +61,7 @@ def add_deadline_cloud_menu() -> None:
 
 
 def submit_to_deadline_cloud() -> None:
-    """Show the Deadline Cloud submission dialog, while preventing  duplicate dialogs from appearing."""
+    """Show the Deadline Cloud submission dialog, while preventing duplicate dialogs from appearing."""
     global _global_submitter_dialog
     if _global_submitter_dialog is not None and _global_submitter_dialog.isVisible():
         _global_submitter_dialog.raise_()
