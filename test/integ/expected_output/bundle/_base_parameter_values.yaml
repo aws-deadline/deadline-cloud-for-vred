@@ -1,3 +1,5 @@
+# Base template for parameter_values.yaml
+# Tests can override specific values by providing only the differences
 parameterValues:
 - name: description
   value: ''
@@ -6,7 +8,7 @@ parameterValues:
 - name: input_directories
   value: []
 - name: JobScriptDir
-  value: scripts  # C:\Users\Administrator\.deadline\scripts
+  value: scripts
 - name: name
   value: ''
 - name: output_directories
@@ -45,7 +47,7 @@ parameterValues:
 - name: OutputDir
   value: c:\vred-snapshots
 - name: OutputFileNamePrefix
-  value: quality
+  value: image
 - name: OutputFormat
   value: PNG
 - name: OverrideRenderPass
@@ -57,11 +59,11 @@ parameterValues:
 - name: RenderAnimation
   value: 'false'
 - name: RenderQuality
-  value: Analytic Low
+  value: Realistic High
 - name: SSQuality
   value: 'Off'
 - name: SceneFile
-  value: Cone.vpb  # C:\Users\Administrator\vred\deadline-cloud-for-vred-forked\test\integ\scene_files\Cone.vpb
+  value: Cone.vpb
 - name: SequenceName
   value: ''
 - name: StartFrame

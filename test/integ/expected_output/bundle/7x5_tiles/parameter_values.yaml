@@ -29,7 +29,7 @@ parameterValues:
 - name: FramesPerTask
   value: 1
 - name: GPURaytracing
-  value: 'false'
+  value: 'true'
 - name: ImageHeight
   value: 600
 - name: ImageWidth
