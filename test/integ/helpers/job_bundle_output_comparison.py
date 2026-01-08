@@ -14,6 +14,45 @@ import yaml
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
+def generate_expected_parameters(
+    base_template_path: Path, overrides: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Generate expected parameter values by applying overrides to base template.
+
+    Args:
+        base_template_path: Path to _base_parameter_values.yaml
+        overrides: Dict of parameter names to values (from test settings)
+
+    Returns:
+        Complete parameter values dict ready for comparison
+
+    Example:
+        base_template has: {"parameterValues": [{"name": "DLSSQuality", "value": "Off"}, ...]}
+        overrides has: {"DLSSQuality": "Performance"}
+        result: {"parameterValues": [{"name": "DLSSQuality", "value": "Performance"}, ...]}
+    """
+    with open(base_template_path, encoding="utf-8") as f:
+        base = yaml.safe_load(f)
+
+    result: Dict[str, Any] = {"parameterValues": []}
+
+    # Loop through each parameter in base template
+    for param in base.get("parameterValues", []):
+        # Start with a copy of the base parameter
+        param_copy = param.copy()  # e.g., {"name": "DLSSQuality", "value": "Off"}
+        param_name = param["name"]  # e.g., "DLSSQuality"
+
+        # If test provides an override for this parameter, use it
+        if param_name in overrides:
+            param_copy["value"] = overrides[param_name]  # Replace "Off" with "Performance"
+
+        # Add the (possibly overridden) parameter to result
+        result["parameterValues"].append(param_copy)
+
+    return result
+
+
 def normalize_file_path(file_path: str, context: Optional[Dict[str, Any]] = None) -> str:
     """
     Normalize file paths for comparison by extracting just the filename.
@@ -113,21 +152,33 @@ def normalize_asset_references(
 
 
 def _load_parameter_files(
-    actual_dir: Path, expected_dir: Path
+    actual_dir: Path, expected_dir: Path, overrides: Optional[Dict[str, Any]] = None
 ) -> tuple[Dict[str, Any], Dict[str, Any]]:
     """Load and return parameter values from actual and expected directories."""
     actual_file = actual_dir / "parameter_values.yaml"
-    expected_file = expected_dir / "parameter_values.yaml"
 
     if not actual_file.exists():
         raise FileNotFoundError(f"Actual parameter values file not found: {actual_file}")
-    if not expected_file.exists():
-        raise FileNotFoundError(f"Expected parameter values file not found: {expected_file}")
 
     with open(actual_file, encoding="utf-8") as f:
         actual_params = yaml.safe_load(f)
-    with open(expected_file, encoding="utf-8") as f:
-        expected_params = yaml.safe_load(f)
+
+    # Priority 1: Use expected directory file if it exists
+    expected_file = expected_dir / "parameter_values.yaml"
+    if expected_file.exists():
+        with open(expected_file, encoding="utf-8") as f:
+            expected_params = yaml.safe_load(f)
+    # Priority 2: Generate from base template if overrides provided
+    elif overrides is not None:
+        base_template = expected_dir.parent / "_base_parameter_values.yaml"
+        if base_template.exists():
+            expected_params = generate_expected_parameters(base_template, overrides)
+        else:
+            raise FileNotFoundError(
+                f"Neither expected parameter file nor base template found for {expected_dir}"
+            )
+    else:
+        raise FileNotFoundError(f"Expected parameter values file not found: {expected_file}")
 
     return actual_params, expected_params
 
@@ -174,7 +225,7 @@ def assert_parameter_values_match(
     Args:
         actual_dir: Directory containing actual parameter_values.yaml
         expected_dir: Directory containing expected parameter_values.yaml
-        context: Test context containing test_name and other info
+        context: Test context containing test_name, parameter_overrides, etc.
 
     Raises:
         AssertionError: If parameter values don't match expected values
@@ -183,7 +234,10 @@ def assert_parameter_values_match(
     if context is None:
         context = {}
 
-    actual_params, expected_params = _load_parameter_files(actual_dir, expected_dir)
+    # Extract overrides from context if provided
+    overrides = context.get("parameter_overrides")
+
+    actual_params, expected_params = _load_parameter_files(actual_dir, expected_dir, overrides)
 
     # Normalize both for comparison
     normalized_actual = normalize_parameter_values(actual_params, context)
@@ -213,17 +267,32 @@ def assert_asset_references_match(
         context = {}
 
     actual_file = actual_dir / "asset_references.yaml"
-    expected_file = expected_dir / "asset_references.yaml"
 
     if not actual_file.exists():
         raise FileNotFoundError(f"Actual asset references file not found: {actual_file}")
-    if not expected_file.exists():
-        raise FileNotFoundError(f"Expected asset references file not found: {expected_file}")
 
     with open(actual_file, encoding="utf-8") as f:
         actual_assets = yaml.safe_load(f)
-    with open(expected_file, encoding="utf-8") as f:
-        expected_assets = yaml.safe_load(f)
+
+    # Priority 1: Use expected directory file if it exists
+    expected_file = expected_dir / "asset_references.yaml"
+    if expected_file.exists():
+        with open(expected_file, encoding="utf-8") as f:
+            expected_assets = yaml.safe_load(f)
+    # Priority 2: Try base asset template if scene_file provided
+    elif scene_file := context.get("scene_file"):
+        scene_basename = Path(scene_file).stem
+        base_asset_template = expected_dir.parent / f"_base_asset_{scene_basename}.yaml"
+
+        if base_asset_template.exists():
+            with open(base_asset_template, encoding="utf-8") as f:
+                expected_assets = yaml.safe_load(f)
+        else:
+            raise FileNotFoundError(
+                f"Neither expected asset file nor base asset template found for {expected_dir}"
+            )
+    else:
+        raise FileNotFoundError(f"Expected asset references file not found: {expected_file}")
 
     # Normalize both for comparison
     normalized_actual = normalize_asset_references(actual_assets, context)
