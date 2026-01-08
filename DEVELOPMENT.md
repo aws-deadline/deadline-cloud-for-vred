@@ -5,11 +5,14 @@ This documentation provides guidance on developer workflows for working with the
 Table of Contents:
 
 * [Development Environment Setup](#development-environment-setup)
+* [Software Architecture](#software-architecture)
 * [Development Processes/Tools](#development-processestools)
     * [Submitter Development Workflow](#submitter-development-workflow)
-        * [Running the Plug-In](#running-the-plug-in)
-        * [Making Code Changes](#making-submitter-code-changes)
-        * [Testing the Submitter](#testing-the-submitter)
+    * [How To Install Submitter Manually](#how-to-install-submitter-manually)
+* [Environment Variables](#environment-variables)
+* [Submitter UI Configuration](#submitter-ui-configuration)
+* [Worker Process Development](#worker-process-development)
+* [Changelog Guidelines](#changelog-guidelines)
 
 [aws-cli-credentials]: https://docs.aws.amazon.com/cli/v1/userguide/cli-chap-authentication.html
 
@@ -383,3 +386,16 @@ Run `hatch run installer:build-installer -h` to see the full list of arguments.
 ```bash
 hatch run test-installer
 ```
+
+## Changelog Guidelines
+
+When a new version of `deadline-cloud-for-vred` is being released, we must prepare an update to our change log (`CHANGELOG.md`). This is a semi-automated process. GitHub actions prepares a pull request with an automatically generated draft of the changelog entry. Maintainers are responsible for reviewing the draft, making any necessary changes, and reviewing the changes in the pull request.
+
+Please consult [CHANGELOG_GUIDELINES.md](./CHANGELOG_GUIDELINES.md) for the changelog guidelines. These guidelines ensure consistency in how we communicate changes to users and provide standards for:
+
+* Structuring changelog sections and their ordering
+* Writing user-focused descriptions for different types of changes
+* Handling breaking changes with proper migration guidance
+* Communicating deprecations effectively
+* Managing fixes to unreleased changes
+* Documenting changes to experimental features
