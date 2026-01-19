@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """Tests for VRED scene management and frame range functionality."""
+
 from unittest.mock import patch
 
 from vred_submitter.scene import FrameRange, Animation, Scene

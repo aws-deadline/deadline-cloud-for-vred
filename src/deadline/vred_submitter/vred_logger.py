@@ -3,6 +3,7 @@
 """
 Implements a basic global logger for the VRED submitter, proving console and file-based logging capabilities.
 """
+
 import logging
 import logging.handlers
 import os

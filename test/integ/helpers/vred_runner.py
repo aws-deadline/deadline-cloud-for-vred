@@ -34,11 +34,7 @@ sys.path.extend([r'{self.current_module_path}/helpers']);
 controller = importlib.import_module('submitter_dialog_controller');
 controller.run_submitter_test({test_settings}, r'{bundle_output_path}');
 terminateVred();
-""".replace(
-            "\n", ""
-        ).replace(
-            "\\", "/"
-        )
+""".replace("\n", "").replace("\\", "/")
 
     def get_render_bootstrap_code(
         self,
@@ -66,11 +62,7 @@ render_script = importlib.import_module('VRED_RenderScript_DeadlineCloud');
 params = render_params.get_vred_render_parameters_from_bundle('{base_dir}','{bundle_path}','{scene_file_path}','{render_output_dir}');
 render_script.deadline_cloud_render(params) if render_script and render_params else vrLogError('failed to import modules');
 terminateVred();
-""".replace(
-            "\n", ""
-        ).replace(
-            "\\", "/"
-        )
+""".replace("\n", "").replace("\\", "/")
 
     def get_vred_executable(self, require_pro: bool = False) -> str:
         """

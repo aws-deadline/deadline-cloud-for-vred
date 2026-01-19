@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """Tests for data classes used in VRED submitter."""
+
 import json
 import os
 import tempfile

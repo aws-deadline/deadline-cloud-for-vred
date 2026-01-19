@@ -24,7 +24,6 @@ from test.integ.helpers.load_render_parameter_values import get_vred_render_para
 from test.integ.helpers.output_comparison import are_images_similar_by_folder
 from test.integ.path_resolver import PathResolver
 
-
 sys.path.extend([os.path.realpath(os.path.dirname(os.path.abspath(__file__)))])
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 # Only set unicode stdout when running as script, not under pytest

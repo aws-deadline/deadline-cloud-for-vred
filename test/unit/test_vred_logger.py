@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """Tests for VRED logging functionality and console output."""
+
 import pytest
 from unittest.mock import Mock, patch
 import logging

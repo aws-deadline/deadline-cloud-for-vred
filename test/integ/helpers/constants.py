@@ -39,17 +39,11 @@ class Constants(metaclass=ConstantsMeta):
     VRED_PRO_ENV_VAR: Final[str] = "VREDPRO"
     VRED_SUBMITTER_SOURCE_PATH: Final[str] = "src/deadline/vred_submitter"
 
-    VRED_PYTHON_PRE_BOOTSTRAP_CODE: Final[str] = (
-        rf"""
+    VRED_PYTHON_PRE_BOOTSTRAP_CODE: Final[str] = rf"""
     load_module = getattr(__builtins__, '__import__');
     os = load_module('os');
     exec(os.environ.get('{CODE_PASSING_ENV_VAR}'));
-    """.replace(
-            "\n", ""
-        ).replace(
-            " ", ""
-        )
-    )
+    """.replace("\n", "").replace(" ", "")
 
     def __new__(cls):
         raise TypeError("Constants class cannot be instantiated")
