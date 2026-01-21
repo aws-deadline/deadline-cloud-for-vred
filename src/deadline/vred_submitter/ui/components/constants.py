@@ -217,9 +217,7 @@ class Constants(metaclass=ConstantsMeta):
     PRINTING_SIZE_LABEL_DESCRIPTION: Final[str] = (
         "The printing size in centimeters (width and height)."
     )
-    QT_GROUP_BOX_STYLESHEET: Final[
-        str
-    ] = """
+    QT_GROUP_BOX_STYLESHEET: Final[str] = """
             QGroupBox {
                 border: 4px solid #999999;
                 border-radius: 10px;

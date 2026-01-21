@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """Tests for VRED render script functionality."""
+
 import logging
 import pytest
 import sys
@@ -11,7 +12,6 @@ from unittest.mock import Mock, patch
 
 from vred_submitter.VRED_RenderScript_DeadlineCloud import DeadlineCloudRenderer
 from vred_submitter.VRED_RenderScript_DeadlineCloud import PathFormat
-
 
 # Shared mock parameters for all test classes to reduce duplication
 DEFAULT_MOCK_PARAMS = {

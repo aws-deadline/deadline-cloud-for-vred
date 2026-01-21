@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """Tests for VREDSubmitter main class functionality."""
+
 import pytest
 from unittest.mock import Mock, patch
 from pathlib import Path

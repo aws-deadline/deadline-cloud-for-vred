@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """Tests for SceneSettingsWidget UI component."""
+
 import pytest
 from unittest.mock import Mock, patch
 from PySide6.QtWidgets import QWidget

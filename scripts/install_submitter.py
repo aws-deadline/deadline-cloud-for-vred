@@ -645,8 +645,7 @@ class VREDSubmitterInstaller:
 
     def _print_summary_for_success(self, install_dir: Path) -> None:
         """Print installation success summary with auto-configuration."""
-        print(
-            f"""
+        print(f"""
 {self._get_summary_common_section(install_dir)}
 
 ✅ Environment Variables:
@@ -671,13 +670,11 @@ class VREDSubmitterInstaller:
 - If menu doesn't appear, check VRED console for errors or warnings
 - Verify environment variables are set correctly
 - Check installation files exist in: {install_dir}
-"""
-        )
+""")
 
     def _print_summary_for_manual_config(self, install_dir: Path) -> None:
         """Print installation summary with manual configuration steps."""
-        print(
-            f"""
+        print(f"""
 {self._get_summary_common_section(install_dir)}
 
 ✅ Environment Variable:
@@ -698,8 +695,7 @@ To complete the setup, configure VRED preferences:
 4. Click OK and restart VRED
 
 After configuration, look for "Deadline Cloud" in the VRED menu bar.
-"""
-        )
+""")
 
     def _get_summary_common_section(self, install_dir: Path) -> str:
         """Get common summary section used in both success and manual config messages."""

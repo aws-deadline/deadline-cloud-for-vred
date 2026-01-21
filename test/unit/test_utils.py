@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """Tests for utility functions and classes used throughout VRED submitter."""
+
 import pytest
 from unittest.mock import patch
 import os

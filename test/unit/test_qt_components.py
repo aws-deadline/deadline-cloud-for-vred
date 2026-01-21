@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 """Tests for Qt UI components used in VRED submitter."""
+
 import pytest
 from unittest.mock import Mock, patch
 from PySide6.QtCore import Qt

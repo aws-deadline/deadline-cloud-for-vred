@@ -16,7 +16,6 @@ from pathlib import Path
 from .constants import Constants
 from .vred_logger import get_logger
 
-
 _global_logger = get_logger(__name__)
 
 
