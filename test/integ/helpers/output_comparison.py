@@ -43,7 +43,9 @@ def are_images_similar_by_folder(expected_dir: Path, actual_dir: Path, tolerance
 
 
 def are_images_similar(
-    expected_image_file_path: str, actual_image_file_path: str, tolerance: float
+    expected_image_file_path: str,
+    actual_image_file_path: str,
+    tolerance: float,
 ) -> bool:
     """Compare two images for similarity.
     :param: expected_image_file_path: file containing expected image
@@ -59,10 +61,25 @@ def are_images_similar(
             logging.error(f"Image shape mismatch: expected {expected.shape}, actual {actual.shape}")
             return False
 
+        diff = np.abs(actual.astype(float) - expected.astype(float))
+        max_diff = np.max(diff)
         result = np.allclose(actual, expected, atol=tolerance)
+
         if not result:
-            max_diff = np.max(np.abs(actual.astype(float) - expected.astype(float)))
-            logging.error(f"Images differ beyond tolerance {tolerance}, max difference: {max_diff}")
+            mean_diff = np.mean(diff)
+            total_pixels = actual.shape[0] * actual.shape[1]
+            pixels_exceeding = (
+                np.any(diff > tolerance, axis=-1) if diff.ndim == 3 else diff > tolerance
+            )
+            num_pixels_exceeding = int(np.sum(pixels_exceeding))
+            pct_pixels_exceeding = (num_pixels_exceeding / total_pixels) * 100
+            logging.error(
+                f"Images differ beyond tolerance {tolerance}:\n"
+                f"  Max pixel difference: {max_diff}\n"
+                f"  Mean pixel difference: {mean_diff:.4f}\n"
+                f"  Pixels exceeding tolerance: {num_pixels_exceeding} / {total_pixels} ({pct_pixels_exceeding:.2f}%)\n"
+                f"  Image shape: {actual.shape}"
+            )
         return result
     except (FileNotFoundError, PIL.UnidentifiedImageError, ValueError) as e:
         logging.error(f"Error comparing images: {e}")

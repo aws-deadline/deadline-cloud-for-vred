@@ -88,7 +88,7 @@ terminateVred();
             {
                 Constants.DISABLE_WEBINTERFACE_ENV_VAR: Constants.DISABLE_WEBINTERFACE_VALUE,
                 Constants.LICENSE_RELEASE_TIME_ENV_VAR: Constants.LICENSE_RELEASE_TIME_SECONDS_LIMIT,
-                Constants.FLEXLM_DIAGNOSTICS_ENV_VAR: Constants.FLEXLM_DIAGNOSTICS_HIGH_VALUE,
+                # Constants.FLEXLM_DIAGNOSTICS_ENV_VAR: Constants.FLEXLM_DIAGNOSTICS_HIGH_VALUE, ### setting FLELM_DIAGNOSTICS causes dev licensing checkout to fail for VRED 2026.
             }
         )
 

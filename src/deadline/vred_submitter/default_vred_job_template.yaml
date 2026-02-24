@@ -590,7 +590,7 @@ steps:
                 os.environ[DISABLE_WEBINTERFACE_ENV_VAR] = DISABLE_WEBINTERFACE_VALUE
                 os.environ[LICENSE_RELEASE_TIME_ENV_VAR] = LICENSE_RELEASE_TIME_SECONDS_LIMIT
                 os.environ[CODE_PASSING_ENV_VAR] = VRED_PYTHON_BOOTSTRAP_CODE
-                os.environ[FLEXLM_DIAGNOSTICS_ENV_VAR] = FLEXLM_DIAGNOSTICS_HIGH_VALUE
+                # os.environ[FLEXLM_DIAGNOSTICS_ENV_VAR] = FLEXLM_DIAGNOSTICS_HIGH_VALUE  # Interferes with VRED 2026 AdskLicensingService license checkout
 
 
             def reader_thread(pipe, output_queue, error_queue):

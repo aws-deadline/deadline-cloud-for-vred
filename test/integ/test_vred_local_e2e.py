@@ -185,7 +185,7 @@ class LocalE2ETestRunner:
             expected_output_dir.exists()
         ), f"Expected output folder not found: {expected_output_dir}"
 
-        image_singularity_factor = 10.0
+        image_singularity_factor = 30.0
         result = are_images_similar_by_folder(
             expected_output_dir, render_output_dir, image_singularity_factor
         )

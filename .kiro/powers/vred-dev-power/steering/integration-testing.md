@@ -41,6 +41,14 @@ VRED has a three-tier testing architecture beyond unit tests:
 | E2E | ✅ Required | ❌ | ✅ | ❌ | ✅ BYOL |
 | Tile Assembly | ❌ | ❌ | ❌ | ✅ | ❌ |
 
+### Snapshot Directory
+
+Integration tests require `C:\vred-snapshots` to exist. Before running any integ tests, ensure this directory is created:
+
+```powershell
+if (-not (Test-Path "C:\vred-snapshots")) { New-Item -ItemType Directory -Path "C:\vred-snapshots" }
+```
+
 ### Commands
 
 ```powershell
