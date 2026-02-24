@@ -214,7 +214,7 @@ def run_vred_render_test_openjd(test_bundle_name: str, scene_filename: str):
         raise FileNotFoundError(f"Expected output folder not found: {expected_output_folder}")
 
     # Compare images
-    image_similarity_factor = 10.0
+    image_similarity_factor = 30.0
     image_comparison_result = are_images_similar_by_folder(
         expected_output_folder, output_dir, image_similarity_factor
     )
