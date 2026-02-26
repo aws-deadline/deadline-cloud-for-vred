@@ -241,6 +241,8 @@ Integration tests are located under the `test/integ` directory. These tests veri
 
 **To run the integration tests**: please see [README in integ folder](test/integ/README.md).
 
+> **Tip**: The integ README also covers [how to add new submitter tests](test/integ/README.md#adding-new-submitter-tests), including the base template pattern and parametrize usage.
+
 
 ### How To Install Submitter Manually
 #### Prerequisites
