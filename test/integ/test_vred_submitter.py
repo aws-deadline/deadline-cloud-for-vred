@@ -96,10 +96,6 @@ def run_vred_submitter_test(
 
     if scene_file_path and not scene_file_path.exists():
         raise FileNotFoundError(f"Scene file '{scene_file_path.name}' does not exist")
-    if not expected_output_folder.exists():
-        raise FileNotFoundError(
-            f"Expected output folder '{expected_output_folder.name}' does not exist"
-        )
 
     # Output directory cleanup is handled by module-scoped fixture
 
@@ -185,8 +181,13 @@ class TestVREDSubmitter:
             test_name, Path(scene_name).stem
         )
 
-        # Pass asset_overrides info to comparison for special handling
-        comparison_context = {"test_name": test_name, "asset_overrides": asset_overrides or []}
+        # Pass parameter_overrides to comparison for base template merging
+        comparison_context = {
+            "test_name": test_name,
+            "asset_overrides": asset_overrides or [],
+            "parameter_overrides": parameter_overrides,
+            "scene_file": scene_name,
+        }
         assert_job_bundle_matches(test_output_dir, expected_output_dir, comparison_context)
         assert (
             expected_sticky_settings_filename.exists()
@@ -231,6 +232,7 @@ class TestVREDSubmitter:
                 "RenderAnimation": "true",
                 "RegionRendering": "true",
                 "View": "Front",
+                "GPURaytracing": "true",
             },
         )
 
@@ -298,7 +300,10 @@ class TestVREDSubmitter:
         )
 
     @pytest.mark.scene_files(Path("scene_files") / "Cone.vpb")
-    def test_submitter_dialog_dlss_settings(self):
+    @pytest.mark.parametrize(
+        "dlssQuality", [("Off"), ("Performance"), ("Quality"), ("Balanced"), ("Ultra Performance")]
+    )
+    def test_submitter_dialog_dlss_settings(self, dlssQuality):
         """Test DLSS quality job bundle generation."""
         self._run_submitter_dialog_field_value_compare_test(
             "dlss_quality",
@@ -311,7 +316,7 @@ class TestVREDSubmitter:
                 "OutputFileNamePrefix": "dlss_test",
                 "OutputFormat": "PNG",
                 "RenderAnimation": "false",
-                "DLSSQuality": "Quality",
+                "DLSSQuality": dlssQuality,
                 "GPURaytracing": "true",
                 "ImageWidth": 1920,
                 "ImageHeight": 1080,
@@ -338,7 +343,18 @@ class TestVREDSubmitter:
         )
 
     @pytest.mark.scene_files(Path("scene_files") / "Cone.vpb")
-    def test_submitter_dialog_render_quality(self):
+    @pytest.mark.parametrize(
+        "dlssQuality",
+        [
+            ("Analytic Low"),
+            ("Realistic High"),
+            ("Analytic High"),
+            ("Realistic Low"),
+            ("NPR"),
+            ("Raytracing"),
+        ],
+    )
+    def test_submitter_dialog_render_quality(self, dlssQuality):
         """Test different render quality job bundle generation."""
         self._run_submitter_dialog_field_value_compare_test(
             "render_quality",
@@ -351,29 +367,91 @@ class TestVREDSubmitter:
                 "OutputFileNamePrefix": "quality",
                 "OutputFormat": "PNG",
                 "RenderAnimation": "false",
-                "RenderQuality": "Analytic Low",
+                "RenderQuality": dlssQuality,
                 "View": "Front",
             },
         )
 
     @pytest.mark.scene_files(Path("scene_files") / "Cone.vpb")
-    def test_submitter_dialog_high_resolution(self):
-        """Test high resolution rendering job bundle generation."""
+    @pytest.mark.parametrize("ssQuality", [("Off"), ("Low"), ("Medium"), ("High"), ("Ultra High")])
+    def test_submitter_dialog_supersampling_quality(self, ssQuality):
+        """Test submitter dialog with the Supersampling Quality setting specified."""
         self._run_submitter_dialog_field_value_compare_test(
-            "high_resolution",
+            "supersampling_quality",
             "Cone.vpb",
             {
                 "output_directories": ["c:\\vred-snapshots"],
                 "StartFrame": 0,
-                "EndFrame": 1,
+                "EndFrame": 25,
                 "OutputDir": "c:\\vred-snapshots",
-                "OutputFileNamePrefix": "hires",
+                "OutputFileNamePrefix": "ssQuality",
                 "OutputFormat": "PNG",
                 "RenderAnimation": "false",
-                "ImageWidth": 3840,  # 4K width
-                "ImageHeight": 2160,  # 4K height
-                "DPI": 300,  # High DPI
-                "RenderQuality": "Realistic High",
                 "View": "Front",
+                "SSQuality": ssQuality,
+            },
+        )
+
+    @pytest.mark.scene_files(Path("scene_files") / "AnimationTest.vpb")
+    def test_submitter_dialog_animation_clip(self):
+        """Test submitter dialog with named clips AnimationClip parameter."""
+        self._run_submitter_dialog_field_value_compare_test(
+            "animation_clip",
+            "AnimationTest.vpb",
+            {
+                "output_directories": ["c:\\vred-snapshots"],
+                "StartFrame": 0,
+                "EndFrame": 25,
+                "OutputDir": "c:\\vred-snapshots",
+                "OutputFileNamePrefix": "image",
+                "OutputFormat": "PNG",
+                "RenderAnimation": "false",
+                "SceneFile": "AnimationTest.vpb",
+                "View": "Front",
+                "JobType": "Sequencer",
+                "AnimationClip": "MyClip",
+                "SequenceName": "TestSequence1",
+            },
+        )
+
+    @pytest.mark.scene_files(Path("scene_files") / "AnimationTest.vpb")
+    def test_submitter_dialog_sequencer_jobtype_named_sequence(self):
+        """Test submitter dialog with JobType set to Sequencer with Named Sequence."""
+        self._run_submitter_dialog_field_value_compare_test(
+            "sequencer_jobtype_named_sequence",
+            "AnimationTest.vpb",
+            {
+                "output_directories": ["c:\\vred-snapshots"],
+                "StartFrame": 0,
+                "EndFrame": 25,
+                "OutputDir": "c:\\vred-snapshots",
+                "OutputFileNamePrefix": "image",
+                "OutputFormat": "PNG",
+                "RenderAnimation": "false",
+                "SceneFile": "AnimationTest.vpb",
+                "View": "Front",
+                "JobType": "Sequencer",
+                "SequenceName": "TestSequence1",
+            },
+        )
+
+    @pytest.mark.scene_files(Path("scene_files") / "Cone.vpb")
+    def test_submitter_dialog_dpi(self):
+        """Test submitter dialog with DPI parameter set to 10."""
+        self._run_submitter_dialog_field_value_compare_test(
+            "dpi",
+            "Cone.vpb",
+            {
+                "output_directories": ["c:\\vred-snapshots"],
+                "StartFrame": 0,
+                "EndFrame": 25,
+                "OutputDir": "c:\\vred-snapshots",
+                "OutputFileNamePrefix": "image",
+                "OutputFormat": "PNG",
+                "RenderAnimation": "false",
+                "View": "Front",
+                "DPI": 10,
+                "ImageHeight": 83,
+                "ImageWidth": 111,
             },
         )

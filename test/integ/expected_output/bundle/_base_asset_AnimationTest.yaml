@@ -1,8 +1,9 @@
+# Base asset references for AnimationTest.vpb scene file
 assetReferences:
   inputs:
     directories: []
     filenames:
-    - Cone.vpb
+    - AnimationTest.vpb
   outputs:
     directories: []
   referencedPaths: []
