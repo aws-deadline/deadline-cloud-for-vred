@@ -243,6 +243,23 @@ Integration tests are located under the `test/integ` directory. These tests veri
 
 > **Tip**: The integ README also covers [how to add new submitter tests](test/integ/README.md#adding-new-submitter-tests), including the base template pattern and parametrize usage.
 
+##### CI Integration Tests
+
+Integration tests run automatically via the `.github/workflows/integration_tests.yml` workflow, which triggers on pushes to `mainline` or manually via `workflow_dispatch`.
+
+The `integ-ci` hatch environment (defined in `hatch.toml`) uses a matrix to test against VRED 2025 and 2026. It runs:
+
+1. `hatch run integ-ci:setup` — Installs VRED Pro for the target version.
+2. `hatch run integ-ci:test` — Runs the integration tests via pytest.
+
+A session-scoped fixture in `test/integ/conftest.py` syncs Windows registry environment variables into the process, since env vars written by installers during CI may not be visible to the test process.
+
+> **Note**: The CI integration tests are not yet passing — tests currently hang during execution. This is a known issue and is tracked as a TODO.
+>
+> **TODO**: Add integration test triggering as part of the release workflow.
+>
+> **TODO**: Add Linux support for VRED Core integration tests.
+
 
 ### How To Install Submitter Manually
 #### Prerequisites
