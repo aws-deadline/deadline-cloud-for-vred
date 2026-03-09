@@ -56,6 +56,32 @@ test = "pytest --cov=vred_submitter --cov-config pyproject.toml {args:test/unit}
 test = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1"
 test_integ = "pytest --no-cov {args:test/integ} -vvv --numprocesses=1 -m integ"
 
+[envs.integ-ci]
+pre-install-commands = [
+  "pip install -r requirements-submitter-testing.txt",
+  "pip install -r requirements-worker-testing.txt",
+  "pip install -r requirements-testing.txt"
+]
+
+[[envs.integ-ci.matrix]]
+vred = ["2025"]
+
+[[envs.integ-ci.matrix]]
+vred = ["2026"]
+
+[envs.integ-ci.overrides]
+matrix.vred.env-vars = [
+  { key = "VREDPRO", value = "C:\\Program Files\\Autodesk\\VREDPro-17.3\\bin\\WIN64\\VREDPro.exe", if = ["2025"] },
+  { key = "VREDPRO", value = "C:\\Program Files\\Autodesk\\VREDPro-18.0\\bin\\WIN64\\VREDPro.exe", if = ["2026"] },
+]
+
+[envs.integ-ci.env-vars]
+VRED_VERSION = "{matrix:vred}"
+
+[envs.integ-ci.scripts]
+setup = "python ./pipeline/setup-runner.py --versions {matrix:vred} {args}"
+test = "pytest --no-cov {args:test/integ} -vvv -p no:xdist -s"
+
 [envs.codebuild.env-vars]
 SKIP_BOOTSTRAP_TEST_RESOURCES="True"
 
