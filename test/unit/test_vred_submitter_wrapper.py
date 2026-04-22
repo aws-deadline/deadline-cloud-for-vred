@@ -118,9 +118,10 @@ class TestAddDeadlineCloudMenu:
 class TestSubmitToDeadlineCloud:
     """Tests for submit_to_deadline_cloud function"""
 
+    @patch("vred_submitter.vred_submitter_wrapper.check_and_show_update_dialog", return_value=False)
     @patch("vred_submitter.vred_submitter_wrapper.get_main_window")
     @patch("vred_submitter.vred_submitter_wrapper.VREDSubmitter")
-    def test_singleton_behavior(self, mock_submitter_cls, mock_get_window):
+    def test_singleton_behavior(self, mock_submitter_cls, mock_get_window, mock_check_update):
         # Verify dialog singleton pattern implementation
         from vred_submitter import vred_submitter_wrapper
 
@@ -141,9 +142,10 @@ class TestSubmitToDeadlineCloud:
         mock_submitter.show_submitter.assert_called_once()
         assert vred_submitter_wrapper._global_submitter_dialog == mock_dialog
 
+    @patch("vred_submitter.vred_submitter_wrapper.check_and_show_update_dialog", return_value=False)
     @patch("vred_submitter.vred_submitter_wrapper.get_main_window")
     @patch("vred_submitter.vred_submitter_wrapper.VREDSubmitter")
-    def test_reuses_existing_dialog(self, mock_submitter_cls, mock_get_window):
+    def test_reuses_existing_dialog(self, mock_submitter_cls, mock_get_window, mock_check_update):
         # Ensure existing dialog is reused and raised
         from vred_submitter import vred_submitter_wrapper
 

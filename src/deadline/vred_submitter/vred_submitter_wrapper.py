@@ -7,6 +7,7 @@ VRED menu for Deadline Cloud. This menu effectively triggers the Deadline Cloud 
 from typing import Any, Optional
 
 from .constants import Constants
+from .update_utils import check_and_show_update_dialog
 from .vred_submitter import VREDSubmitter
 from .vred_utils import assign_scene_transition_event, get_main_window
 
@@ -67,5 +68,9 @@ def submit_to_deadline_cloud() -> None:
         _global_submitter_dialog.raise_()
         _global_submitter_dialog.activateWindow()
         return
+
+    if check_and_show_update_dialog():
+        return
+
     submitter = VREDSubmitter(get_main_window(), Qt.Tool)
     _global_submitter_dialog = submitter.show_submitter()
