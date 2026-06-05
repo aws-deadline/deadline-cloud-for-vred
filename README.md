@@ -1,6 +1,6 @@
 # AWS Deadline Cloud for VRED
 
-### [User guide](https://aws-deadline.github.io/) | [Service documentation](https://docs.aws.amazon.com/deadline-cloud/) | [Deadline Cloud on GitHub](https://github.com/aws-deadline/) 
+### [User guide](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/autodesk-vred.html) | [Service documentation](https://docs.aws.amazon.com/deadline-cloud/) | [Deadline Cloud on GitHub](https://github.com/aws-deadline/) 
 
 [![pypi](https://img.shields.io/pypi/v/deadline-cloud-for-vred.svg?style=flat)](https://pypi.python.org/pypi/deadline-cloud-for-vred)
 [![python](https://img.shields.io/pypi/pyversions/deadline-cloud-for-vred.svg?style=flat)](https://pypi.python.org/pypi/deadline-cloud-for-vred)
@@ -376,7 +376,7 @@ notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.ama
 
 ## Telemetry
 
-See [telemetry](docs/telemetry.md) for more information.
+See [telemetry](https://docs.aws.amazon.com/deadline-cloud/latest/userguide/opt-out.html) for more information.
 
 ## License
 
