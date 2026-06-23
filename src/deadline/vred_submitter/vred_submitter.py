@@ -250,6 +250,7 @@ class VREDSubmitter:
             parent=self.parent_window,
             f=self.window_flags,
             show_host_requirements_tab=True,
+            use_deadline_cloud_v2_channel=True,
         )
         submitter_dialog.setMinimumSize(
             UIConstants.SUBMITTER_DIALOG_WINDOW_DIMENSIONS[0],
