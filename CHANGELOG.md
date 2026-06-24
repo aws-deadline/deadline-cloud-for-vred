@@ -1,3 +1,8 @@
+## 0.1.6 (2026-06-24)
+
+### Features
+* The submitter now uses the deadline-cloud-v2 conda channel, ensuring workers get the latest compatible packages when running VRED render jobs. (`8a2a65d`)
+* The submitter now notifies you when a newer version of the submitter plug-in is available, helping you stay up to date. (#133)
 ## 0.1.5 (2025-10-07)
 
 
