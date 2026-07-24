@@ -32,7 +32,7 @@ VRED_EXE_PATHS = {
 def run(cmd, check=True, shell=False):
     """Run a command and optionally check for errors."""
     print(f"Running: {cmd if shell else ' '.join(cmd)}")
-    result = subprocess.run(cmd, shell=shell)
+    result = subprocess.run(cmd, shell=shell, check=False)
     if check and result.returncode != 0:
         print(f"Command failed with return code {result.returncode}")
         sys.exit(result.returncode)
@@ -74,6 +74,7 @@ def run_installer(setup_exe):
         [str(setup_exe), "-q", "-i", "install"],
         capture_output=True,
         text=True,
+        check=False,
     )
     print(f"Installer exit code: {result.returncode}")
     if result.stdout:

@@ -8,17 +8,17 @@ Note: These are local tests that do not submit to the cloud render farm.
 """
 
 import logging
-import pytest
 import shutil
 import sys
-import yaml
 from pathlib import Path
+
+import pytest
+import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from deadline.vred_submitter.constants import Constants as SubmitterConstants
-
 from test.integ.helpers.constants import Constants as TestConstants
 from test.integ.helpers.job_bundle_output_comparison import assert_job_bundle_matches
 from test.integ.helpers.output_comparison import are_images_similar_by_folder
@@ -27,6 +27,7 @@ from test.integ.helpers.vred_runner import VREDRunner
 from test.integ.path_resolver import PathResolver
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 OUTPUT_DIRECTORY_NAME = "output"
 
@@ -43,7 +44,7 @@ def setup_and_cleanup_local_e2e_output():
             shutil.rmtree(output_dir)
         output_dir.mkdir(exist_ok=True)
     except (OSError, PermissionError) as e:
-        logging.warning("Could not clean local-e2e test output directory: %s", e)
+        logger.warning("Could not clean local-e2e test output directory: %s", e)
 
     yield
 
@@ -51,7 +52,7 @@ def setup_and_cleanup_local_e2e_output():
         if output_dir.exists():
             shutil.rmtree(output_dir)
     except (OSError, PermissionError) as e:
-        logging.warning("Could not clean local-e2e test output directory: %s", e)
+        logger.warning("Could not clean local-e2e test output directory: %s", e)
 
 
 class LocalE2ETestRunner:
@@ -92,10 +93,10 @@ class LocalE2ETestRunner:
         bundle_path.mkdir(parents=True, exist_ok=True)
         render_output_dir.mkdir(parents=True, exist_ok=True)
 
-        logging.info("Test: %s", test_name)
-        logging.info("Scene: %s.vpb", scene_basename)
-        logging.info("Bundle: %s", bundle_path)
-        logging.info("Output: %s", render_output_dir)
+        logger.info("Test: %s", test_name)
+        logger.info("Scene: %s.vpb", scene_basename)
+        logger.info("Bundle: %s", bundle_path)
+        logger.info("Output: %s", render_output_dir)
 
         # Clean up sticky settings file before test (if exists)
         sticky_settings_file = scene_file_path.with_suffix(
@@ -103,7 +104,7 @@ class LocalE2ETestRunner:
         )
         if sticky_settings_file.exists():
             sticky_settings_file.unlink()
-            logging.info("Removed existing sticky settings file")
+            logger.info("Removed existing sticky settings file")
         assert (
             not sticky_settings_file.exists()
         ), f"Sticky settings file should not exist yet: {sticky_settings_file}"
@@ -111,7 +112,7 @@ class LocalE2ETestRunner:
         self.vred_runner.setup_environment()
 
         # Phase 1: Submitter - Generate job bundle (requires VRED Pro)
-        logging.info("\n[Phase 1] Running submitter to generate job bundle...")
+        logger.info("\n[Phase 1] Running submitter to generate job bundle...")
         if not self.vred_runner.invoke_vred_submitter(scene_file_path, test_settings, bundle_path):
             raise RuntimeError("Submitter phase failed")
 
@@ -120,7 +121,7 @@ class LocalE2ETestRunner:
         bundle_params = bundle_path / TestConstants.PARAMETER_VALUES_FILENAME
         if not bundle_template.exists() or not bundle_params.exists():
             raise RuntimeError(f"Job bundle not created at {bundle_path}")
-        logging.info("Job bundle created successfully")
+        logger.info("Job bundle created successfully")
 
         # Quick validation on template YAML
         self._validate_template(bundle_template)
@@ -131,12 +132,12 @@ class LocalE2ETestRunner:
         ), f"Sticky settings file should exist in: {sticky_settings_file}"
 
         # Phase 2: Worker - Render from job bundle
-        logging.info("\n[Phase 2] Running worker to render from job bundle...")
+        logger.info("\n[Phase 2] Running worker to render from job bundle...")
         if not self.vred_runner.invoke_vred_render(
             self.path_resolver.base_path, scene_file_path, bundle_path, render_output_dir
         ):
             raise RuntimeError("Render phase failed")
-        logging.info("Rendering completed")
+        logger.info("Rendering completed")
 
         expected_output_folder = self.path_resolver.get_expected_render_folder(
             test_name, scene_basename
@@ -148,7 +149,7 @@ class LocalE2ETestRunner:
         try:
             with open(template_path, encoding="utf-8") as f:
                 yaml.safe_load(f)
-            logging.info("✅ Template YAML is valid")
+            logger.info("✅ Template YAML is valid")
         except Exception as e:
             raise RuntimeError(f"Invalid template YAML: {e}") from e
 
@@ -161,7 +162,7 @@ class LocalE2ETestRunner:
         test_settings: list,
     ) -> None:
         """Validate all submitter outputs: job bundle and sticky settings"""
-        logging.info("\n[Validation] Checking submitter outputs...")
+        logger.info("\n[Validation] Checking submitter outputs...")
 
         # Validate job bundle against expected output (if exists)
         expected_bundle_dir = self.path_resolver.get_expected_bundle_folder(
@@ -170,16 +171,16 @@ class LocalE2ETestRunner:
         if expected_bundle_dir.exists():
             comparison_context = {"test_name": test_name}
             assert_job_bundle_matches(bundle_path, expected_bundle_dir, comparison_context)
-            logging.info("✅ Job bundle matches expected output")
+            logger.info("✅ Job bundle matches expected output")
 
         # Verify sticky settings
         parameter_overrides = {item["name"]: item["value"] for item in test_settings}
         verify_sticky_settings_file(sticky_settings_file, parameter_overrides)
-        logging.info("✅ Sticky settings verified")
+        logger.info("✅ Sticky settings verified")
 
     def validate_render_outputs(self, render_output_dir: Path, expected_output_dir: Path) -> None:
         """Validate render outputs against expected images"""
-        logging.info("\n[Validation] Checking render outputs...")
+        logger.info("\n[Validation] Checking render outputs...")
 
         assert (
             expected_output_dir.exists()
@@ -190,7 +191,7 @@ class LocalE2ETestRunner:
             expected_output_dir, render_output_dir, image_singularity_factor
         )
         assert result, "Image comparison failed"
-        logging.info("✅ Rendered images match expected output")
+        logger.info("✅ Rendered images match expected output")
 
 
 @pytest.mark.local_e2e

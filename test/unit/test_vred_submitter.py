@@ -2,13 +2,15 @@
 
 """Tests for VREDSubmitter main class functionality."""
 
-import pytest
-from unittest.mock import Mock, patch
 from pathlib import Path
-from PySide6.QtCore import Qt
+from unittest.mock import Mock, patch
 
-from vred_submitter.vred_submitter import VREDSubmitter
+import pytest
+from PySide6.QtCore import Qt
 from vred_submitter.data_classes import RenderSubmitterUISettings
+from vred_submitter.vred_submitter import VREDSubmitter
+
+from deadline.client.exceptions import DeadlineOperationError, UserInitiatedCancel
 
 
 class TestVREDSubmitter:
@@ -135,7 +137,7 @@ class TestVREDSubmitter:
         # Create conflict with existing parameter
         queue_parameters = [{"name": "ImageWidth", "value": "different_value"}]
 
-        with pytest.raises(Exception):  # DeadlineOperationError
+        with pytest.raises(DeadlineOperationError):
             submitter._get_parameter_values(settings, queue_parameters)
 
     def test_get_parameter_values_when_region_rendering_disabled(self, submitter):
@@ -302,11 +304,14 @@ class TestVREDSubmitter:
 
             mock_create_bundle.assert_called_once()
 
+    @patch("vred_submitter.vred_submitter.is_scene_file_modified", return_value=False)
     @patch("vred_submitter.vred_submitter.Scene")
-    def test_create_job_bundle_callback_no_scene_name(self, mock_scene, submitter):
-        mock_scene.name.return_value = ""
+    def test_create_job_bundle_callback_no_scene_name(
+        self, mock_scene, mock_is_modified, submitter
+    ):
+        mock_scene.project_full_path.return_value = ""
 
-        with pytest.raises(Exception):  # UserInitiatedCancel
+        with pytest.raises(UserInitiatedCancel):
             submitter._create_job_bundle_callback(Mock(), "/job/bundle", Mock(), [], Mock(), None)
 
     def test_parameter_values_input_validation_type_checking(self, submitter):
@@ -345,7 +350,7 @@ class TestVREDSubmitter:
         # Create conflicting queue parameter
         queue_parameters = [{"name": "ImageWidth", "value": "different_value"}]
 
-        with pytest.raises(Exception):  # DeadlineOperationError
+        with pytest.raises(DeadlineOperationError):
             submitter._get_parameter_values(settings, queue_parameters)
 
     def test_job_bundle_callback_output_path_validation(self, submitter):
@@ -359,12 +364,15 @@ class TestVREDSubmitter:
         settings.OutputFormat = "PNG"
         settings.FrameStep = 1
 
-        with patch("vred_submitter.vred_submitter.Scene") as mock_scene:
+        with (
+            patch("vred_submitter.vred_submitter.Scene") as mock_scene,
+            patch("vred_submitter.vred_submitter.is_scene_file_modified", return_value=False),
+        ):
             mock_scene.name.return_value = "test_scene"
             with patch("vred_submitter.vred_submitter.os.path.exists") as mock_exists:
                 mock_exists.return_value = False  # Path doesn't exist
 
-                with pytest.raises(Exception):  # UserInitiatedCancel
+                with pytest.raises(UserInitiatedCancel):
                     submitter._create_job_bundle_callback(
                         widget, "/job/bundle", settings, [], Mock(), None
                     )
@@ -380,14 +388,17 @@ class TestVREDSubmitter:
         settings.OutputFormat = "PNG"
         settings.FrameStep = 1
 
-        with patch("vred_submitter.vred_submitter.Scene") as mock_scene:
+        with (
+            patch("vred_submitter.vred_submitter.Scene") as mock_scene,
+            patch("vred_submitter.vred_submitter.is_scene_file_modified", return_value=False),
+        ):
             mock_scene.name.return_value = "test_scene"
             with patch("vred_submitter.vred_submitter.os.path.exists") as mock_exists:
                 mock_exists.return_value = True
                 with patch("vred_submitter.vred_submitter.is_valid_filename") as mock_valid:
                     mock_valid.return_value = False  # Invalid filename
 
-                    with pytest.raises(Exception):  # UserInitiatedCancel
+                    with pytest.raises(UserInitiatedCancel):
                         submitter._create_job_bundle_callback(
                             widget, "/job/bundle", settings, [], Mock(), None
                         )
@@ -403,14 +414,17 @@ class TestVREDSubmitter:
         settings.OutputFormat = "PNG"
         settings.FrameStep = 0  # Invalid frame step
 
-        with patch("vred_submitter.vred_submitter.Scene") as mock_scene:
+        with (
+            patch("vred_submitter.vred_submitter.Scene") as mock_scene,
+            patch("vred_submitter.vred_submitter.is_scene_file_modified", return_value=False),
+        ):
             mock_scene.name.return_value = "test_scene"
             with patch("vred_submitter.vred_submitter.os.path.exists") as mock_exists:
                 mock_exists.return_value = True
                 with patch("vred_submitter.vred_submitter.is_valid_filename") as mock_valid:
                     mock_valid.return_value = True
 
-                    with pytest.raises(Exception):  # UserInitiatedCancel
+                    with pytest.raises(UserInitiatedCancel):
                         submitter._create_job_bundle_callback(
                             widget, "/job/bundle", settings, [], Mock(), None
                         )
@@ -510,6 +524,11 @@ class TestVREDSubmitter:
         import sys
         from unittest.mock import Mock
 
+        # Preserve global module state so this test doesn't leak mocks into other tests
+        original_qt_widgets = sys.modules.get("PySide6.QtWidgets")
+        original_scene_settings_widget = sys.modules.get(
+            "vred_submitter.ui.components.scene_settings_widget"
+        )
         try:
             # Create new mocks for Qt widgets
             class MockQWidget:
@@ -532,21 +551,31 @@ class TestVREDSubmitter:
             from vred_submitter.ui.components.scene_settings_widget import SceneSettingsWidget
 
             # Mock required dependencies
-            with patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsCallbacks"):
-                with patch(
-                    "vred_submitter.ui.components.scene_settings_widget.SceneSettingsPopulator"
-                ):
-                    with patch("vred_submitter.ui.components.scene_settings_widget.CustomGroupBox"):
-                        # Create the scene widget
-                        mock_parent = MockQWidget()
-                        SceneSettingsWidget(Mock(), mock_parent)
+            with (
+                patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsCallbacks"),
+                patch("vred_submitter.ui.components.scene_settings_widget.SceneSettingsPopulator"),
+                patch("vred_submitter.ui.components.scene_settings_widget.CustomGroupBox"),
+            ):
+                # Create the scene widget
+                mock_parent = MockQWidget()
+                SceneSettingsWidget(Mock(), mock_parent)
 
-                        # Verify that line edits are created and some have max length constraints
-                        assert mock_line_edit.call_count > 0
-                        assert mock_line_edit.return_value.setMaxLength.call_count > 0
+                # Verify that line edits are created and some have max length constraints
+                assert mock_line_edit.call_count > 0
+                assert mock_line_edit.return_value.setMaxLength.call_count > 0
         finally:
-            # Reset Qt widgets mock
-            sys.modules["PySide6.QtWidgets"] = Mock()
+            # Restore the original Qt widgets mock and reloaded module so this test
+            # does not pollute sys.modules for tests that import Qt-dependent modules later.
+            if original_qt_widgets is not None:
+                sys.modules["PySide6.QtWidgets"] = original_qt_widgets
+            else:
+                sys.modules.pop("PySide6.QtWidgets", None)
+            if original_scene_settings_widget is not None:
+                sys.modules["vred_submitter.ui.components.scene_settings_widget"] = (
+                    original_scene_settings_widget
+                )
+            else:
+                sys.modules.pop("vred_submitter.ui.components.scene_settings_widget", None)
 
     def test_render_submitter_ui_settings_validation(self, submitter):
         settings = RenderSubmitterUISettings()

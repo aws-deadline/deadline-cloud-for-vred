@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from deadline.client.api import UpdateCheckResult, UpdateCheckStatus
-
 from deadline.vred_submitter.update_utils import (
     _check_for_update,
     _session_state,

@@ -6,12 +6,13 @@ import math
 import os
 import re
 import time
-import yaml
-
+from collections.abc import Callable, Iterator
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Tuple, TypeVar, Union
+from typing import Any, TypeVar
+
+import yaml
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
@@ -62,7 +63,7 @@ class NamedValue:
         """
         return f"NamedValue(name='{self.__name__}', value='{self.value}')"
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Compares this NamedValue with another value for equality.
         param: other: the value to compare
@@ -74,7 +75,7 @@ class NamedValue:
 
 
 class DynamicKeyNamedValueObject:
-    def __init__(self, data_dict: Dict[str, Any]) -> None:
+    def __init__(self, data_dict: dict[str, Any]) -> None:
         """
         Assigns attributes and values to this object that reflect the contents of data_dict and provides support for
         getting the names of primitives
@@ -86,7 +87,7 @@ class DynamicKeyNamedValueObject:
 
 
 class DynamicKeyValueObject:
-    def __init__(self, data_dict: Dict[str, Any]) -> None:
+    def __init__(self, data_dict: dict[str, Any]) -> None:
         """
         Assigns attributes and values to this object; reflect the contents of data_dict for easy attribute-based access.
         :param: data_dict: attributes/properties and values
@@ -131,7 +132,7 @@ def ceil(number: float, decimals: int) -> float:
     return math.ceil(number * (Constants.BASE_TEN**decimals)) / (Constants.BASE_TEN**decimals)
 
 
-def get_yaml_contents(file_path: str) -> Dict[str, Any]:
+def get_yaml_contents(file_path: str) -> dict[str, Any]:
     """
     Read and parse contents of a YAML file.
     param: file_path: path to the YAML file as string or Path object
@@ -152,7 +153,7 @@ def get_yaml_contents(file_path: str) -> Dict[str, Any]:
         return contents
     except (ParserError, ScannerError) as yaml_err:
         raise yaml.YAMLError(
-            f"{Constants.ERROR_YAML_INVALID_FORMAT} {file_path}: {str(yaml_err)}"
+            f"{Constants.ERROR_YAML_INVALID_FORMAT} {file_path}: {yaml_err!s}"
         ) from yaml_err
     except FileNotFoundError as error:
         raise FileNotFoundError(f"{Constants.ERROR_FILE_NOT_FOUND} {file_path}") from error
@@ -163,9 +164,7 @@ def get_yaml_contents(file_path: str) -> Dict[str, Any]:
             f"{Constants.ERROR_FILE_ACCESS_PERMISSION_DENIED} {file_path}"
         ) from error
     except Exception as exc:
-        raise RuntimeError(
-            f"{Constants.ERROR_YAML_UNEXPECTED_ERROR} {file_path}: {str(exc)}"
-        ) from exc
+        raise RuntimeError(f"{Constants.ERROR_YAML_UNEXPECTED_ERROR} {file_path}: {exc!s}") from exc
 
 
 def is_number(string: str) -> bool:
@@ -183,7 +182,7 @@ def is_number(string: str) -> bool:
     return True
 
 
-def is_all_numbers(strings: List[str]) -> bool:
+def is_all_numbers(strings: list[str]) -> bool:
     """
     Check if all provided strings represent numbers.
     param: strings: list of strings to check
@@ -228,9 +227,7 @@ def bool_to_str(boolean: bool) -> str:
     return str(boolean).lower()
 
 
-def clamp(
-    value: Union[int, float], min_val: Union[int, float], max_val: Union[int, float]
-) -> Union[int, float]:
+def clamp(value: float, min_val: float, max_val: float) -> int | float:
     """
     Clamp a numeric value to be between (or at) min and max values, preserving the original type.
     param: value: value to clamp
@@ -258,7 +255,7 @@ def is_valid_filename(filename: str) -> bool:
     return bool(re.match(Constants.FILENAME_UNICODE_REGEX, filename, re.UNICODE))
 
 
-def get_file_name_path_components(filename_with_path: str) -> Tuple[str, str, str]:
+def get_file_name_path_components(filename_with_path: str) -> tuple[str, str, str]:
     """
     Extracts the directory, filename prefix, and extension from filename_with_path.
     param: filename_with_path: path to examine

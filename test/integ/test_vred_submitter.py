@@ -25,19 +25,20 @@ Example paths:
 """
 
 import logging
-import pytest
 import shutil
-import yaml
 from pathlib import Path
 
-from deadline.vred_submitter.constants import Constants
+import pytest
+import yaml
 
-from test.integ.helpers.vred_runner import VREDRunner
+from deadline.vred_submitter.constants import Constants
 from test.integ.helpers.job_bundle_output_comparison import assert_job_bundle_matches
 from test.integ.helpers.sticky_settings_verification import verify_sticky_settings_file
+from test.integ.helpers.vred_runner import VREDRunner
 from test.integ.path_resolver import PathResolver
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 OUTPUT_DIRECTORY_NAME = "output"
 
@@ -55,9 +56,9 @@ def setup_and_cleanup_submitter_output():
         if output_dir.exists():
             shutil.rmtree(output_dir)
         output_dir.mkdir(exist_ok=True)
-        logging.info(f"Submitter test output directory prepared: {output_dir}")
+        logger.info(f"Submitter test output directory prepared: {output_dir}")
     except (OSError, PermissionError) as e:
-        logging.warning(f"Could not clean submitter test output directory: {e}")
+        logger.warning(f"Could not clean submitter test output directory: {e}")
 
     yield  # Run all tests
 
@@ -65,9 +66,9 @@ def setup_and_cleanup_submitter_output():
     try:
         if output_dir.exists():
             shutil.rmtree(output_dir)
-        logging.info("Submitter test output directory cleaned up")
+        logger.info("Submitter test output directory cleaned up")
     except (OSError, PermissionError) as e:
-        logging.warning(f"Could not clean submitter test output directory: {e}")
+        logger.warning(f"Could not clean submitter test output directory: {e}")
 
 
 def run_vred_submitter_test(
@@ -102,10 +103,10 @@ def run_vred_submitter_test(
     if not setup_output_directory(str(test_output_dir)):
         raise RuntimeError(f"Error: output folder can't be accessed: {test_output_dir}")
 
-    logging.info(f"Scene file: {scene_file_basename}.vpb")
-    logging.info(f"Test configuration (job bundle): {test_config_name_arg}")
-    logging.debug(f"Expected output folder: {expected_output_folder}")
-    logging.debug(f"Generated output folder: {test_output_dir}")
+    logger.info(f"Scene file: {scene_file_basename}.vpb")
+    logger.info(f"Test configuration (job bundle): {test_config_name_arg}")
+    logger.debug(f"Expected output folder: {expected_output_folder}")
+    logger.debug(f"Generated output folder: {test_output_dir}")
 
     vred_runner = VREDRunner()
     vred_runner.setup_environment()

@@ -1,12 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
-import pytest
 import sys
+from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
 
 # Used to prevent MemoryError messages
 import yaml  # noqa: F401
-from pathlib import Path
-from unittest.mock import MagicMock
 
 # Add submitter parent directory to Python path
 SUBMITTER_PARENT_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "deadline"
@@ -303,12 +304,24 @@ class MockQPushButton(MockQtWidget):
 class MockQComboBox(MockQtWidget):
     """Mock QComboBox with size adjustment policy."""
 
+    class SizeAdjustPolicy:
+        AdjustToContents = 0
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
 
 class MockQMessageBox(MockQtWidget):
     """Mock QMessageBox with icon and button constants."""
+
+    class Icon:
+        Information = 1
+        Question = 2
+
+    class StandardButton:
+        Ok = 1
+        Yes = 2
+        No = 4
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -325,13 +338,6 @@ mock_qt_widgets.QLineEdit = MockQtWidget
 mock_qt_widgets.QPushButton = MockQPushButton
 mock_qt_widgets.QComboBox = MockQComboBox
 mock_qt_widgets.QMessageBox = MockQMessageBox
-
-# Add constants to widget classes
-setattr(MockQComboBox, "SizeAdjustPolicy", type("SizeAdjustPolicy", (), {"AdjustToContents": 0})())
-setattr(MockQMessageBox, "Icon", type("Icon", (), {"Information": 1, "Question": 2})())
-setattr(
-    MockQMessageBox, "StandardButton", type("StandardButton", (), {"Ok": 1, "Yes": 2, "No": 4})()
-)
 
 
 # Mock layout classes

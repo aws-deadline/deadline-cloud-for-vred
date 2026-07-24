@@ -90,11 +90,32 @@ line-length = 100
 [tool.ruff.lint]
 ignore = ["E501"]
 
+[tool.ruff.lint.per-file-ignores]
+# This filename is a required pipeline component referenced by the job bundle
+# scripts directory; it cannot be renamed to satisfy the module-name convention.
+"src/deadline/vred_submitter/VRED_RenderScript_DeadlineCloud.py" = ["N999"]
+# Build scripts use plain `raise Exception(...)` for simple guard clauses;
+# defining custom exception classes there adds little value.
+"scripts/**/*.py" = ["TRY002", "BLE001"]
+# Build/CI scripts use top-level `except Exception` to log and continue/exit cleanly.
+"pipeline/**/*.py" = ["BLE001"]
+# Test harnesses and capability probes intentionally catch broadly to log and
+# return a pass/fail rather than aborting the run.
+"test/**/*.py" = ["BLE001"]
+# The VRED plugin must never crash VRED's startup, so its load/init boundaries
+# catch broadly, log, and degrade gracefully.
+"vred_submitter_plugin/**/*.py" = ["BLE001"]
+
 [tool.ruff.lint.isort]
 known-first-party = [
   "deadline",
   "openjd"
 ]
+
+[tool.ruff.lint.flake8-bugbear]
+# Qt.WindowFlags() returns an immutable flag value that is only stored, never
+# mutated, so using it as a default argument is safe (B008 false positive).
+extend-immutable-calls = ["PySide6.QtCore.Qt.WindowFlags"]
 
 [tool.black]
 line-length = 100

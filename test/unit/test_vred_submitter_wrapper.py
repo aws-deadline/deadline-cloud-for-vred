@@ -1,7 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from PySide6.QtWidgets import QWidget
 
 
@@ -85,7 +86,7 @@ class TestAddDeadlineCloudMenu:
     @patch("vred_submitter.vred_submitter_wrapper.get_main_window")
     def test_prevents_duplicates(self, mock_get_window, mock_assign):
         # Ensure duplicate menu prevention logic works
-        from vred_submitter.vred_submitter_wrapper import add_deadline_cloud_menu, Constants
+        from vred_submitter.vred_submitter_wrapper import Constants, add_deadline_cloud_menu
 
         mock_window = MagicMock()
         mock_menu_bar = MagicMock()

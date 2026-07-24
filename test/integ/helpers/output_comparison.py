@@ -2,12 +2,16 @@
 
 import logging
 import sys
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import PIL.Image
 import yaml
-from pathlib import Path
-from typing import Any
+
 from .constants import Constants
+
+logger = logging.getLogger(__name__)
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -24,20 +28,20 @@ def are_images_similar_by_folder(expected_dir: Path, actual_dir: Path, tolerance
     actual_dir = Path(actual_dir)
 
     if not expected_dir.exists():
-        logging.error(f"Expected directory does not exist: {expected_dir}")
+        logger.error(f"Expected directory does not exist: {expected_dir}")
         return False
     if not actual_dir.exists():
-        logging.error(f"Actual directory does not exist: {actual_dir}")
+        logger.error(f"Actual directory does not exist: {actual_dir}")
         return False
 
     for image in expected_dir.iterdir():
         if image.is_file():
             actual_image = actual_dir / image.name
             if not actual_image.exists():
-                logging.error(f"Missing actual image: {actual_image}")
+                logger.error(f"Missing actual image: {actual_image}")
                 return False
             if not are_images_similar(str(image), str(actual_image), tolerance):
-                logging.error(f"Image mismatch: {image.name}")
+                logger.error(f"Image mismatch: {image.name}")
                 return False
     return True
 
@@ -58,7 +62,7 @@ def are_images_similar(
         expected = np.asarray(PIL.Image.open(expected_image_file_path))
 
         if actual.shape != expected.shape:
-            logging.error(f"Image shape mismatch: expected {expected.shape}, actual {actual.shape}")
+            logger.error(f"Image shape mismatch: expected {expected.shape}, actual {actual.shape}")
             return False
 
         diff = np.abs(actual.astype(float) - expected.astype(float))
@@ -73,7 +77,7 @@ def are_images_similar(
             )
             num_pixels_exceeding = int(np.sum(pixels_exceeding))
             pct_pixels_exceeding = (num_pixels_exceeding / total_pixels) * 100
-            logging.error(
+            logger.error(
                 f"Images differ beyond tolerance {tolerance}:\n"
                 f"  Max pixel difference: {max_diff}\n"
                 f"  Mean pixel difference: {mean_diff:.4f}\n"
@@ -82,7 +86,7 @@ def are_images_similar(
             )
         return result
     except (FileNotFoundError, PIL.UnidentifiedImageError, ValueError) as e:
-        logging.error(f"Error comparing images: {e}")
+        logger.error(f"Error comparing images: {e}")
         return False
 
 

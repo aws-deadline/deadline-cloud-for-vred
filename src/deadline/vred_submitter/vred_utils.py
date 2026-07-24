@@ -3,25 +3,25 @@
 """VRED-specific Convenience/Utility Functions"""
 
 import re
-
+from builtins import (  # type: ignore[attr-defined]
+    vrCameraService,
+    vrFileIOService,
+    vrMainWindow,
+    vrReferenceService,
+)
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
-
-from .constants import Constants
-from .utils import get_normalized_path, is_numerically_defined
 
 from PySide6.QtCore import QObject
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QDialog, QMainWindow, QToolBar, QToolButton
-
-from builtins import vrCameraService, vrFileIOService, vrMainWindow, vrReferenceService  # type: ignore[attr-defined]
-from vrAnimWidgets import getAnimClips, getAnimClipNodes, getCurrentFrame
+from vrAnimWidgets import getAnimClipNodes, getAnimClips, getCurrentFrame
 from vrController import getVredVersionYear
 from vrOSGWidget import (
-    getDLSSQuality,
-    getRenderWindowHeight,
-    getRenderWindowWidth,
-    getSuperSamplingQuality,
+    VR_DLSS_BALANCED,
+    VR_DLSS_OFF,
+    VR_DLSS_PERFORMANCE,
+    VR_DLSS_QUALITY,
+    VR_DLSS_ULTRA_PERFORMANCE,
     VR_QUALITY_ANALYTIC_HIGH,
     VR_QUALITY_ANALYTIC_LOW,
     VR_QUALITY_NPR,
@@ -33,11 +33,10 @@ from vrOSGWidget import (
     VR_SS_QUALITY_MEDIUM,
     VR_SS_QUALITY_OFF,
     VR_SS_QUALITY_ULTRA_HIGH,
-    VR_DLSS_BALANCED,
-    VR_DLSS_PERFORMANCE,
-    VR_DLSS_OFF,
-    VR_DLSS_QUALITY,
-    VR_DLSS_ULTRA_PERFORMANCE,
+    getDLSSQuality,
+    getRenderWindowHeight,
+    getRenderWindowWidth,
+    getSuperSamplingQuality,
 )
 from vrRenderSettings import (
     getRaytracingMode,
@@ -60,9 +59,12 @@ from vrRenderSettings import (
 )
 from vrSequencer import getSequenceList
 
-ANIMATION_TYPE_DICT: Dict[int, str] = {0: "Clip", 1: "Timeline"}
+from .constants import Constants
+from .utils import get_normalized_path, is_numerically_defined
 
-DLSS_QUALITY_DICT: Dict[int, str] = {
+ANIMATION_TYPE_DICT: dict[int, str] = {0: "Clip", 1: "Timeline"}
+
+DLSS_QUALITY_DICT: dict[int, str] = {
     VR_DLSS_OFF: "Off",
     VR_DLSS_PERFORMANCE: "Performance",
     VR_DLSS_BALANCED: "Balanced",
@@ -70,7 +72,7 @@ DLSS_QUALITY_DICT: Dict[int, str] = {
     VR_DLSS_ULTRA_PERFORMANCE: "Ultra Performance",
 }
 
-RENDER_QUALITY_DICT: Dict[int, str] = {
+RENDER_QUALITY_DICT: dict[int, str] = {
     VR_QUALITY_ANALYTIC_LOW: "Analytic Low",
     VR_QUALITY_ANALYTIC_HIGH: "Analytic High",
     VR_QUALITY_REALISTIC_LOW: "Realistic Low",
@@ -79,7 +81,7 @@ RENDER_QUALITY_DICT: Dict[int, str] = {
     VR_QUALITY_NPR: "NPR",
 }
 
-SS_QUALITY_DICT: Dict[int, str] = {
+SS_QUALITY_DICT: dict[int, str] = {
     VR_SS_QUALITY_OFF: "Off",
     VR_SS_QUALITY_LOW: "Low",
     VR_SS_QUALITY_MEDIUM: "Medium",
@@ -105,7 +107,7 @@ def get_active_camera_name() -> str:
     return vrCameraService.getActiveCamera().getName()
 
 
-def get_animation_clips_list() -> List[str]:
+def get_animation_clips_list() -> list[str]:
     """
     Returns a sorted list of the names of animation clips in the scene
     return: sorted list of the names of animation clips
@@ -159,9 +161,9 @@ def get_frame_range_string() -> str:
     frame_step = getRenderFrameStep()
     frame_string = str(start_frame)
     if start_frame != end_frame:
-        frame_string = f"{frame_string}-{str(end_frame)}"
+        frame_string = f"{frame_string}-{end_frame!s}"
         if frame_step > 1:
-            frame_string = f"{frame_string}x{str(frame_step)}"
+            frame_string = f"{frame_string}x{frame_step!s}"
     return frame_string
 
 
@@ -207,7 +209,7 @@ def get_major_version() -> int:
     return getVredVersionYear()
 
 
-def get_populated_animation_clip_ranges() -> Dict[str, List[float]]:
+def get_populated_animation_clip_ranges() -> dict[str, list[float]]:
     """
     return: a dictionary containing animation clip names as keys and their corresponding clip ranges as values
     in the format [start_frame, end_frame].
@@ -234,7 +236,7 @@ def get_populated_animation_clip_ranges() -> Dict[str, List[float]]:
     return animation_clip_ranges_map
 
 
-def get_all_file_references() -> Set[Path]:
+def get_all_file_references() -> set[Path]:
     """
     return: a set of all references in the scene
     """
@@ -249,7 +251,7 @@ def get_all_file_references() -> Set[Path]:
     }
 
 
-def get_all_sequences() -> List[str]:
+def get_all_sequences() -> list[str]:
     """
     return: a sorted list of all sequence names in the scene
     """
@@ -270,7 +272,7 @@ def get_animation_type() -> str:
     return ANIMATION_TYPE_DICT.get(getRenderAnimationType(), "")
 
 
-def get_render_window_size() -> List[int]:
+def get_render_window_size() -> list[int]:
     """
     return: width and height of the render window
     """
@@ -433,7 +435,7 @@ def get_use_render_region() -> bool:
     return getUseRenderRegion()
 
 
-def get_views_list() -> List[str]:
+def get_views_list() -> list[str]:
     """
     Retrieves a sorted list of unique view names that are either cameras or viewpoints, but not both.
     Note: assumes there aren't identical camera names for now; could rely on an index or getPath()
@@ -463,7 +465,7 @@ def save_scene_file(filename: str) -> None:
     vrFileIOService.saveFile(get_normalized_path(filename))
 
 
-def get_frame_range_components(frame_string: str) -> Tuple[int, int, int]:
+def get_frame_range_components(frame_string: str) -> tuple[int, int, int]:
     """
     Extracts the frame range components from a given frame string.
     The current supported frame string format is expected to be one of the following:

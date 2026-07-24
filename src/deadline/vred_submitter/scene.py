@@ -1,15 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
 import os
-
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Iterator, Optional
 
 from .vred_utils import (
     get_frame_current,
     get_frame_start,
-    get_frame_stop,
     get_frame_step,
+    get_frame_stop,
     get_render_filename,
     get_scene_full_path,
 )
@@ -22,8 +21,8 @@ class FrameRange:
     """
 
     start: int
-    stop: Optional[int] = None
-    step: Optional[int] = None
+    stop: int | None = None
+    step: int | None = None
 
     def __repr__(self) -> str:
         if self.stop is None or self.stop == self.start:

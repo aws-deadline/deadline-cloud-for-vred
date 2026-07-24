@@ -4,20 +4,20 @@
 VRED menu for Deadline Cloud. This menu effectively triggers the Deadline Cloud UI via VREDSubmitter.
 """
 
-from typing import Any, Optional
+from typing import Any
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QMenu, QWidget
 
 from .constants import Constants
 from .update_utils import check_and_show_update_dialog
 from .vred_submitter import VREDSubmitter
 from .vred_utils import assign_scene_transition_event, get_main_window
 
-from PySide6.QtGui import QAction
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QMenu, QWidget
-
 # Track deadline Deadline Cloud dialog instance
 #
-_global_submitter_dialog: Optional[QWidget] = None
+_global_submitter_dialog: QWidget | None = None
 
 
 def scene_file_changed_callback(*dummy_args: Any) -> None:

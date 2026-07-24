@@ -42,7 +42,6 @@ import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # Add the scripts directory to Python path for importing deps_bundle
 project_scripts_dir = Path(__file__).parent
@@ -79,9 +78,9 @@ SUPPORTED_VRED_VERSIONS = {17: "VRED Pro 2025", 18: "VRED Pro 2026"}
 class SubmitterFiles:
     """Type definition for submitter files"""
 
-    plugin: List[Path] = field(default_factory=list)
-    scripts: List[Path] = field(default_factory=list)
-    dependency_bundle: List[Path] = field(default_factory=list)
+    plugin: list[Path] = field(default_factory=list)
+    scripts: list[Path] = field(default_factory=list)
+    dependency_bundle: list[Path] = field(default_factory=list)
 
 
 class VREDSubmitterInstaller:
@@ -165,7 +164,7 @@ class VREDSubmitterInstaller:
 
         return directories
 
-    def copy_files(self, files: SubmitterFiles, directories: Dict[str, Path]) -> None:
+    def copy_files(self, files: SubmitterFiles, directories: dict[str, Path]) -> None:
         """Copy submitter files to appropriate directories."""
         try:
             # Copy plugin files
@@ -195,11 +194,11 @@ class VREDSubmitterInstaller:
                 len(files.dependency_bundle),
             )
 
-        except (OSError, IOError) as e:
+        except OSError as e:
             raise RuntimeError(f"Failed to copy files: {e}") from e
 
     def _install_dependency_bundle(
-        self, dependency_bundles: List[Path], directories: dict[str, Path]
+        self, dependency_bundles: list[Path], directories: dict[str, Path]
     ) -> None:
         """Install dependency bundle ZIP files to python/modules directory."""
         for bundle_zip in dependency_bundles:
@@ -238,7 +237,7 @@ class VREDSubmitterInstaller:
                         shutil.copy2(plugin_source, plugin_dest)
                         logger.info("Installed plugin to %s: %s", version_name, plugin_dest)
                         success_count += 1
-                    except (OSError, IOError) as e:
+                    except OSError as e:
                         logger.warning("Failed to install plugin to %s: %s", version_name, e)
                 else:
                     logger.warning(
@@ -254,7 +253,7 @@ class VREDSubmitterInstaller:
         logger.warning("Plugin not installed to any VRED versions")
         raise RuntimeError("Plugin installation failed")
 
-    def _get_vred_installation_paths(self) -> Dict[str, Optional[Path]]:
+    def _get_vred_installation_paths(self) -> dict[str, Path | None]:
         """Get VRED installation paths for supported versions only."""
         autodesk_dir = Path("C:/Program Files/Autodesk")
         vred_paths = {}
@@ -271,12 +270,11 @@ class VREDSubmitterInstaller:
         for path in all_vred_paths:
             try:
                 major, minor = self._extract_version_number(path)
-                if major in SUPPORTED_VRED_VERSIONS:
-                    if (
-                        major not in supported_versions_found
-                        or minor > supported_versions_found[major][1]
-                    ):
-                        supported_versions_found[major] = (path, minor)
+                if major in SUPPORTED_VRED_VERSIONS and (
+                    major not in supported_versions_found
+                    or minor > supported_versions_found[major][1]
+                ):
+                    supported_versions_found[major] = (path, minor)
             except ValueError:
                 logger.debug("Skipping invalid VREDPro path: %s", path)
                 continue
@@ -287,7 +285,7 @@ class VREDSubmitterInstaller:
 
         # Fail fast if no supported versions found
         if not vred_paths:
-            supported_list = ", ".join([f"{maj}.x" for maj in SUPPORTED_VRED_VERSIONS.keys()])
+            supported_list = ", ".join([f"{maj}.x" for maj in SUPPORTED_VRED_VERSIONS])
             raise RuntimeError(
                 f"No supported VRED Pro versions found. Please install one of: {supported_list}"
             )
@@ -500,7 +498,7 @@ class VREDSubmitterInstaller:
         except (EOFError, KeyboardInterrupt):
             return False
 
-    def _create_merged_preferences_xml(self, existing_override: Optional[str]) -> str:
+    def _create_merged_preferences_xml(self, existing_override: str | None) -> str:
         """
         Create merged preferences XML that preserves all existing keys while updating
         python sandbox and script settings for Deadline Cloud.
@@ -553,7 +551,7 @@ class VREDSubmitterInstaller:
         xml_str = ET.tostring(root, encoding="unicode")
         return f'<?xml version="1.0"?>\n<!DOCTYPE VRED>\n{xml_str}'
 
-    def _get_merged_script_base64(self, existing_override: Optional[str]) -> str:
+    def _get_merged_script_base64(self, existing_override: str | None) -> str:
         """
         Get merged script content from existing override or VRED preferences.
         Assumes the existing preferences.xml (either default one or override one) does NOT
@@ -588,7 +586,7 @@ class VREDSubmitterInstaller:
 
     def install(
         self,
-        destination: Optional[Path] = None,
+        destination: Path | None = None,
         verbose: bool = False,
         auto_configure: bool = True,
         force_update_preferences_override: bool = False,

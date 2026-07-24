@@ -3,13 +3,13 @@
 """Tests for Qt utility functions for dialogs and widget management."""
 
 from unittest.mock import Mock, patch
-from PySide6.QtWidgets import QWidget, QMessageBox
 
+from PySide6.QtWidgets import QMessageBox, QWidget
 from vred_submitter.qt_utils import (
-    show_qt_ok_message_dialog,
-    get_qt_yes_no_dialog_prompt_result,
     center_widget,
     get_dpi_scale_factor,
+    get_qt_yes_no_dialog_prompt_result,
+    show_qt_ok_message_dialog,
 )
 
 

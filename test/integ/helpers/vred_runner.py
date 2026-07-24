@@ -9,6 +9,8 @@ from pathlib import Path
 
 from .constants import Constants
 
+logger = logging.getLogger(__name__)
+
 
 class VREDRunner:
     """Base class for VRED execution operations for tesing"""
@@ -71,15 +73,15 @@ terminateVred();
         return: Path to the VRED executable
         """
         if require_pro:
-            if executable := os.environ.get(Constants.VRED_PRO_ENV_VAR):
-                if os.path.isfile(executable):
-                    return executable
+            if (executable := os.environ.get(Constants.VRED_PRO_ENV_VAR)) and os.path.isfile(
+                executable
+            ):
+                return executable
             raise OSError("VRED Pro required but not found in VREDPRO environment variable")
 
         for env_var in [Constants.VRED_CORE_ENV_VAR, Constants.VRED_PRO_ENV_VAR]:
-            if executable := os.environ.get(env_var):
-                if os.path.isfile(executable):
-                    return executable
+            if (executable := os.environ.get(env_var)) and os.path.isfile(executable):
+                return executable
         raise OSError("Cannot determine valid VRED binary from environment variables")
 
     def setup_environment(self) -> None:
@@ -119,10 +121,10 @@ terminateVred();
         try:
             invocation = " ".join(cmd) if Constants.IS_WINDOWS else cmd
             result = subprocess.run(invocation, stderr=subprocess.STDOUT, check=True, text=True)
-            logging.debug(result)
+            logger.debug(result)
             return True
         except subprocess.CalledProcessError as e:
-            logging.error(f"Command failed: {invocation}\n{e.output}\nReturn code: {e.returncode}")
+            logger.error(f"Command failed: {invocation}\n{e.output}\nReturn code: {e.returncode}")
             return False
 
     def invoke_vred_submitter(self, scene_file_path: Path, test_settings: list, bundle_path: Path):

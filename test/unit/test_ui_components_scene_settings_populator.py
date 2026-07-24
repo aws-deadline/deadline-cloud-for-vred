@@ -2,15 +2,15 @@
 
 """Tests for SceneSettingsPopulator UI data population and persistence."""
 
-import pytest
 from unittest.mock import Mock, patch
-from PySide6.QtWidgets import QWidget
 
-from vred_submitter.ui.components.scene_settings_populator import (
-    SceneSettingsPopulator,
-    PersistedUISettingsNames,
-)
+import pytest
+from PySide6.QtWidgets import QWidget
 from vred_submitter.data_classes import RenderSubmitterUISettings
+from vred_submitter.ui.components.scene_settings_populator import (
+    PersistedUISettingsNames,
+    SceneSettingsPopulator,
+)
 
 
 class TestPersistedUISettingsNames:

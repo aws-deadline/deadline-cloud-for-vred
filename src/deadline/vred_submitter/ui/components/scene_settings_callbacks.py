@@ -2,19 +2,22 @@
 
 """Represents backend callbacks and UX interaction logic for UI within ("Job-specific settings")"""
 
-from .constants import Constants
-from .scene_settings_populator import SceneSettingsPopulator
+from PySide6.QtWidgets import (
+    QFileDialog,
+    QWidget,
+)
+
 from ...utils import ceil, clamp, is_all_numbers
+from ...vred_logger import get_logger
 from ...vred_utils import (
     assign_scene_transition_event,
     get_populated_animation_clip_ranges,
     get_render_window_size,
 )
+from .constants import Constants
+from .scene_settings_populator import SceneSettingsPopulator
 
-from PySide6.QtWidgets import (
-    QFileDialog,
-    QWidget,
-)
+_global_logger = get_logger(__name__)
 
 
 class SceneSettingsCallbacks:
@@ -122,9 +125,12 @@ class SceneSettingsCallbacks:
         for disconnect_function in disconnect_functions:
             try:
                 disconnect_function()
-            except Exception:
-                # if any disconnections fail, we continue to ensure we disconnect all of them
-                pass
+            except RuntimeError as e:
+                # Expected during scene reset: the Qt C++ object may have been deleted.
+                _global_logger.debug("Signal disconnect skipped (signal source deleted): %s", e)
+            except Exception as e:  # noqa: BLE001 - best-effort cleanup must never crash the UI
+                # Safety net: continue so one failed disconnect doesn't stop the rest.
+                _global_logger.debug("Signal disconnect skipped: %s", e)
 
     def job_type_changed_callback(self) -> None:
         """
@@ -692,21 +698,18 @@ class SceneSettingsCallbacks:
         self.parent.populator.persisted_ui_settings_states.use_clip_range = enabled
         if self.parent.use_clip_range_widget.isEnabled():
             self.parent.frame_range_widget.setEnabled(not enabled)
-        if enabled:
-            # Check if there are animation clips available (beyond the empty one)
-            if len(self.parent.populator.animation_clip_ranges_map) > 1:
-                # Get current clip name and refresh clip ranges
-                anim_clip_name = self.parent.animation_clip_widget.currentText()
-                self.parent.populator.animation_clip_ranges_map = (
-                    get_populated_animation_clip_ranges()
-                )
-                # Get range for selected clip and update UI
-                if anim_clip_name in self.parent.populator.animation_clip_ranges_map:
-                    start_frame, end_frame = self.parent.populator.animation_clip_ranges_map[
-                        anim_clip_name
-                    ]
-                    frame_range_text = Constants.FRAME_RANGE_BASIC_FORMAT % (start_frame, end_frame)
-                    self.parent.frame_range_widget.setText(frame_range_text)
+        # Refresh clip ranges only when enabled and clips exist (beyond the empty one)
+        if enabled and len(self.parent.populator.animation_clip_ranges_map) > 1:
+            # Get current clip name and refresh clip ranges
+            anim_clip_name = self.parent.animation_clip_widget.currentText()
+            self.parent.populator.animation_clip_ranges_map = get_populated_animation_clip_ranges()
+            # Get range for selected clip and update UI
+            if anim_clip_name in self.parent.populator.animation_clip_ranges_map:
+                start_frame, end_frame = self.parent.populator.animation_clip_ranges_map[
+                    anim_clip_name
+                ]
+                frame_range_text = Constants.FRAME_RANGE_BASIC_FORMAT % (start_frame, end_frame)
+                self.parent.frame_range_widget.setText(frame_range_text)
 
     def render_output_file_dialog_callback(self) -> None:
         """Opens a file dialog to select a background image file."""

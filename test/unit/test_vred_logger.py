@@ -2,12 +2,12 @@
 
 """Tests for VRED logging functionality and console output."""
 
-import pytest
-from unittest.mock import Mock, patch
 import logging
-from pathlib import Path
 import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
 
+import pytest
 from vred_submitter.vred_logger import VREDConsoleHandler, VREDLogger, get_logger
 
 

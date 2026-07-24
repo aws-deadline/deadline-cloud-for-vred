@@ -2,39 +2,44 @@
 
 """Tests for VRED-specific utility functions and API wrappers."""
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 from vred_submitter.vred_utils import (
+    ANIMATION_TYPE_DICT,
+    DLSS_QUALITY_DICT,
+    RENDER_QUALITY_DICT,
+    SS_QUALITY_DICT,
     assign_scene_transition_event,
     get_active_camera_name,
-    get_animation_clips_list,
-    get_dlss_quality,
-    get_supersampling_quality,
-    get_render_pixel_height,
-    get_render_pixel_width,
-    get_frame_range_string,
-    get_frame_current,
-    get_frame_start,
-    get_frame_stop,
-    get_frame_step,
-    get_main_window,
-    get_major_version,
-    get_populated_animation_clip_ranges,
     get_all_file_references,
     get_all_sequences,
     get_animation_clip,
+    get_animation_clips_list,
     get_animation_type,
-    get_render_window_size,
-    get_scene_full_path,
-    get_scene_fps,
+    get_dlss_quality,
+    get_frame_current,
+    get_frame_range_components,
+    get_frame_range_string,
+    get_frame_start,
+    get_frame_step,
+    get_frame_stop,
+    get_main_window,
+    get_major_version,
+    get_populated_animation_clip_ranges,
+    get_premultiply_alpha,
     get_render_alpha,
     get_render_animation,
-    get_render_pixel_per_inch,
-    get_render_view,
     get_render_filename,
-    get_premultiply_alpha,
+    get_render_pixel_height,
+    get_render_pixel_per_inch,
+    get_render_pixel_width,
+    get_render_view,
+    get_render_window_size,
+    get_scene_fps,
+    get_scene_full_path,
+    get_supersampling_quality,
     get_tonemap_hdr,
     get_use_clip_range,
     get_use_gpu_ray_tracing,
@@ -42,11 +47,6 @@ from vred_submitter.vred_utils import (
     get_views_list,
     is_scene_file_modified,
     save_scene_file,
-    get_frame_range_components,
-    ANIMATION_TYPE_DICT,
-    DLSS_QUALITY_DICT,
-    RENDER_QUALITY_DICT,
-    SS_QUALITY_DICT,
 )
 
 

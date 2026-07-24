@@ -5,8 +5,6 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
-import sys
-
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
@@ -16,19 +14,9 @@ NATIVE_DEPENDENCIES = ["xxhash", "psutil"]
 
 
 def _get_project_dict() -> dict[str, Any]:
-    if sys.version_info < (3, 11):
-        with TemporaryDirectory() as toml_env:
-            toml_install_pip_args = ["pip", "install", "--target", toml_env, "toml"]
-            subprocess.run(toml_install_pip_args, check=True)
-            sys.path.insert(0, toml_env)
-            import toml  # type: ignore
-        mode = "r"
-    else:
-        import tomllib as toml
+    import tomllib as toml
 
-        mode = "rb"
-
-    with open("pyproject.toml", mode) as pyproject_toml:
+    with open("pyproject.toml", "rb") as pyproject_toml:
         return toml.load(pyproject_toml)
 
 
@@ -40,7 +28,7 @@ def _get_dependencies(pyproject_dict: dict[str, Any]) -> list[str]:
 
     dependencies = pyproject_dict["project"]["dependencies"]
     deps_noopenjd = filter(lambda dep: not dep.startswith("openjd"), dependencies)
-    return list(map(lambda dep: dep.replace(" ", ""), deps_noopenjd))
+    return [dep.replace(" ", "") for dep in deps_noopenjd]
 
 
 def _get_package_version_regex(package: str) -> re.Pattern:

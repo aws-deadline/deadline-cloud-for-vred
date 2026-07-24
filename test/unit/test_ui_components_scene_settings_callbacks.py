@@ -2,10 +2,10 @@
 
 """Tests for SceneSettingsCallbacks UI event handling."""
 
-import pytest
 from unittest.mock import Mock, patch
-from PySide6.QtWidgets import QWidget
 
+import pytest
+from PySide6.QtWidgets import QWidget
 from vred_submitter.ui.components.scene_settings_callbacks import SceneSettingsCallbacks
 
 

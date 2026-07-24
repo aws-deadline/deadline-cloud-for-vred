@@ -86,7 +86,7 @@ class DeadlineCloudForVRED:
         return: True if setup succeeds, False otherwise.
         """
         try:
-            import deadline.client  # noqa: F401
+            import deadline.client
 
             return True
         except ModuleNotFoundError:
@@ -109,7 +109,7 @@ class DeadlineCloudForVRED:
         except FileNotFoundError:
             vrLogError(ERROR_MSG_CLIENT_MISSING)
         except Exception as e:
-            vrLogError(f"{ERROR_MSG_LOAD_CLIENT}: {str(e)}")
+            vrLogError(f"{ERROR_MSG_LOAD_CLIENT}: {e!s}")
             vrLogError(traceback.format_exc())
         return False
 
@@ -122,7 +122,7 @@ class DeadlineCloudForVRED:
         returns: True if setup succeeds, False otherwise.
         """
         try:
-            import deadline.vred_submitter  # noqa: F401
+            import deadline.vred_submitter
 
             return True
         except ModuleNotFoundError:
@@ -146,7 +146,7 @@ class DeadlineCloudForVRED:
         except FileNotFoundError:
             vrLogError(ERROR_MSG_SCRIPT_NOT_FOUND)
         except Exception as e:
-            vrLogError(f"{ERROR_MSG_LOAD_SUBMITTER}: {str(e)}")
+            vrLogError(f"{ERROR_MSG_LOAD_SUBMITTER}: {e!s}")
             vrLogError(traceback.format_exc())
         return False
 
@@ -161,6 +161,6 @@ class DeadlineCloudForVRED:
             vred_submitter_wrapper.add_deadline_cloud_menu()
             return True
         except Exception as e:
-            vrLogError(f"{ERROR_MSG_MENU_INIT}: {str(e)}")
+            vrLogError(f"{ERROR_MSG_MENU_INIT}: {e!s}")
             vrLogError(traceback.format_exc())
             return False

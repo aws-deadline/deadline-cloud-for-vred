@@ -2,29 +2,29 @@
 
 """Tests for utility functions and classes used throughout VRED submitter."""
 
-import pytest
-from unittest.mock import patch
 import os
-import yaml
-from yaml.parser import ParserError
+from unittest.mock import patch
 
+import pytest
+import yaml
 from vred_submitter.utils import (
-    NamedValue,
     DynamicKeyNamedValueObject,
     DynamicKeyValueObject,
-    timed_func,
-    ceil,
-    get_yaml_contents,
-    is_number,
-    is_all_numbers,
-    is_numerically_defined,
-    iterator_value,
+    NamedValue,
     bool_to_str,
+    ceil,
     clamp,
-    get_normalized_path,
-    is_valid_filename,
     get_file_name_path_components,
+    get_normalized_path,
+    get_yaml_contents,
+    is_all_numbers,
+    is_number,
+    is_numerically_defined,
+    is_valid_filename,
+    iterator_value,
+    timed_func,
 )
+from yaml.parser import ParserError
 
 
 class TestNamedValue:

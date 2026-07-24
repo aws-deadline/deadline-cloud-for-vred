@@ -4,7 +4,7 @@
 
 from unittest.mock import patch
 
-from vred_submitter.scene import FrameRange, Animation, Scene
+from vred_submitter.scene import Animation, FrameRange, Scene
 
 
 class TestFrameRange:

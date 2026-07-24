@@ -3,18 +3,18 @@
 """Provides backend UI value population and interpretation in ("Job-specific settings")"""
 
 import os
-
 from enum import auto
 from typing import Any
 
-from .constants import Constants
+from PySide6.QtWidgets import QWidget
+
 from ...data_classes import RenderSubmitterUISettings
 from ...utils import (
-    DynamicKeyValueObject,
     DynamicKeyNamedValueObject,
+    DynamicKeyValueObject,
     StrEnum,
-    get_normalized_path,
     get_file_name_path_components,
+    get_normalized_path,
 )
 from ...vred_utils import (
     get_all_sequences,
@@ -22,10 +22,10 @@ from ...vred_utils import (
     get_animation_clips_list,
     get_animation_type,
     get_dlss_quality,
+    get_frame_range_components,
     get_frame_start,
     get_frame_step,
     get_frame_stop,
-    get_frame_range_components,
     get_populated_animation_clip_ranges,
     get_premultiply_alpha,
     get_render_alpha,
@@ -38,12 +38,11 @@ from ...vred_utils import (
     get_scene_full_path,
     get_supersampling_quality,
     get_tonemap_hdr,
-    get_use_render_region,
     get_use_gpu_ray_tracing,
+    get_use_render_region,
     get_views_list,
 )
-
-from PySide6.QtWidgets import QWidget
+from .constants import Constants
 
 
 class PersistedUISettingsNames(StrEnum):

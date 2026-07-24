@@ -6,8 +6,8 @@ import json
 import os
 import tempfile
 from pathlib import Path
-import pytest
 
+import pytest
 from vred_submitter.data_classes import RenderSubmitterUISettings
 
 

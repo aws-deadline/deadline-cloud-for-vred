@@ -6,28 +6,13 @@ Generates job bundles for render job submission/export purposes.
 """
 
 import os
-
 from copy import deepcopy
 from dataclasses import fields
 from pathlib import Path
 from shutil import copy
-from typing import Any, Optional
+from typing import Any
 
-from .assets import AssetIntrospector
-from .constants import Constants
-from .data_classes import RenderSubmitterUISettings
-from .qt_utils import center_widget, get_dpi_scale_factor, get_qt_yes_no_dialog_prompt_result
-from .scene import Scene
-from .ui.components.constants import _global_dpi_scale, Constants as UIConstants
-from .ui.components.scene_settings_widget import SceneSettingsWidget
-from .utils import (
-    get_normalized_path,
-    get_yaml_contents,
-    is_valid_filename,
-)
-from .vred_logger import get_logger
-from .vred_utils import is_scene_file_modified, get_major_version, save_scene_file
-from ._version import version
+from PySide6.QtCore import Qt
 
 from deadline.client.api import (
     get_deadline_cloud_library_telemetry_client,
@@ -37,11 +22,26 @@ from deadline.client.job_bundle._yaml import deadline_yaml_dump
 from deadline.client.job_bundle.parameters import JobParameter
 from deadline.client.job_bundle.submission import AssetReferences
 from deadline.client.ui.dialogs.submit_job_to_deadline_dialog import (
-    SubmitJobToDeadlineDialog,
     JobBundlePurpose,
+    SubmitJobToDeadlineDialog,
 )
 
-from PySide6.QtCore import Qt
+from ._version import version
+from .assets import AssetIntrospector
+from .constants import Constants
+from .data_classes import RenderSubmitterUISettings
+from .qt_utils import center_widget, get_dpi_scale_factor, get_qt_yes_no_dialog_prompt_result
+from .scene import Scene
+from .ui.components.constants import Constants as UIConstants
+from .ui.components.constants import _global_dpi_scale
+from .ui.components.scene_settings_widget import SceneSettingsWidget
+from .utils import (
+    get_normalized_path,
+    get_yaml_contents,
+    is_valid_filename,
+)
+from .vred_logger import get_logger
+from .vred_utils import get_major_version, is_scene_file_modified, save_scene_file
 
 # Note: this logger can be repurposed/used later
 # Need to initialize to be used inside VRED context
@@ -154,7 +154,7 @@ class VREDSubmitter:
         )
         return parameter_values
 
-    def show_submitter(self) -> Optional[SubmitJobToDeadlineDialog]:
+    def show_submitter(self) -> SubmitJobToDeadlineDialog | None:
         """
         Populates the necessary settings for showing the VRED render submitter dialog, then displays it.
         return: SubmitJobToDeadlineDialog instance if successful, None otherwise.
@@ -265,7 +265,7 @@ class VREDSubmitter:
         settings: RenderSubmitterUISettings,
         queue_parameters: list[JobParameter],
         asset_references: AssetReferences,
-        host_requirements: Optional[dict[str, Any]] = None,
+        host_requirements: dict[str, Any] | None = None,
         purpose: JobBundlePurpose = JobBundlePurpose.SUBMISSION,
     ) -> dict[str, Any]:
         """
@@ -322,7 +322,7 @@ class VREDSubmitter:
         settings: RenderSubmitterUISettings,
         queue_parameters: list[JobParameter],
         asset_references: AssetReferences,
-        host_requirements: Optional[dict[str, Any]],
+        host_requirements: dict[str, Any] | None,
     ) -> None:
         """
         Create job bundle files (template, parameter values, asset references)
@@ -345,9 +345,9 @@ class VREDSubmitter:
                 settings.JobScriptDir,
             )
         except Exception as exc:
-            raise IOError(
+            raise OSError(
                 f"{Constants.ERROR_FILE_WRITE_PERMISSION_DENIED}: {settings.JobScriptDir} {exc}"
-            )
+            ) from exc
         job_template = self._get_job_template(
             default_job_template=self.default_job_template, settings=settings
         )

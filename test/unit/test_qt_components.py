@@ -2,16 +2,16 @@
 
 """Tests for Qt UI components used in VRED submitter."""
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget
-
 from vred_submitter.qt_components import (
-    CustomGroupBox,
     AutoSizedButton,
     AutoSizedComboBox,
     AutoSizingMessageBox,
+    CustomGroupBox,
     FileSearchLineEdit,
 )
 

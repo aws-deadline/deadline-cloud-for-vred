@@ -10,20 +10,18 @@ import json
 import logging
 import os
 import traceback
-
-from dataclasses import dataclass
-from enum import auto, Enum, IntEnum
-from typing import Any, Dict, List
-
 from builtins import vrCameraService, vrReferenceService  # type: ignore[attr-defined]
+from dataclasses import dataclass
+from enum import Enum, IntEnum, auto
+from typing import Any, ClassVar
+
 from vrController import crashVred, terminateVred
 from vrOSGWidget import (
-    enableRaytracing,
-    isDLSSSupported,
-    setDLSSQuality,
-    setRenderQuality,
-    setSuperSampling,
-    setSuperSamplingQuality,
+    VR_DLSS_BALANCED,
+    VR_DLSS_OFF,
+    VR_DLSS_PERFORMANCE,
+    VR_DLSS_QUALITY,
+    VR_DLSS_ULTRA_PERFORMANCE,
     VR_QUALITY_ANALYTIC_HIGH,
     VR_QUALITY_ANALYTIC_LOW,
     VR_QUALITY_NPR,
@@ -35,11 +33,12 @@ from vrOSGWidget import (
     VR_SS_QUALITY_MEDIUM,
     VR_SS_QUALITY_OFF,
     VR_SS_QUALITY_ULTRA_HIGH,
-    VR_DLSS_BALANCED,
-    VR_DLSS_PERFORMANCE,
-    VR_DLSS_OFF,
-    VR_DLSS_QUALITY,
-    VR_DLSS_ULTRA_PERFORMANCE,
+    enableRaytracing,
+    isDLSSSupported,
+    setDLSSQuality,
+    setRenderQuality,
+    setSuperSampling,
+    setSuperSamplingQuality,
 )
 from vrRenderSettings import (
     getRenderFilename,
@@ -92,7 +91,7 @@ class StrEnum(str, Enum):
 
 
 class DynamicKeyValueObject:
-    def __init__(self, data_dict: Dict[str, Any]) -> None:
+    def __init__(self, data_dict: dict[str, Any]) -> None:
         """
         Assigns attributes and values to this object; reflect the contents of data_dict for easy attribute-based access.
         :param: data_dict: attributes/properties and values
@@ -158,14 +157,14 @@ class DeadlineCloudRenderer:
     LOGGING_FORMAT = "%(levelname)s - %(message)s"
     LOGGING_LEVEL = logging.INFO
 
-    DLSS_QUALITY_DICT = {
+    DLSS_QUALITY_DICT: ClassVar[dict[str, Any]] = {
         "Off": VR_DLSS_OFF,
         "Performance": VR_DLSS_PERFORMANCE,
         "Balanced": VR_DLSS_BALANCED,
         "Quality": VR_DLSS_QUALITY,
         "Ultra Performance": VR_DLSS_ULTRA_PERFORMANCE,
     }
-    RENDER_QUALITY_DICT = {
+    RENDER_QUALITY_DICT: ClassVar[dict[str, Any]] = {
         "Analytic Low": VR_QUALITY_ANALYTIC_LOW,
         "Analytic High": VR_QUALITY_ANALYTIC_HIGH,
         "Realistic Low": VR_QUALITY_REALISTIC_LOW,
@@ -173,14 +172,14 @@ class DeadlineCloudRenderer:
         "Raytracing": VR_QUALITY_RAYTRACING,
         "NPR": VR_QUALITY_NPR,
     }
-    SS_QUALITY_DICT = {
+    SS_QUALITY_DICT: ClassVar[dict[str, Any]] = {
         "Off": VR_SS_QUALITY_OFF,
         "Low": VR_SS_QUALITY_LOW,
         "Medium": VR_SS_QUALITY_MEDIUM,
         "High": VR_SS_QUALITY_HIGH,
         "Ultra High": VR_SS_QUALITY_ULTRA_HIGH,
     }
-    ANIMATION_TYPE_DICT = {"Clip": 0, "Timeline": 1}
+    ANIMATION_TYPE_DICT: ClassVar[dict[str, int]] = {"Clip": 0, "Timeline": 1}
     CAMERA_FOUND = "Found camera in view list:"
     DLSS_SUPER_SAMPLING_ASSIGNED = "Deep Learning Supersampling quality level set to:"
     ERROR_DLSS_SUPERSAMPLING_CONFLICT = (
@@ -204,14 +203,14 @@ class DeadlineCloudRenderer:
     VALIDATING_RENDER_SETTINGS = "Validating render settings"
     VIEWPOINT_FOUND = "Found viewpoint in view list:"
 
-    def __init__(self, render_parameters_dict: Dict[str, Any]) -> None:
+    def __init__(self, render_parameters_dict: dict[str, Any]) -> None:
         """
         Initializes Deadline Cloud for VRED logging and render parameters (prior to applying them later)
         :param: render_parameters_dict: a dictionary of render parameters
         """
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(format=self.LOGGING_FORMAT, level=self.LOGGING_LEVEL)
-        self.path_mapping_rules: List[PathMappingRule] = []
+        self.path_mapping_rules: list[PathMappingRule] = []
         self.render_parameters: Any = DynamicKeyValueObject(render_parameters_dict)
         self.output_filename = self._get_conventional_output_filename()
 
@@ -240,7 +239,7 @@ class DeadlineCloudRenderer:
         )
 
     def validate_parameter_in_dict(
-        self, parameter_name: str, dictionary: Dict, error_message: str
+        self, parameter_name: str, dictionary: dict, error_message: str
     ) -> None:
         """
         Validates the existence of a parameter in a dictionary.
@@ -399,7 +398,7 @@ class DeadlineCloudRenderer:
                     PathMappingRule(**mapping)
                     for mapping in data.get(self.PATH_MAPPING_RULES_FIELD)
                 ]
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, TypeError) as exc:
             self.logger.error(exc)
             return False
         return True
@@ -529,7 +528,7 @@ class DeadlineCloudRenderer:
             # Important to close VRED for further frame rendering to proceed and to release license
             if self.WANT_VRED_TERMINATION:
                 terminateVred()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - render boundary: report failure, free license
             self.logger.error(exc)
             self.logger.error(traceback.format_exc())
             if self.WANT_VRED_TERMINATION:
@@ -539,7 +538,7 @@ class DeadlineCloudRenderer:
                 terminateVred()
 
 
-def deadline_cloud_render(render_parameters_dict: Dict[str, Any]) -> None:
+def deadline_cloud_render(render_parameters_dict: dict[str, Any]) -> None:
     """
     Main entry point (to be triggered externally and indirectly via VRED "postpython" argument):
     - reads render parameters and values from a dictionary (render_parameters_dict)
