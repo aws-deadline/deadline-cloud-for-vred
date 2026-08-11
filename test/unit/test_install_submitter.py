@@ -1,13 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
-import pytest
+import base64
 import sys
 import tempfile
 import zipfile
-import base64
-from typing import TYPE_CHECKING
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Skip this entire test module on non-Windows platforms
 pytestmark = pytest.mark.skipif(

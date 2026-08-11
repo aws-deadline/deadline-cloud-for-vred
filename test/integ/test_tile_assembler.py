@@ -26,6 +26,7 @@ from test.integ.path_resolver import PathResolver
 
 sys.path.extend([os.path.realpath(os.path.dirname(os.path.abspath(__file__)))])
 logging.basicConfig(format="%(message)s", level=logging.INFO)
+logger = logging.getLogger(__name__)
 # Only set unicode stdout when running as script, not under pytest
 if "pytest" not in sys.modules:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -138,7 +139,7 @@ def run_tile_assembler_test(test_config_name_arg: str):
             f"Error: output folder already exists or can't be accessed: {generated_output_folder}"
         )
 
-    logging.info(f"Test configuration (job bundle): {test_config_name_arg}")
+    logger.info(f"Test configuration (job bundle): {test_config_name_arg}")
 
     scene_file_basename = Path(render_params[SCENE_FILE_FIELD]).stem
     assemble_tiles(
@@ -153,13 +154,13 @@ def run_tile_assembler_test(test_config_name_arg: str):
     expected_output_folder = path_resolver.get_expected_render_folder(
         test_config_name_arg, scene_file_basename
     )
-    logging.debug(f"Expected output folder: {expected_output_folder}")
-    logging.debug(f"Generated output folder: {generated_output_folder}")
+    logger.debug(f"Expected output folder: {expected_output_folder}")
+    logger.debug(f"Generated output folder: {generated_output_folder}")
 
     result = are_images_similar_by_folder(
         expected_output_folder, generated_output_folder, IMAGE_SIMILARITY_FACTOR
     )
-    logging.info(f"Image comparison match across both folders: {'PASS' if result else 'FAIL'}")
+    logger.info(f"Image comparison match across both folders: {'PASS' if result else 'FAIL'}")
     assert result, "Image comparison failed"
 
 

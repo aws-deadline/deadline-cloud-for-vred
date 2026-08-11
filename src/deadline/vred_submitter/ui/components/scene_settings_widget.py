@@ -7,17 +7,10 @@ Acts as the main control point for branching out these responsibilities to other
     - populating VRED runtime-level values into UI elements
 """
 
+from collections.abc import Iterator
 from itertools import count
-from typing import Iterator, Type
 
-from ...data_classes import RenderSubmitterUISettings
-from ...qt_components import AutoSizedComboBox, AutoSizedButton, CustomGroupBox
-from ...utils import iterator_value
-from .constants import Constants
-from .scene_settings_callbacks import SceneSettingsCallbacks
-from .scene_settings_populator import SceneSettingsPopulator
-
-from PySide6.QtCore import Qt, QEvent, QRegularExpression
+from PySide6.QtCore import QEvent, QRegularExpression, Qt
 from PySide6.QtGui import QDoubleValidator, QIntValidator, QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -26,9 +19,16 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QSpinBox,
-    QWidget,
     QVBoxLayout,
+    QWidget,
 )
+
+from ...data_classes import RenderSubmitterUISettings
+from ...qt_components import AutoSizedButton, AutoSizedComboBox, CustomGroupBox
+from ...utils import iterator_value
+from .constants import Constants
+from .scene_settings_callbacks import SceneSettingsCallbacks
+from .scene_settings_populator import SceneSettingsPopulator
 
 
 class SceneSettingsWidget(QWidget):
@@ -215,7 +215,7 @@ class SceneSettingsWidget(QWidget):
         alignment: Qt.Alignment,
         label_text: str,
         tooltip: str,
-        widget_cls: Type[QWidget],
+        widget_cls: type[QWidget],
     ) -> QWidget:
         """
         Helper method to add a label and widget pair to a grid layout.

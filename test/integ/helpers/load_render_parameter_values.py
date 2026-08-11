@@ -2,13 +2,12 @@
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from deadline.client.job_bundle.parameters import read_job_bundle_parameters
-
 from test.integ.helpers.constants import Constants
 
 
@@ -34,9 +33,9 @@ def convert_from_openjd_value(value, type_info):
 def get_vred_render_parameters_from_bundle(
     base_dir: Path,
     bundle_path_str: str,
-    scene_file_override: Optional[str] = None,
-    output_dir_override: Optional[str] = None,
-) -> Dict[str, Any]:
+    scene_file_override: str | None = None,
+    output_dir_override: str | None = None,
+) -> dict[str, Any]:
     """
     Load render parameters from exported job bundle.
     param: base_dir: absolute path to the directory where tests are located (e.g., test/integ)

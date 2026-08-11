@@ -2,13 +2,13 @@
 
 """Tests for SceneSettingsWidget UI component."""
 
-import pytest
 from unittest.mock import Mock, patch
-from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import QEvent
 
-from vred_submitter.ui.components.scene_settings_widget import SceneSettingsWidget
+import pytest
+from PySide6.QtCore import QEvent
+from PySide6.QtWidgets import QWidget
 from vred_submitter.data_classes import RenderSubmitterUISettings
+from vred_submitter.ui.components.scene_settings_widget import SceneSettingsWidget
 
 
 class TestSceneSettingsWidget:

@@ -15,12 +15,13 @@ Example paths:
 import io
 import json
 import logging
-import pytest
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
+
+import pytest
 
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -30,6 +31,7 @@ from test.integ.helpers.output_comparison import are_images_similar_by_folder
 from test.integ.path_resolver import PathResolver
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
+logger = logging.getLogger(__name__)
 # Only set unicode stdout when running as script, not under pytest
 if "pytest" not in sys.modules:
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -46,25 +48,25 @@ def setup_and_cleanup_openjd_output():
     output_dir = Path(__file__).parent / OUTPUT_DIRECTORY_NAME
 
     # Setup: Clean output directory before tests
-    logging.info("Cleaning up OpenJD test output directory before tests...")
+    logger.info("Cleaning up OpenJD test output directory before tests...")
     try:
         if output_dir.exists():
             shutil.rmtree(output_dir)
         output_dir.mkdir(exist_ok=True)
-        logging.info(f"Render test output directory prepared: {output_dir}")
+        logger.info(f"Render test output directory prepared: {output_dir}")
     except (OSError, PermissionError) as e:
-        logging.warning(f"Could not clean Render test output directory: {e}")
+        logger.warning(f"Could not clean Render test output directory: {e}")
 
     yield  # Run all tests
 
     # Teardown: Clean output directory after tests
-    logging.info("Cleaning up Render test output directory after tests...")
+    logger.info("Cleaning up Render test output directory after tests...")
     try:
         if output_dir.exists():
             shutil.rmtree(output_dir)
-        logging.info("Render test output directory cleaned up")
+        logger.info("Render test output directory cleaned up")
     except (OSError, PermissionError) as e:
-        logging.warning(f"Could not clean Render test output directory: {e}")
+        logger.warning(f"Could not clean Render test output directory: {e}")
 
 
 def get_job_template_path() -> Path:
@@ -80,7 +82,7 @@ def get_job_template_path() -> Path:
     )
 
 
-def load_job_parameters_from_bundle(bundle_dir: Path) -> Dict[str, Any]:
+def load_job_parameters_from_bundle(bundle_dir: Path) -> dict[str, Any]:
     """
     Load job parameters from the job bundle using the Deadline Cloud client library.
 
@@ -113,7 +115,7 @@ def load_job_parameters_from_bundle(bundle_dir: Path) -> Dict[str, Any]:
 
 
 def run_openjd_render(
-    template_path: Path, job_params: Dict[str, Any], output_dir: Path
+    template_path: Path, job_params: dict[str, Any], output_dir: Path
 ) -> subprocess.CompletedProcess:
     """
     Execute VRED rendering using OpenJD CLI.
@@ -145,9 +147,9 @@ def run_openjd_render(
 
     # Log output
     if result.stdout:
-        logging.debug(f"OpenJD stdout:\n{result.stdout}")
+        logger.debug(f"OpenJD stdout:\n{result.stdout}")
     if result.stderr:
-        logging.debug(f"OpenJD stderr:\n{result.stderr}")
+        logger.debug(f"OpenJD stderr:\n{result.stderr}")
 
     return result
 
@@ -198,7 +200,7 @@ def run_vred_render_test_openjd(test_bundle_name: str, scene_filename: str):
 
     # Check execution result
     if result.returncode != 0:
-        logging.error(f"OpenJD execution failed with return code {result.returncode}")
+        logger.error(f"OpenJD execution failed with return code {result.returncode}")
         raise RuntimeError(f"OpenJD rendering failed: {result.stderr}")
 
     # Validate output images
@@ -207,8 +209,8 @@ def run_vred_render_test_openjd(test_bundle_name: str, scene_filename: str):
         test_bundle_name, scene_file_basename
     )
 
-    logging.debug(f"Expected output folder: {expected_output_folder}")
-    logging.debug(f"Generated output folder: {output_dir}")
+    logger.debug(f"Expected output folder: {expected_output_folder}")
+    logger.debug(f"Generated output folder: {output_dir}")
 
     if not expected_output_folder.exists():
         raise FileNotFoundError(f"Expected output folder not found: {expected_output_folder}")

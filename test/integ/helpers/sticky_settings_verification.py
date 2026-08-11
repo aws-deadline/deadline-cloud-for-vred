@@ -1,15 +1,15 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
-import json
 import dataclasses
-from pathlib import Path
-from typing import Dict, Any
-from unittest.mock import MagicMock
+import json
 import sys
+from pathlib import Path
+from typing import Any
+from unittest.mock import MagicMock
 
 
 def verify_sticky_settings_file(
-    sticky_settings_file: Path, parameter_overrides: Dict[str, Any]
+    sticky_settings_file: Path, parameter_overrides: dict[str, Any]
 ) -> None:
     """
     Verify the contents of the sticky settings file match expected values.
@@ -59,7 +59,7 @@ def verify_sticky_settings_file(
             ), f"Sticky parameter '{param_name}': expected {expected_value}, got {actual_value}"
 
     # Verify that only sticky-enabled fields are in the file (no non-sticky fields leaked in)
-    for param_name in sticky_data.keys():
+    for param_name in sticky_data:
         assert (
             param_name in sticky_fields
         ), f"Non-sticky parameter '{param_name}' should not be saved to sticky settings file"

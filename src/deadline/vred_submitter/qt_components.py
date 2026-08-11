@@ -2,11 +2,7 @@
 
 """Provides Qt-based Custom UI Controls"""
 
-from typing import Optional
-
-from .ui.components.constants import Constants as UIConstants
-
-from PySide6.QtCore import QEvent, Qt, QSize
+from PySide6.QtCore import QEvent, QSize, Qt
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (
     QComboBox,
@@ -20,6 +16,8 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QWidget,
 )
+
+from .ui.components.constants import Constants as UIConstants
 
 
 class CustomGroupBox(QGroupBox):
@@ -181,7 +179,7 @@ class FileSearchLineEdit(QWidget):
     """
 
     def __init__(
-        self, file_format: str = "", directory_only: bool = False, parent: Optional[QWidget] = None
+        self, file_format: str = "", directory_only: bool = False, parent: QWidget | None = None
     ):
         """
         param: file_format: the file format from which to filter

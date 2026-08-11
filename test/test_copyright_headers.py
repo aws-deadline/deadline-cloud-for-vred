@@ -11,18 +11,16 @@ _copyright_header_re = re.compile(
 
 def _check_file(filename: Path) -> None:
     with open(filename, encoding="utf-8") as infile:
-        lines_read = 0
-        for line in infile:
+        for lines_read, line in enumerate(infile, start=1):
             if _copyright_header_re.search(line):
                 return  # success
-            lines_read += 1
             if lines_read > 10:
-                raise Exception(
+                raise ValueError(
                     f"Could not find a valid Amazon.com copyright header in the top of {filename}."
                     " Please add one."
                 )
         # __init__.py files are usually empty, this is to catch that.
-        raise Exception(
+        raise ValueError(
             f"Could not find a valid Amazon.com copyright header in the top of {filename}."
             " Please add one."
         )

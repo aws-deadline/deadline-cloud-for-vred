@@ -85,7 +85,7 @@ class VREDLogger(logging.Logger):
         if not os.path.exists(os.path.dirname(log_file)):
             try:
                 os.makedirs(os.path.dirname(log_file))
-            except (IOError, OSError):
+            except OSError:
                 return os.path.join(tempfile.gettempdir(), self.ALTERNATIVE_LOGGING_FILENAME)
         if not os.access(os.path.dirname(log_file), os.W_OK | os.R_OK):
             return os.path.join(tempfile.gettempdir(), self.ALTERNATIVE_LOGGING_FILENAME)

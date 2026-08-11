@@ -9,19 +9,18 @@ and trigger job bundle export for submitter testing.
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # Add project root path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QWidget
+
 from deadline.client.ui.dialogs.submit_job_to_deadline_dialog import JobBundlePurpose
 from deadline.vred_submitter.data_classes import RenderSubmitterUISettings
 from deadline.vred_submitter.vred_submitter import VREDSubmitter
-
 from test.integ.helpers.constants import Constants
-
-from PySide6.QtWidgets import QWidget
-from PySide6.QtTest import QTest
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -238,7 +237,7 @@ class SubmitterDialogController:
             QTest.qWait(3000)
 
 
-def run_submitter_test(test_settings: Dict[str, Any], bundle_output_path: str) -> bool:
+def run_submitter_test(test_settings: dict[str, Any], bundle_output_path: str) -> bool:
     """
     Run integration test specifically for the submitter dialog.
     param: test_settings: list of setting dictionaries to apply to the dialog's Qt controls

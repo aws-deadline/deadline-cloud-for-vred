@@ -7,16 +7,17 @@ Provides functions to compare actual job bundle outputs with expected job bundle
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def generate_expected_parameters(
-    base_template_path: Path, overrides: Dict[str, Any]
-) -> Dict[str, Any]:
+    base_template_path: Path, overrides: dict[str, Any]
+) -> dict[str, Any]:
     """
     Generate expected parameter values by applying overrides to base template.
 
@@ -35,7 +36,7 @@ def generate_expected_parameters(
     with open(base_template_path, encoding="utf-8") as f:
         base = yaml.safe_load(f)
 
-    result: Dict[str, Any] = {"parameterValues": []}
+    result: dict[str, Any] = {"parameterValues": []}
 
     # Loop through each parameter in base template
     for param in base.get("parameterValues", []):
@@ -53,7 +54,7 @@ def generate_expected_parameters(
     return result
 
 
-def normalize_file_path(file_path: str, context: Optional[Dict[str, Any]] = None) -> str:
+def normalize_file_path(file_path: str, context: dict[str, Any] | None = None) -> str:
     """
     Normalize file paths for comparison by extracting just the filename.
     For asset referencing tests, preserve specific known valid paths.
@@ -84,8 +85,8 @@ def normalize_file_path(file_path: str, context: Optional[Dict[str, Any]] = None
 
 
 def normalize_parameter_values(
-    param_values: Dict[str, Any], context: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+    param_values: dict[str, Any], context: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """
     Normalize parameter values for comparison by handling environment-specific values.
 
@@ -117,8 +118,8 @@ def normalize_parameter_values(
 
 
 def normalize_asset_references(
-    asset_refs: Dict[str, Any], context: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+    asset_refs: dict[str, Any], context: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """
     Normalize asset references for comparison by handling environment-specific paths.
 
@@ -152,8 +153,8 @@ def normalize_asset_references(
 
 
 def _load_parameter_files(
-    actual_dir: Path, expected_dir: Path, overrides: Optional[Dict[str, Any]] = None
-) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    actual_dir: Path, expected_dir: Path, overrides: dict[str, Any] | None = None
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Load and return parameter values from actual and expected directories."""
     actual_file = actual_dir / "parameter_values.yaml"
 
@@ -184,7 +185,7 @@ def _load_parameter_files(
 
 
 def _compare_parameter_counts(
-    normalized_actual: Dict[str, Any], normalized_expected: Dict[str, Any]
+    normalized_actual: dict[str, Any], normalized_expected: dict[str, Any]
 ) -> None:
     """Compare parameter counts between actual and expected."""
     actual_count = len(normalized_actual.get("parameterValues", []))
@@ -196,7 +197,7 @@ def _compare_parameter_counts(
 
 
 def _compare_parameter_values(
-    normalized_actual: Dict[str, Any], normalized_expected: Dict[str, Any]
+    normalized_actual: dict[str, Any], normalized_expected: dict[str, Any]
 ) -> None:
     """Compare individual parameter values."""
     actual_lookup = {
@@ -217,7 +218,7 @@ def _compare_parameter_values(
 
 
 def assert_parameter_values_match(
-    actual_dir: Path, expected_dir: Path, context: Optional[Dict[str, Any]] = None
+    actual_dir: Path, expected_dir: Path, context: dict[str, Any] | None = None
 ) -> None:
     """
     Compare actual parameter values with expected parameter values.
@@ -249,7 +250,7 @@ def assert_parameter_values_match(
 
 
 def assert_asset_references_match(
-    actual_dir: Path, expected_dir: Path, context: Optional[Dict[str, Any]] = None
+    actual_dir: Path, expected_dir: Path, context: dict[str, Any] | None = None
 ) -> None:
     """
     Compare actual asset references with expected asset references values.
@@ -305,11 +306,11 @@ def assert_asset_references_match(
         f"  Actual: {normalized_actual}"
     )
 
-    logging.info("✓ Asset references match expected output")
+    logger.info("✓ Asset references match expected output")
 
 
 def assert_job_bundle_matches(
-    actual_dir: Path, expected_dir: Path, context: Optional[Dict[str, Any]] = None
+    actual_dir: Path, expected_dir: Path, context: dict[str, Any] | None = None
 ) -> None:
     """
     Compare the actual job bundle with expected job bundle output.
@@ -323,7 +324,7 @@ def assert_job_bundle_matches(
         context = {}
 
     test_name = context.get("test_name", "unknown")
-    logging.info("Comparing job bundle: %s vs %s", actual_dir.name, expected_dir.name)
+    logger.info("Comparing job bundle: %s vs %s", actual_dir.name, expected_dir.name)
 
     # Compare parameter values
     assert_parameter_values_match(actual_dir, expected_dir, context)
@@ -341,6 +342,6 @@ def assert_job_bundle_matches(
         with open(actual_template, encoding="utf-8") as f:
             yaml.safe_load(f)  # Will raise exception if invalid
 
-        logging.info("✓ Template file is valid YAML")
+        logger.info("✓ Template file is valid YAML")
 
-    logging.info("✅ Job bundle matches expected output: %s", test_name)
+    logger.info("✅ Job bundle matches expected output: %s", test_name)

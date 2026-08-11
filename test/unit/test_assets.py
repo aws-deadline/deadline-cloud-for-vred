@@ -2,10 +2,10 @@
 
 """Tests for asset introspection and file reference parsing."""
 
-import pytest
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
+import pytest
 from vred_submitter.assets import AssetIntrospector
 
 

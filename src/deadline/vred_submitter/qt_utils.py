@@ -2,10 +2,10 @@
 
 """Qt-based Convenience/Utility Functions"""
 
-from .qt_components import AutoSizingMessageBox
-
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QMessageBox, QWidget
+
+from .qt_components import AutoSizingMessageBox
 
 _WINDOWS_STANDARD_DPI = 96.0
 

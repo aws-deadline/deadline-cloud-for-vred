@@ -2,16 +2,15 @@
 
 """Tests for VRED render script functionality."""
 
+import json
 import logging
-import pytest
+import os
 import sys
 import tempfile
-import json
-import os
 from unittest.mock import Mock, patch
 
-from vred_submitter.VRED_RenderScript_DeadlineCloud import DeadlineCloudRenderer
-from vred_submitter.VRED_RenderScript_DeadlineCloud import PathFormat
+import pytest
+from vred_submitter.VRED_RenderScript_DeadlineCloud import DeadlineCloudRenderer, PathFormat
 
 # Shared mock parameters for all test classes to reduce duplication
 DEFAULT_MOCK_PARAMS = {
@@ -85,7 +84,7 @@ class TestDeadlineCloudRenderer:
 
             # Verify that basicConfig was called with the correct level
             mock_logging.basicConfig.assert_called_once()
-            args, kwargs = mock_logging.basicConfig.call_args
+            _args, kwargs = mock_logging.basicConfig.call_args
             assert kwargs["level"] == DeadlineCloudRenderer.LOGGING_LEVEL
             assert kwargs["level"] != logging.DEBUG
 
@@ -674,16 +673,18 @@ class TestInitRenderJob:
         """Test render job initialization without animation"""
         mock_params = self.get_mock_params()
 
-        with patch(
-            "vred_submitter.VRED_RenderScript_DeadlineCloud.DynamicKeyValueObject",
-            return_value=Mock(**mock_params),
+        with (
+            patch(
+                "vred_submitter.VRED_RenderScript_DeadlineCloud.DynamicKeyValueObject",
+                return_value=Mock(**mock_params),
+            ),
+            patch.object(DeadlineCloudRenderer, "init_render_animation") as mock_init_anim,
         ):
-            with patch.object(DeadlineCloudRenderer, "init_render_animation") as mock_init_anim:
-                renderer = DeadlineCloudRenderer(mock_params)
-                renderer.init_render_job()
+            renderer = DeadlineCloudRenderer(mock_params)
+            renderer.init_render_job()
 
-                # Should not call init_render_animation when RenderAnimation is False
-                mock_init_anim.assert_not_called()
+            # Should not call init_render_animation when RenderAnimation is False
+            mock_init_anim.assert_not_called()
 
     @patch("vred_submitter.VRED_RenderScript_DeadlineCloud.setRenderAnimation")
     def test_render_job_with_animation(self, mock_set_animation):
@@ -691,22 +692,20 @@ class TestInitRenderJob:
         mock_params = self.get_mock_params()
         mock_params["RenderAnimation"] = True
 
-        with patch(
-            "vred_submitter.VRED_RenderScript_DeadlineCloud.DynamicKeyValueObject",
-            return_value=Mock(**mock_params),
+        with (
+            patch(
+                "vred_submitter.VRED_RenderScript_DeadlineCloud.DynamicKeyValueObject",
+                return_value=Mock(**mock_params),
+            ),
+            patch.object(DeadlineCloudRenderer, "init_camera_view") as mock_init_camera,
+            patch.object(DeadlineCloudRenderer, "init_render_quality_modes") as mock_init_quality,
+            patch.object(DeadlineCloudRenderer, "init_render_animation") as mock_init_anim,
         ):
-            with patch.object(DeadlineCloudRenderer, "init_camera_view") as mock_init_camera:
-                with patch.object(
-                    DeadlineCloudRenderer, "init_render_quality_modes"
-                ) as mock_init_quality:
-                    with patch.object(
-                        DeadlineCloudRenderer, "init_render_animation"
-                    ) as mock_init_anim:
-                        renderer = DeadlineCloudRenderer(mock_params)
-                        renderer.init_render_job()
+            renderer = DeadlineCloudRenderer(mock_params)
+            renderer.init_render_job()
 
-                        # Verify all methods were called
-                        mock_init_camera.assert_called_once()
-                        mock_init_quality.assert_called_once()
-                        mock_init_anim.assert_called_once()
-                        mock_set_animation.assert_called_once_with(True)
+            # Verify all methods were called
+            mock_init_camera.assert_called_once()
+            mock_init_quality.assert_called_once()
+            mock_init_anim.assert_called_once()
+            mock_set_animation.assert_called_once_with(True)

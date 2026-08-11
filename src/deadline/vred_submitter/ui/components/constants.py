@@ -3,7 +3,7 @@
 """Provides a Constants class that focuses on UI design, values to populate"""
 
 from types import MappingProxyType
-from typing import List, Final
+from typing import Final
 
 # Note: For all Qt Widgets, 1920x1080 @ 100% scale was used to determine baseline X,Y dimension values
 # (at DPIScale.factor=1.0). Changing resolution and scale will maintain the sizing/layout of widgets.
@@ -51,7 +51,7 @@ class Constants(metaclass=ConstantsMeta):
     ANIMATION_CLIP_LABEL_DESCRIPTION: Final[str] = "The name of the animation clip to render."
     ANIMATION_TYPE_LABEL: Final[str] = "Animation Type"
     ANIMATION_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of animation (Clip or Timeline)."
-    ANIMATION_TYPE_OPTIONS: Final[List[str]] = ["Clip", "Timeline"]
+    ANIMATION_TYPE_OPTIONS: Final[list[str]] = ["Clip", "Timeline"]
     CLIP_LABEL: Final[str] = "Clip"
 
     @ClassProperty
@@ -74,7 +74,7 @@ class Constants(metaclass=ConstantsMeta):
     DLSS_QUALITY_LABEL_DESCRIPTION: Final[str] = (
         "The Deep Learning Super Sampling (DLSS) quality level to apply."
     )
-    DLSS_QUALITY_OPTIONS: Final[List[str]] = [
+    DLSS_QUALITY_OPTIONS: Final[list[str]] = [
         "Off",
         "Performance",
         "Balanced",
@@ -163,7 +163,7 @@ class Constants(metaclass=ConstantsMeta):
     JOB_TYPE_LABEL_DESCRIPTION: Final[str] = "The type of job to Render."
     JOB_TYPE_RENDER: Final[str] = "Render"
     JOB_TYPE_SEQUENCER: Final[str] = "Sequencer"
-    JOB_TYPE_OPTIONS: Final[List[str]] = [
+    JOB_TYPE_OPTIONS: Final[list[str]] = [
         JOB_TYPE_RENDER,
         JOB_TYPE_SEQUENCER,
     ]
@@ -239,7 +239,7 @@ class Constants(metaclass=ConstantsMeta):
     )
     RENDER_QUALITY_LABEL: Final[str] = "Render Quality"
     RENDER_QUALITY_LABEL_DESCRIPTION: Final[str] = "The render quality level to apply."
-    RENDER_QUALITY_OPTIONS: Final[List[str]] = [
+    RENDER_QUALITY_OPTIONS: Final[list[str]] = [
         "Analytic Low",
         "Analytic High",
         "Realistic Low",
@@ -275,10 +275,10 @@ class Constants(metaclass=ConstantsMeta):
     SS_QUALITY_LABEL_DESCRIPTION: Final[str] = (
         "The Super Sampling quality level to apply; note: DLSS quality level takes precedence."
     )
-    SS_QUALITY_OPTIONS: Final[List[str]] = ["Off", "Low", "Medium", "High", "Ultra High"]
+    SS_QUALITY_OPTIONS: Final[list[str]] = ["Off", "Low", "Medium", "High", "Ultra High"]
 
     @ClassProperty
-    def SUBMITTER_DIALOG_WINDOW_DIMENSIONS(cls) -> List[int]:
+    def SUBMITTER_DIALOG_WINDOW_DIMENSIONS(cls) -> list[int]:
         return [int(600 * _global_dpi_scale.factor), int(600 * _global_dpi_scale.factor)]
 
     TILES_IN_X_LABEL: Final[str] = "Tiles In X"
