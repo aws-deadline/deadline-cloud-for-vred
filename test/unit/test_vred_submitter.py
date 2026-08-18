@@ -251,12 +251,26 @@ class TestVREDSubmitter:
         assert result == (mock_auto_detected, mock_user_defined)
         mock_introspector.parse_scene_assets.assert_called_once()
 
+    # Patch the pre-GUI hook symbols so this unit test never reaches real deadline-cloud config
+    # (~/.deadline/config) or the environment hook loader (DEADLINE_HOOKS_DIR); otherwise the test
+    # outcome would depend on ambient config and could execute studio hook code during unit runs.
+    @patch("vred_submitter.vred_submitter.apply_pre_gui_output")
+    @patch("vred_submitter.vred_submitter.run_pre_gui_hooks", return_value={})
+    @patch("vred_submitter.vred_submitter._pre_gui_hook_confirm_callback", return_value=None)
     @patch("vred_submitter.vred_submitter.os.getenv")
     @patch("vred_submitter.vred_submitter.get_major_version")
     @patch("vred_submitter.vred_submitter.get_dpi_scale_factor")
     @patch("vred_submitter.vred_submitter.SubmitJobToDeadlineDialog")
     def test_create_submitter_dialog(
-        self, mock_dialog_class, mock_get_dpi_scale, mock_get_version, mock_getenv, submitter
+        self,
+        mock_dialog_class,
+        mock_get_dpi_scale,
+        mock_get_version,
+        mock_getenv,
+        mock_confirm_cb,
+        mock_run_hooks,
+        mock_apply,
+        submitter,
     ):
         mock_get_version.return_value = "2023"
         mock_get_dpi_scale.return_value = 1.0
@@ -268,7 +282,10 @@ class TestVREDSubmitter:
         mock_dialog = Mock()
         mock_dialog_class.return_value = mock_dialog
 
-        settings = Mock()
+        # A real settings dataclass (not a Mock): _create_submitter_dialog reads
+        # render_settings.priority (an int) for the PreGuiHookContext and mirrors deadline: values
+        # onto the settings fields, so a Mock's non-int attributes would break that path.
+        settings = RenderSubmitterUISettings()
         attachments = (Mock(), Mock())
 
         result = submitter._create_submitter_dialog(settings, attachments)

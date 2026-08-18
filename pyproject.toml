@@ -24,7 +24,7 @@ classifiers = [
 
 
 dependencies = [
-    "deadline >= 0.59.0,< 0.61",
+    "deadline >= 0.60.1,< 0.61",
 ]
 
 [project.scripts]
