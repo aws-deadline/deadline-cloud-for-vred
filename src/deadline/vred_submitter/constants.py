@@ -97,6 +97,11 @@ class Constants(metaclass=ConstantsMeta):
     PARAMETER_VALUES_FIELD: Final[str] = "parameterValues"
     PARAMETER_VALUES_FILENAME: Final[str] = "parameter_values.yaml"
     POSITIVE_INFINITY: Final[str] = "inf"
+    PRE_GUI_HOOK_FAILED_TITLE: Final[str] = "Pre-GUI hook failed"
+    PRE_GUI_HOOK_FAILED_BODY: Final[str] = (
+        "A pre-GUI submission hook failed to run. The submitter is opening with default values; "
+        "the hook's changes were not applied.\n\nSee the VRED log for details."
+    )
     READ_FLAG: Final[str] = "r"
     RENDER_SUBMITTER_SETTINGS_FILE_EXT = ".deadline_render_settings.json"
     SCENE_FILE_NOT_SAVED_TITLE: Final[str] = "Warning: scene file not saved"

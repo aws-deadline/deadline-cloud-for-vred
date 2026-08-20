@@ -17,7 +17,12 @@ from PySide6.QtCore import Qt
 from deadline.client.api import (
     get_deadline_cloud_library_telemetry_client,
 )
-from deadline.client.exceptions import DeadlineOperationError, UserInitiatedCancel
+from deadline.client.config import get_setting, str2bool
+from deadline.client.exceptions import (
+    DeadlineOperationCanceled,
+    DeadlineOperationError,
+    UserInitiatedCancel,
+)
 from deadline.client.job_bundle._yaml import deadline_yaml_dump
 from deadline.client.job_bundle.parameters import JobParameter
 from deadline.client.job_bundle.submission import AssetReferences
@@ -25,12 +30,23 @@ from deadline.client.ui.dialogs.submit_job_to_deadline_dialog import (
     JobBundlePurpose,
     SubmitJobToDeadlineDialog,
 )
+from deadline.client.ui.pre_gui_hooks import (
+    PreGuiHookContext,
+    apply_pre_gui_output,
+    qt_hook_confirmation,
+    run_pre_gui_hooks,
+)
 
 from ._version import version
 from .assets import AssetIntrospector
 from .constants import Constants
 from .data_classes import RenderSubmitterUISettings
-from .qt_utils import center_widget, get_dpi_scale_factor, get_qt_yes_no_dialog_prompt_result
+from .qt_utils import (
+    center_widget,
+    get_dpi_scale_factor,
+    get_qt_yes_no_dialog_prompt_result,
+    show_qt_ok_message_dialog,
+)
 from .scene import Scene
 from .ui.components.constants import Constants as UIConstants
 from .ui.components.constants import _global_dpi_scale
@@ -46,6 +62,87 @@ from .vred_utils import get_major_version, is_scene_file_modified, save_scene_fi
 # Note: this logger can be repurposed/used later
 # Need to initialize to be used inside VRED context
 _global_logger = get_logger(__name__)
+
+
+def _pre_gui_hook_confirm_callback(parent):
+    """Choose the confirmation callback for pre-GUI hooks based on the auto_accept setting.
+
+    Returns ``None`` (run hooks without prompting) when ``settings.auto_accept`` is enabled,
+    otherwise the standard Qt confirmation dialog from ``qt_hook_confirmation``. Kept as a small
+    helper so the auto_accept branch can be unit-tested headlessly.
+    """
+    if str2bool(get_setting("settings.auto_accept")):
+        return None
+    return qt_hook_confirmation(parent)
+
+
+# The deadline-cloud shared job properties the Shared-settings tab recognizes, mapped to the
+# matching RenderSubmitterUISettings field, the type each expects, and (where the widget enforces a
+# fixed set) the allowed values. Anything else raises inside SharedJobPropertiesWidget's
+# set_parameter_value (deadline-cloud); mirrored from that widget. Numeric ranges are intentionally
+# left to the spin boxes (which clamp) and the service (which validates at submit) rather than
+# duplicating deadline-cloud's bounds here.
+_DEADLINE_SHARED_PROPERTIES: dict[str, tuple[str, type, "frozenset[str] | None"]] = {
+    "deadline:targetTaskRunStatus": ("initial_status", str, frozenset({"READY", "SUSPENDED"})),
+    "deadline:maxFailedTasksCount": ("max_failed_tasks_count", int, None),
+    "deadline:maxRetriesPerTask": ("max_retries_per_task", int, None),
+    "deadline:priority": ("priority", int, None),
+    "deadline:maxWorkerCount": ("max_worker_count", int, None),
+}
+
+
+def _sanitize_hook_deadline_properties(
+    shared_parameter_values: dict[str, Any],
+    render_settings: RenderSubmitterUISettings,
+) -> None:
+    """Validate and mirror hook-supplied ``deadline:`` shared job properties.
+
+    ``apply_pre_gui_output`` routes every ``deadline:``-prefixed hook parameter into the shared
+    parameter values with no validation. The submitter dialog replays each onto its Shared-settings
+    tab during construction (outside the pre-GUI try/except), where an unrecognized key raises
+    ``KeyError`` and a wrong-typed value raises ``TypeError`` — so a single mistyped hook key would
+    crash the submitter with a raw traceback instead of opening.
+
+    To keep "a faulty hook must not block submission" true end to end, this: (a) drops and logs any
+    unrecognized ``deadline:`` key, (b) coerces the int-typed properties, dropping and logging values
+    that can't coerce, (c) drops and logs values outside a fixed allowed set (e.g. an initial status
+    other than READY/SUSPENDED), and (d) mirrors each accepted value onto the matching
+    ``RenderSubmitterUISettings`` field so the settings object (persisted by ``save_sticky_settings``)
+    stays consistent with the value the dialog shows. Numeric ranges are left to the spin boxes
+    (which clamp) and the service (which validates at submit).
+    """
+    for key in list(shared_parameter_values):
+        if not key.startswith("deadline:"):
+            continue
+        mapping = _DEADLINE_SHARED_PROPERTIES.get(key)
+        if mapping is None:
+            _global_logger.warning(
+                "Pre-GUI hook set unrecognized shared job property '%s'; ignoring it.", key
+            )
+            del shared_parameter_values[key]
+            continue
+        field_name, value_type, allowed_values = mapping
+        try:
+            coerced = value_type(shared_parameter_values[key])
+        except (TypeError, ValueError):
+            _global_logger.warning(
+                "Pre-GUI hook set '%s' to an invalid value %r; ignoring it.",
+                key,
+                shared_parameter_values[key],
+            )
+            del shared_parameter_values[key]
+            continue
+        if allowed_values is not None and coerced not in allowed_values:
+            _global_logger.warning(
+                "Pre-GUI hook set '%s' to an unsupported value %r (allowed: %s); ignoring it.",
+                key,
+                coerced,
+                ", ".join(sorted(allowed_values)),
+            )
+            del shared_parameter_values[key]
+            continue
+        shared_parameter_values[key] = coerced
+        setattr(render_settings, field_name, coerced)
 
 
 class VREDSubmitter:
@@ -169,6 +266,9 @@ class VREDSubmitter:
             }
         )
         submitter_dialog = self._create_submitter_dialog(render_settings, attachments)
+        if submitter_dialog is None:
+            # A pre-GUI hook confirmation was declined; abort opening the submitter silently.
+            return None
         submitter_dialog.show()
         center_widget(submitter_dialog)
         return submitter_dialog
@@ -221,13 +321,13 @@ class VREDSubmitter:
         self,
         render_settings: RenderSubmitterUISettings,
         attachments: tuple[AssetReferences, AssetReferences],
-    ) -> SubmitJobToDeadlineDialog:
+    ) -> SubmitJobToDeadlineDialog | None:
         """
         Configures and creates a job submission dialog for Deadline Cloud.
         Supports overriding conda packages and channels via environment variables (CONDA_CHANNELS, CONDA_PACKAGES)
         param: render_settings: render settings for the submitter UI
         param: attachments auto-detected asset references and user-defined asset references
-        return: configured dialog instance
+        return: configured dialog instance, or None if a pre-GUI hook confirmation was declined
         """
         auto_detected_attachments, user_attachments = attachments
         conda_packages = (
@@ -238,6 +338,70 @@ class VREDSubmitter:
         shared_parameter_values = {Constants.CONDA_PACKAGES_JOB_PARAM: conda_packages}
         if conda_channels:
             shared_parameter_values[Constants.CONDA_CHANNELS_JOB_PARAM] = conda_channels
+
+        # Run pre-GUI hooks so studios can pre-populate dialog fields before it opens. VRED has
+        # no on-disk job bundle at this point, so hooks are sourced from DEADLINE_HOOKS_DIR only
+        # (bundle_dir=None), gated by settings.allow_environment_hooks. The confirmation prompt is
+        # skipped when auto_accept is set; otherwise the standard dialog is shown.
+        try:
+            pre_gui_output = run_pre_gui_hooks(
+                PreGuiHookContext(
+                    bundle_dir=None,
+                    job_name=render_settings.name,
+                    # Seed the hook with the priority the dialog will actually show (loaded from
+                    # sticky settings), not the PreGuiHookContext default, so a hook that reads
+                    # priority sees a value consistent with the upcoming dialog.
+                    priority=render_settings.priority,
+                    submitter_name="vred",
+                    parameters=dict(shared_parameter_values),
+                ),
+                confirm_callback=_pre_gui_hook_confirm_callback(self.parent_window),
+            )
+            # Apply the merged output onto COPIES and commit only on success, so a hook that raises
+            # partway through apply leaves render_settings / shared_parameter_values pristine. This
+            # matters because render_settings is later persisted by save_sticky_settings, so a
+            # half-applied value from malformed hook output must not leak to the scene's sticky file.
+            # deepcopy (not dataclasses.replace) so the copy's mutable list fields are isolated too.
+            # RenderSubmitterUISettings has no .parameters list, so apply_pre_gui_output writes
+            # name/description onto the settings and routes every hook parameter into
+            # shared_parameter_values (queue parameters, deadline: job properties). VRED's render
+            # options are driven by the Job-specific settings tab / scene, not by pre-GUI hooks — see
+            # the README. Guard with `or {}`: run_pre_gui_hooks returns {} for the no-hooks case, and
+            # this stays safe if a future release returns None instead.
+            candidate_settings = deepcopy(render_settings)
+            candidate_shared = dict(shared_parameter_values)
+            apply_pre_gui_output(pre_gui_output or {}, candidate_settings, candidate_shared)
+            # Validate/coerce and mirror the deadline: shared job properties before they reach the
+            # dialog constructor (which would otherwise raise on an unrecognized or wrong-typed key).
+            _sanitize_hook_deadline_properties(candidate_shared, candidate_settings)
+            render_settings = candidate_settings
+            shared_parameter_values = candidate_shared
+        except DeadlineOperationCanceled:
+            # The user declined the hook confirmation prompt. This is a normal cancellation, not a
+            # failure, so abort opening the submitter silently by returning None; show_submitter
+            # then skips showing the dialog. An uncaught DeadlineOperationCanceled would otherwise
+            # propagate into VRED as a raw traceback.
+            return None
+        except Exception:
+            # A pre-GUI hook — or applying its output — failed. Pre-GUI hooks are opt-in and
+            # advisory, so a single faulty hook must not block submission: log the failure and open
+            # the dialog with the pristine defaults (the failed apply ran only on the discarded
+            # copies, so render_settings / shared_parameter_values are unchanged).
+            _global_logger.exception(
+                "A pre-GUI hook failed; opening the submitter without applying hook output."
+            )
+            # Only surface a dialog when a hooks directory is configured. Otherwise, on the default
+            # no-hooks path (the majority of users, who never set DEADLINE_HOOKS_DIR), an unrelated
+            # failure inside the try — e.g. a config read — would pop a confusing "hook failed"
+            # dialog every time the submitter opens. A silently dropped studio default is worth a
+            # visible warning; a phantom one is not. os.environ.get can't raise, so this check is safe
+            # here (gating on the env var alone, without re-reading settings that could themselves
+            # raise from within this handler).
+            if os.environ.get("DEADLINE_HOOKS_DIR"):
+                show_qt_ok_message_dialog(
+                    Constants.PRE_GUI_HOOK_FAILED_TITLE, Constants.PRE_GUI_HOOK_FAILED_BODY
+                )
+
         # Need to apply these settings prior in order to ensure that Qt Controls are sized as expected!
         _global_dpi_scale.factor = get_dpi_scale_factor()
         submitter_dialog = SubmitJobToDeadlineDialog(
