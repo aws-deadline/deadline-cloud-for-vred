@@ -1,3 +1,7 @@
+## 0.1.7 (2026-08-21)
+
+### Features
+* The VRED render submitter now runs pre-GUI hooks before opening the submission dialog. Studios can use hooks sourced from `DEADLINE_HOOKS_DIR` to pre-populate shared settings fields (job name, description, priority, max failed tasks/retries, initial status) and Conda/queue parameters automatically. (#148)
 ## 0.1.6 (2026-06-24)
 
 ### Features
