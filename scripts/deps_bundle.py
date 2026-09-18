@@ -9,6 +9,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
+# The interpreters VRED Pro embeds, not this package's own build/runtime interpreter: VRED
+# 2025 (17.3) embeds Python 3.10 and VRED 2026 (18.0) embeds 3.11, per the StrEnum backport in
+# vred_submitter/utils.py written for exactly that pair. pyproject.toml's `requires-python`
+# floor and `Python :: 3.12` classifier describe this package's own supported build/CI
+# interpreters, which are unrelated -- no VRED release embeds 3.12, so this list is not grown
+# to match that classifier speculatively. Add a version here only once a supported VRED
+# release actually embeds it.
 SUPPORTED_PYTHON_VERSIONS = ["3.10", "3.11"]
 # Packages with compiled extension modules, fetched once per supported Python version so the
 # bundle carries a loadable artifact for each interpreter.
@@ -102,6 +109,17 @@ def _python_version_key(version: str) -> tuple[int, ...]:
 
 
 def _download_native_dependencies(working_directory: Path, base_env: Path) -> list[Path]:
+    # No --platform flag: these downloads resolve for the build host's own platform, and the
+    # merge in _copy_native_to_base_env now makes that load-bearing rather than a gap-fill.
+    # That is safe only because the in-app VRED submitter this bundle ships for is Windows-only
+    # (install_submitter.py rejects non-Windows outright) and the release pipeline that builds
+    # it enforces the same thing: .github/workflows/release_publish.yml's BuildInstaller job
+    # calls the shared reusable_build_installers.yml with `oses: "['Windows']"` hardcoded, so
+    # the CodeBuild host that runs this script for a shipped release is always Windows. A
+    # manual `Build Installers` dispatch can pick Linux or MacOS, but that path builds the
+    # platform-specific standalone-client installer, not the in-app submitter this dependency
+    # bundle serves. If that release pipeline is ever loosened to build the Windows in-app
+    # submitter bundle from a non-Windows host, add --platform win_amd64 here.
     versioned_native_dependencies = [
         f"{package_name}=={_get_package_version(package_name, base_env)}"
         for package_name in NATIVE_DEPENDENCIES
@@ -156,6 +174,22 @@ def _copy_native_to_base_env(base_env: Path, native_dependency_paths: list[Path]
     installing ``_awscrt.abi3.so``, so the copies differ and only one can ship; abi3 is
     forward compatible, which makes the one built for the lowest supported Python the only
     copy that loads on all of them, and taking the first tree is what keeps it.
+
+    The overwrite below is deliberately unconditional rather than scoped to compiled suffixes
+    (``.so``/``.pyd``/``.dylib``). Each native tree is a full ``pip install --no-deps`` of one
+    package, so it also carries that package's pure-Python modules and ``.dist-info/``
+    directory, and both get overwritten too -- not just the extension module this function is
+    reasoned about above. The pure-Python files are harmless: their versions are pinned from
+    the base environment (see ``_download_native_dependencies``), so the bytes a native tree
+    overwrites with are identical to what was already there. The ``.dist-info`` metadata is
+    not byte-identical -- ``WHEEL`` ends up declaring the lowest supported interpreter's tag
+    and ``RECORD`` lists only that tree's artifact, even though the merged bundle carries every
+    supported version's compiled artifact. That is accepted: the bundle is a flat directory
+    placed on ``PYTHONPATH``, nothing pip-manages or introspects at runtime, so no code path
+    reads that metadata back. Scoping the overwrite to compiled suffixes would avoid the skew
+    but adds a second rule to reason about and would miss any non-compiled data file a future
+    native dependency ships; content verification for cases like that belongs to the planned
+    shared bundler, not to this per-repo script.
     """
     copied: set[Path] = set()
     for native_dependency_path in native_dependency_paths:

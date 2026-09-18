@@ -54,6 +54,13 @@ argparse
 array
 ast
 atexit
+awscrt
+awscrt.auth
+awscrt.checksums
+awscrt.crypto
+awscrt.exceptions
+awscrt.http
+awscrt.io
 base64
 binascii
 bisect

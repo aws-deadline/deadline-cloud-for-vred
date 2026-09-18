@@ -33,6 +33,13 @@ import deps_bundle
 # awscrt's abi3 wheels all install this one name, whatever Python they were built for.
 ABI3_ARTIFACT = "_awscrt.abi3.so"
 
+# awscrt ships a version-specific wheel through Python 3.10 and abi3 wheels from 3.11
+# onward. Named explicitly, rather than left for the fixture and the assertion below to
+# each infer from list position, so the two move together if SUPPORTED_PYTHON_VERSIONS ever
+# drops 3.10 -- changing this constant changes which supported versions get an abi3 name at
+# all, not which list index a test happens to read.
+AWSCRT_LAST_NON_ABI3_VERSION = "3.10"
+
 # Stands in for the copy the base environment resolved for the build host's own
 # interpreter, which is not necessarily a version the bundle targets.
 BASE_ENV_SENTINEL = "build-host"
@@ -75,11 +82,19 @@ def merged_bundle(tmp_path, supported_versions) -> Path:
     base_env = tmp_path / "base_env"
     _write(base_env / ABI3_ARTIFACT, BASE_ENV_SENTINEL)
 
+    boundary = _version_key(AWSCRT_LAST_NON_ABI3_VERSION)
+    assert any(_version_key(v) <= boundary for v in supported_versions) and any(
+        _version_key(v) > boundary for v in supported_versions
+    ), (
+        "AWSCRT_LAST_NON_ABI3_VERSION needs supported versions on both sides of it for this "
+        "fixture to exercise both the version-specific and the abi3-collision case"
+    )
+
     native_paths = []
     for version in supported_versions:
         tree = tmp_path / "native" / _tag(version)
         native_paths.append(tree)
-        if version == supported_versions[0]:
+        if _version_key(version) <= boundary:
             _write(tree / f"_awscrt.cpython-{_tag(version)}-darwin.so", version)
         else:
             _write(tree / ABI3_ARTIFACT, version)
@@ -102,7 +117,14 @@ def test_colliding_abi3_artifact_comes_from_the_lowest_supported_abi(
     supported version that gets an abi3 wheel, the collision here is with the base
     environment's host-resolved copy, which must lose to 3.11's tree.
     """
-    lowest_abi3_version = supported_versions[1]
+    lowest_abi3_version = min(
+        (
+            version
+            for version in supported_versions
+            if _version_key(version) > _version_key(AWSCRT_LAST_NON_ABI3_VERSION)
+        ),
+        key=_version_key,
+    )
     shipped = (merged_bundle / ABI3_ARTIFACT).read_text()
 
     assert shipped != BASE_ENV_SENTINEL, (
@@ -132,9 +154,13 @@ def test_version_specific_artifacts_are_kept_for_every_supported_version(
             ), f"the bundle carries no {package} artifact for Python {version}"
             assert artifact.read_text() == version
 
-    lowest = supported_versions[0]
-    awscrt_non_abi3 = merged_bundle / f"_awscrt.cpython-{_tag(lowest)}-darwin.so"
-    assert awscrt_non_abi3.exists(), f"the bundle carries no awscrt artifact for Python {lowest}"
+    for version in supported_versions:
+        if _version_key(version) > _version_key(AWSCRT_LAST_NON_ABI3_VERSION):
+            continue
+        awscrt_non_abi3 = merged_bundle / f"_awscrt.cpython-{_tag(version)}-darwin.so"
+        assert (
+            awscrt_non_abi3.exists()
+        ), f"the bundle carries no awscrt artifact for Python {version}"
 
 
 def test_native_trees_are_merged_lowest_python_version_first(tmp_path, monkeypatch):
