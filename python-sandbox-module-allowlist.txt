@@ -6,6 +6,7 @@ __main__
 __mp_main__
 _abc
 _ast
+_awscrt
 _bisect
 _blake2
 _bz2
@@ -324,8 +325,10 @@ xxhash
 xxhash._xxhash
 xxhash.version
 yaml
+yaml._yaml
 yaml.composer
 yaml.constructor
+yaml.cyaml
 yaml.dumper
 yaml.emitter
 yaml.error
