@@ -24,9 +24,8 @@ classifiers = [
 
 
 dependencies = [
-    # 0.60.4 is the floor because AWS Console sign-in landed there and nowhere earlier:
-    # 0.60.1 through 0.60.3 have no AWS_CONSOLE_LOGIN credentials source, and do not
-    # declare a `console` extra at all.
+    # 0.60.4 is the floor: AWS Console sign-in landed there, and 0.60.1-0.60.3 declare no
+    # `console` extra at all.
     "deadline >= 0.60.4,< 0.61",
 ]
 

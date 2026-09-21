@@ -2,23 +2,16 @@
 
 """Guards the dependency declaration that AWS Console sign-in depends on.
 
-Console sign-in is not exercised by the integration tests: it needs an interactive
-browser OAuth handshake and Deadline Cloud Monitor, while CI authenticates by
-assuming a role, so credentials are host-provided and the console path is never
-taken. What can break silently is the dependency declaration, which is what this
-test pins.
+Console sign-in is not exercised by the integration tests: CI authenticates by assuming a
+role, so the console path is never taken there. What can break silently is the dependency
+declaration, which is what these tests pin.
 
-The test reads ``pyproject.toml`` rather than installed distribution metadata.
-``importlib.metadata`` reflects what was captured at install time, so an edit to
-``pyproject.toml`` would not be seen until the environment is reinstalled -- and
-"somebody edited that line" is precisely the regression being guarded.
+Reads ``pyproject.toml`` directly rather than installed distribution metadata, since
+``importlib.metadata`` would not see an edit until the environment is reinstalled.
 
-The test above guards the negative side: the floor itself must exclude releases with no
-console sign-in support. The tests below guard the positive side -- that
-``_add_console_extra`` adds the extra correctly, that ``_build_base_environment`` still
-passes it to pip, and that ``NATIVE_DEPENDENCIES`` still carries awscrt and pyyaml -- so that
-removing any of those silently breaks console sign-in in the shipped bundle without failing
-the negative-side test above.
+Splits into a negative guard (the floor must exclude releases with no console sign-in
+support) and a positive guard (the extra must still reach pip via ``_add_console_extra``
+and ``_build_base_environment``, and ``NATIVE_DEPENDENCIES`` must still be correct).
 """
 
 import subprocess
@@ -39,21 +32,13 @@ import deps_bundle  # importable only after the sys.path append above
 
 PYPROJECT = Path(__file__).parents[2] / "pyproject.toml"
 
-# Console sign-in landed in deadline 0.60.4 and nowhere earlier: 0.60.1 through
-# 0.60.3 have no AWS_CONSOLE_LOGIN credentials source and do not declare a
-# `console` extra at all. 0.60.3 is the highest version that must be excluded.
+# 0.60.1-0.60.3 have no AWS_CONSOLE_LOGIN credentials source and declare no `console`
+# extra; 0.60.3 is the highest version that must stay excluded.
 HIGHEST_DEADLINE_WITHOUT_CONSOLE_SIGNIN = "0.60.3"
 
 
 def test_deadline_floor_excludes_releases_without_console_signin():
-    """Guards the floor itself, not whatever a resolver happened to select.
-
-    An installed-version check cannot do this: with a loosened ">= 0.60.1"
-    requirement, pip still resolves the newest 0.60.x, so the regression passes
-    unnoticed. The floor matters beyond feature availability: requesting the
-    console extra against a release that does not declare it makes pip silently
-    backtrack to one without it, dropping awscrt with only a warning.
-    """
+    """Pins the declared deadline floor, independent of whatever a resolver selects."""
     pyproject = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     requirements = [Requirement(r) for r in pyproject["project"]["dependencies"]]
     deadline_requirements = [r for r in requirements if r.name == "deadline"]
@@ -67,26 +52,13 @@ def test_deadline_floor_excludes_releases_without_console_signin():
 
 
 def test_native_dependencies_include_awscrt_and_pyyaml():
-    """Pins the packages deps_bundle.py fetches per-version for their compiled artifacts.
-
-    Console sign-in needs awscrt to be importable under whichever Python VRED embeds; pyyaml
-    needs the same because it silently falls back to a pure-Python parser otherwise. Dropping
-    either from NATIVE_DEPENDENCIES would ship a bundle where a subset of interpreters cannot
-    load one of them, with nothing here to catch it.
-    """
+    """Pins that awscrt and pyyaml stay in NATIVE_DEPENDENCIES."""
     assert "awscrt" in deps_bundle.NATIVE_DEPENDENCIES
     assert "pyyaml" in deps_bundle.NATIVE_DEPENDENCIES
 
 
 def test_build_base_environment_requests_the_console_extra(tmp_path, monkeypatch):
-    """Pins the positive half of the console sign-in fix: the extra actually reaches pip.
-
-    test_deadline_floor_excludes_releases_without_console_signin guards the floor pyproject.toml
-    declares; this guards that _build_base_environment still adds the console extra back
-    before invoking pip, mirroring the subprocess.run monkeypatch already used in
-    test_deps_bundle_native_merge.py. If the _add_console_extra call here were dropped, that
-    other test would stay green while the shipped bundle silently lost console sign-in.
-    """
+    """Pins that _build_base_environment passes the console extra to pip."""
     captured_args: list[str] = []
 
     def record(args, **kwargs):
@@ -113,21 +85,13 @@ def test_build_base_environment_requests_the_console_extra(tmp_path, monkeypatch
     ],
 )
 def test_add_console_extra_pins_behavior(requirement, expected):
-    """Pins _add_console_extra's contract: preserve existing extras, be idempotent, and leave
-    non-deadline requirements untouched.
-    """
+    """Pins _add_console_extra's contract: preserve extras, be idempotent, ignore others."""
     assert deps_bundle._add_console_extra(requirement) == expected
 
 
 def test_add_console_extra_changes_the_real_base_dependencies():
-    """Stronger than the parametrized behavior test above: proves the injection takes effect
-    against pyproject.toml's actual dependencies, not just a synthetic requirement string.
-
-    ``_add_console_extra`` no-ops on any requirement it does not recognize as ``deadline``. If
-    that requirement were ever renamed, wrapped, or split -- say the base dependency became
-    ``deadline-cloud`` -- this test fails, whereas test_add_console_extra_pins_behavior above
-    would keep passing forever since it never exercises the real declaration. A rename passing
-    silently is exactly how the bundle would ship with no awscrt and no build-time signal.
+    """Pins that _add_console_extra actually changes pyproject.toml's real dependencies,
+    not just a synthetic requirement string like the parametrized test above.
     """
     pyproject_dict = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     dependencies = deps_bundle._get_dependencies(pyproject_dict)

@@ -9,25 +9,18 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-# The interpreters VRED Pro embeds, not this package's own build/runtime interpreter: VRED
-# 2025 (17.3) embeds Python 3.10 and VRED 2026 (18.0) embeds 3.11, per the StrEnum backport in
-# vred_submitter/utils.py written for exactly that pair. pyproject.toml's `requires-python`
-# floor and `Python :: 3.12` classifier describe this package's own supported build/CI
-# interpreters, which are unrelated -- no VRED release embeds 3.12, so this list is not grown
-# to match that classifier speculatively. Add a version here only once a supported VRED
-# release actually embeds it.
+# VRED Pro's embedded interpreters, not this package's own build/CI interpreter: VRED 2025
+# (17.3) embeds Python 3.10, VRED 2026 (18.0) embeds 3.11 (see the StrEnum backport in
+# vred_submitter/utils.py). pyproject.toml's `requires-python` floor and `Python :: 3.12`
+# classifier describe the build/CI interpreter only -- no VRED release embeds 3.12.
 SUPPORTED_PYTHON_VERSIONS = ["3.10", "3.11"]
 # Packages with compiled extension modules, fetched once per supported Python version so the
 # bundle carries a loadable artifact for each interpreter.
 #
-# awscrt is here because its wheels are not uniformly abi3: Python 3.10 gets
-# _awscrt.cpython-310-<platform>.so while 3.11+ get _awscrt.abi3.so. Resolving it only in
-# the base environment would ship whichever the build host produced, so any VRED whose
-# interpreter that single artifact does not cover would fail to import awscrt and AWS
-# Console sign-in would break there.
-# pyyaml is here because it ships a version-specific `_yaml` extension module: resolved only
-# in the base environment it lands built for a single interpreter, and pyyaml hides that by
-# falling back to its pure-Python parser on the other one.
+# awscrt: wheels are not uniformly abi3 -- 3.10 gets a version-specific
+# _awscrt.cpython-310-<platform>.so, 3.11+ gets the shared _awscrt.abi3.so.
+# pyyaml: ships a version-specific `_yaml` extension module and silently falls back to a
+# pure-Python parser when the artifact doesn't match, masking the same failure mode.
 NATIVE_DEPENDENCIES = ["xxhash", "psutil", "awscrt", "pyyaml"]
 
 
@@ -83,14 +76,9 @@ def _add_console_extra(requirement: str) -> str:
 def _build_base_environment(working_directory: Path, dependencies: list[str]) -> Path:
     (working_directory / "base_env").mkdir()
     base_env_path = working_directory / "base_env"
-    # The bundle is the submitter, which needs AWS Console sign-in. Only the submitter
-    # bundle needs the console extra, and it pulls awscrt, a compiled wheel, so it is
-    # requested here at bundle time rather than declared in project.dependencies.
-    #
-    # Requesting the extra rather than installing awscrt directly means the bundle tracks
-    # whatever the extra actually requires -- notably a botocore floor, since the console
-    # login provider lives in botocore, not in deadline -- and takes awscrt from the exact
-    # version botocore's crt extra pins, rather than resolving it independently and drifting.
+    # Requested here (not in project.dependencies) since only the submitter bundle needs the
+    # console extra; requesting it lets awscrt track whatever version botocore's crt extra
+    # pins, rather than resolving independently and drifting.
     dependencies_for_pip = [_add_console_extra(dependency) for dependency in dependencies]
     base_env_pip_args = [
         "pip",
@@ -109,17 +97,11 @@ def _python_version_key(version: str) -> tuple[int, ...]:
 
 
 def _download_native_dependencies(working_directory: Path, base_env: Path) -> list[Path]:
-    # No --platform flag: these downloads resolve for the build host's own platform, and the
-    # merge in _copy_native_to_base_env now makes that load-bearing rather than a gap-fill.
-    # That is safe only because the in-app VRED submitter this bundle ships for is Windows-only
-    # (install_submitter.py rejects non-Windows outright) and the release pipeline that builds
-    # it enforces the same thing: .github/workflows/release_publish.yml's BuildInstaller job
-    # calls the shared reusable_build_installers.yml with `oses: "['Windows']"` hardcoded, so
-    # the CodeBuild host that runs this script for a shipped release is always Windows. A
-    # manual `Build Installers` dispatch can pick Linux or MacOS, but that path builds the
-    # platform-specific standalone-client installer, not the in-app submitter this dependency
-    # bundle serves. If that release pipeline is ever loosened to build the Windows in-app
-    # submitter bundle from a non-Windows host, add --platform win_amd64 here.
+    # No --platform flag: these downloads resolve for the build host's own platform, which
+    # _copy_native_to_base_env's merge now makes load-bearing rather than a gap-fill. Safe only
+    # because the in-app submitter this bundle ships for is Windows-only (install_submitter.py
+    # rejects non-Windows) and release_publish.yml's BuildInstaller job hardcodes
+    # `oses: ['Windows']`, so the CodeBuild host for a shipped release is always Windows.
     versioned_native_dependencies = [
         f"{package_name}=={_get_package_version(package_name, base_env)}"
         for package_name in NATIVE_DEPENDENCIES
@@ -141,12 +123,9 @@ def _download_native_dependencies(working_directory: Path, base_env: Path) -> li
             "--abi",
             "cp" + version.replace(".", ""),
             "--only-binary=:all:",
-            # These trees exist only for their compiled artifacts, and they overwrite the
-            # base environment during the merge. Without --no-deps each tree would carry the
-            # packages' full transitive closures, resolved independently of the base
-            # environment's, and clobber whatever it had resolved for anything they share.
-            # Today none of NATIVE_DEPENDENCIES has runtime dependencies, but that is a
-            # property of the current graph, not of this code.
+            # These trees exist only for their compiled artifacts and overwrite the base
+            # environment during the merge; --no-deps keeps each tree from resolving (and
+            # clobbering) full dependency closures independently.
             "--no-deps",
             *versioned_native_dependencies,
         ]
@@ -158,38 +137,22 @@ def _download_native_dependencies(working_directory: Path, base_env: Path) -> li
 def _copy_native_to_base_env(base_env: Path, native_dependency_paths: list[Path]) -> None:
     """Flatten the per-version native trees into the bundle, lowest version first.
 
-    ``native_dependency_paths`` is ordered by ascending Python version and the first tree
-    to supply a path wins, overwriting the base environment. The base environment resolved
-    these packages for whatever interpreter the build host happens to run, which is not
-    necessarily a version the bundle targets, so it must not decide which artifact ships.
+    ``native_dependency_paths`` is ascending by Python version; the first tree to supply a
+    path wins a filename collision, overwriting the base environment -- which resolved these
+    packages for the build host's interpreter, not one the bundle targets.
 
-    Which artifacts survive follows from how the wheels name their extension modules, so no
-    rule is needed per package. A version-specific name is unique per version and so cannot
-    collide: ``xxhash`` ships one wheel per version and every interpreter keeps its own
-    ``_xxhash.cpython-<tag>-<platform>.so``, and ``pyyaml`` is the same case, one wheel per
-    version installing ``yaml/_yaml.cpython-<tag>-<platform>.so``. An abi3 name is the same
-    for every version and so collides, and there the two cases differ. ``psutil`` publishes
-    a single abi3 wheel that serves all of them, so every tree holds identical bytes and the
-    collision is a no-op. ``awscrt`` publishes a separate abi3 wheel per Python, each
-    installing ``_awscrt.abi3.so``, so the copies differ and only one can ship; abi3 is
-    forward compatible, which makes the one built for the lowest supported Python the only
-    copy that loads on all of them, and taking the first tree is what keeps it.
+    A version-specific name (xxhash's ``_xxhash.cpython-<tag>-*``, pyyaml's
+    ``yaml/_yaml.cpython-<tag>-*``) is unique per version and never collides. An abi3 name
+    (``_awscrt.abi3.so``, psutil's shared wheel) is identical across versions and always
+    collides; abi3 is forward-compatible only, so taking the first (lowest-version) tree is
+    what keeps the one copy every supported interpreter can load.
 
-    The overwrite below is deliberately unconditional rather than scoped to compiled suffixes
-    (``.so``/``.pyd``/``.dylib``). Each native tree is a full ``pip install --no-deps`` of one
-    package, so it also carries that package's pure-Python modules and ``.dist-info/``
-    directory, and both get overwritten too -- not just the extension module this function is
-    reasoned about above. The pure-Python files are harmless: their versions are pinned from
-    the base environment (see ``_download_native_dependencies``), so the bytes a native tree
-    overwrites with are identical to what was already there. The ``.dist-info`` metadata is
-    not byte-identical -- ``WHEEL`` ends up declaring the lowest supported interpreter's tag
-    and ``RECORD`` lists only that tree's artifact, even though the merged bundle carries every
-    supported version's compiled artifact. That is accepted: the bundle is a flat directory
-    placed on ``PYTHONPATH``, nothing pip-manages or introspects at runtime, so no code path
-    reads that metadata back. Scoping the overwrite to compiled suffixes would avoid the skew
-    but adds a second rule to reason about and would miss any non-compiled data file a future
-    native dependency ships; content verification for cases like that belongs to the planned
-    shared bundler, not to this per-repo script.
+    The overwrite is unconditional, not scoped to compiled suffixes: each native tree is a
+    full ``pip install --no-deps``, so pure-Python files and ``.dist-info/`` get overwritten
+    too. Pure-Python bytes are identical either way since versions are pinned from the base
+    environment; the resulting ``.dist-info`` mismatch (describing only the lowest
+    interpreter) is inert because the bundle is a flat ``PYTHONPATH`` directory nothing
+    introspects at runtime.
     """
     copied: set[Path] = set()
     for native_dependency_path in native_dependency_paths:
