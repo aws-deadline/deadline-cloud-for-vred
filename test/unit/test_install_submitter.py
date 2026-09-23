@@ -16,10 +16,12 @@ pytestmark = pytest.mark.skipif(
     reason="Tests for VRED Pro submitter installer - VRED Pro only runs on Windows.",
 )
 
-# Add project's "scripts" directory to path for importing install_submitter
+# Add project's "scripts" directory to path for importing install_submitter.
+# Appended rather than prepended: scripts/ holds generically named modules (common.py), and
+# prepending would shadow any same-named import for the rest of the pytest session.
 scripts_dir = Path(__file__).parent.parent.parent / "scripts"
 if str(scripts_dir) not in sys.path:
-    sys.path.insert(0, str(scripts_dir))
+    sys.path.append(str(scripts_dir))
 
 # Conditional import to avoid RuntimeError on non-Windows
 if sys.platform == "win32":

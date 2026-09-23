@@ -1,6 +1,7 @@
 black == 26.*
 coverage[toml] == 7.*
 mypy == 2.*
+packaging == 26.*
 pytest == 9.*
 pytest-cov == 7.*
 pytest-xdist == 3.*

@@ -24,7 +24,9 @@ classifiers = [
 
 
 dependencies = [
-    "deadline >= 0.60.1,< 0.61",
+    # 0.60.4 is the floor: AWS Console sign-in landed there, and 0.60.1-0.60.3 declare no
+    # `console` extra at all.
+    "deadline >= 0.60.4,< 0.61",
 ]
 
 [project.scripts]
