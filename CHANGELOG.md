@@ -1,3 +1,7 @@
+## 0.1.8 (2026-09-23)
+
+### Bug Fixes
+* Fixed AWS Console sign-in failing to authenticate from the VRED submitter. The minimum required version of `deadline` has been raised to 0.60.4, which includes proper console sign-in support and the `awscrt` dependency. (#159)
 ## 0.1.7 (2026-08-21)
 
 ### Features
