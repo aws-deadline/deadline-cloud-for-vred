@@ -1,3 +1,7 @@
+## 0.1.8 (2026-09-23)
+
+### Bug Fixes
+* AWS Console sign-in now authenticates correctly from the VRED submitter. (#159)
 ## 0.1.7 (2026-08-21)
 
 ### Features
