@@ -709,7 +709,13 @@ steps:
                     # When license error has been detected, raise exception
                     if license_error_detected:
                         process.terminate()
-                        raise Exception("License error detected")
+                        raise Exception(
+                            "VRED failed to acquire a license.\n"
+                            "VRED requires bring your own license (BYOL): check that your "
+                            "license server is reachable from the worker and has a free seat.\n"
+                            "For more information: "
+                            "https://docs.aws.amazon.com/deadline-cloud/latest/developerguide/license.html"
+                        )
 
                     process.wait()
 
