@@ -1,7 +1,12 @@
 name: Code Quality
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'pull_request' && 'pr' || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [ mainline, release, 'patch_*' ]
   push:
     # Run on mainline pushes to populate the Actions cache that PRs restore from.
@@ -18,7 +23,9 @@ on:
 jobs:
   Test:
     name: Python
+    if: github.event.pull_request.draft != true
     strategy:
+      fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.11', '3.12']
